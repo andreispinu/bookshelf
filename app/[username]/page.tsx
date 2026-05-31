@@ -62,8 +62,11 @@ export default async function PublicProfilePage({ params }: Props) {
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="h-16 w-16 rounded-full bg-stone-800 flex items-center justify-center text-white text-xl font-semibold shrink-0">
-            {initials(profile.name)}
+          <div className="h-16 w-16 rounded-full bg-stone-800 overflow-hidden flex items-center justify-center text-white text-xl font-semibold shrink-0">
+            {profile.avatar_url
+              ? <img src={profile.avatar_url} alt={profile.name} className="h-full w-full object-cover" />
+              : initials(profile.name)
+            }
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-stone-800">{profile.name}'s BookShelf</h1>

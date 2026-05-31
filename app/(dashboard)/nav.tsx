@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef, useEffect, useState } from 'react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -13,7 +13,7 @@ const links = [
   { href: '/loans',   label: 'Loans'    },
 ]
 
-export default function Nav({ userName }: { userName: string }) {
+export default function Nav({ userName, avatarUrl }: { userName: string; avatarUrl?: string | null }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -71,6 +71,7 @@ export default function Nav({ userName }: { userName: string }) {
             aria-label="Account menu"
           >
             <Avatar className="h-8 w-8">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
               <AvatarFallback className="bg-stone-200 text-stone-700 text-xs cursor-pointer hover:bg-stone-300 transition-colors">
                 {initials}
               </AvatarFallback>

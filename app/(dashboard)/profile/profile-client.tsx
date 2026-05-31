@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +14,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { updateName } from './actions'
 import type { Profile } from '@/types'
 
@@ -29,6 +32,11 @@ function scrollToPlans() {
 }
 
 export default function ProfileClient({ profile, email }: Props) {
+  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+
   const [editOpen, setEditOpen] = useState(false)
   const [editName, setEditName] = useState(profile.name)
   const [editError, setEditError] = useState<string | null>(null)
@@ -58,6 +66,27 @@ export default function ProfileClient({ profile, email }: Props) {
   const trialEndDate = trialEndsAt
     ? trialEndsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    const formData = new FormData()
+    formData.append('image', file)
+    try {
+      const res = await fetch('/api/upload-avatar', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Upload failed')
+      setAvatarUrl(data.avatar_url)
+      toast.success('Profile picture updated')
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setAvatarUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   async function handleSaveName() {
     setEditError(null)
@@ -117,9 +146,37 @@ export default function ProfileClient({ profile, email }: Props) {
       <section>
         <h2 className="text-lg font-semibold text-stone-800 mb-4">Account</h2>
         <div className="bg-white rounded-xl border border-stone-200 p-6 flex items-center gap-5">
-          <div className="shrink-0 h-14 w-14 rounded-full bg-stone-800 flex items-center justify-center text-white text-lg font-semibold">
-            {initials(currentName)}
-          </div>
+          <button
+            type="button"
+            className="relative shrink-0 h-14 w-14 rounded-full overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+            onClick={() => !avatarUploading && fileInputRef.current?.click()}
+            aria-label="Change profile picture"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={currentName} className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full bg-stone-800 flex items-center justify-center text-white text-lg font-semibold">
+                {initials(currentName)}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {avatarUploading ? (
+                <svg className="h-5 w-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              ) : (
+                <Camera className="h-5 w-5 text-white" />
+              )}
+            </div>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
           <div className="flex-1 min-w-0">
             <p className="font-medium text-stone-800">{currentName}</p>
             <p className="text-sm text-stone-500">{email}</p>

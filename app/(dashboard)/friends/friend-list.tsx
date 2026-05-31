@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { respondToRequest, cancelOrRemoveFriend } from './actions'
@@ -59,6 +59,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
             {incoming.map(f => (
               <li key={f.friendshipId} className="flex items-center gap-3 py-3">
                 <Avatar className="h-8 w-8">
+                  {f.profile.avatar_url && <AvatarImage src={f.profile.avatar_url} alt={f.profile.name} />}
                   <AvatarFallback className="bg-stone-200 text-stone-700 text-xs">
                     {initials(f.profile.name)}
                   </AvatarFallback>
@@ -102,6 +103,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
               <li key={f.friendshipId} className="flex items-center gap-3 py-3">
                 <Link href={`/friends/${f.profile.id}`} className="flex items-center gap-3 flex-1 min-w-0 group">
                   <Avatar className="h-8 w-8 shrink-0">
+                    {f.profile.avatar_url && <AvatarImage src={f.profile.avatar_url} alt={f.profile.name} />}
                     <AvatarFallback className="bg-stone-200 text-stone-700 text-xs group-hover:bg-stone-300 transition-colors">
                       {initials(f.profile.name)}
                     </AvatarFallback>
@@ -141,6 +143,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
             {outgoing.map(f => (
               <li key={f.friendshipId} className="flex items-center gap-3 py-3">
                 <Avatar className="h-8 w-8">
+                  {f.profile.avatar_url && <AvatarImage src={f.profile.avatar_url} alt={f.profile.name} />}
                   <AvatarFallback className="bg-stone-200 text-stone-700 text-xs">
                     {initials(f.profile.name)}
                   </AvatarFallback>

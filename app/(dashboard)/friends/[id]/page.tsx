@@ -48,8 +48,11 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
     <div>
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="h-14 w-14 rounded-full bg-stone-800 flex items-center justify-center text-white text-lg font-semibold shrink-0">
-          {initials(profile.name)}
+        <div className="h-14 w-14 rounded-full bg-stone-800 overflow-hidden flex items-center justify-center text-white text-lg font-semibold shrink-0">
+          {profile.avatar_url
+            ? <img src={profile.avatar_url} alt={profile.name} className="h-full w-full object-cover" />
+            : initials(profile.name)
+          }
         </div>
         <div>
           <h2 className="text-2xl font-semibold text-stone-800">{profile.name}'s shelf</h2>
