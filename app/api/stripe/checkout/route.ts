@@ -1,0 +1,36 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { stripe } from '@/lib/stripe'
+import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+
+export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  const { priceId } = await request.json()
+  if (!priceId) return NextResponse.json({ error: 'priceId required' }, { status: 400 })
+
+  // Get existing Stripe customer ID if any
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('stripe_customer_id')
+    .eq('id', user.id)
+    .single()
+
+  const origin = request.nextUrl.origin
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    payment_method_types: ['card'],
+    line_items: [{ price: priceId, quantity: 1 }],
+    ...(profile?.stripe_customer_id
+      ? { customer: profile.stripe_customer_id }
+      : { customer_email: user.email }),
+    metadata: { userId: user.id },
+    success_url: `${origin}/books?subscribed=1`,
+    cancel_url: `${origin}/subscribe`,
+  })
+
+  return NextResponse.json({ url: session.url })
+}

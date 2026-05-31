@@ -17,6 +17,12 @@ export type Profile = {
   name: string
   avatar_url: string | null
   created_at: string
+  trial_ends_at: string | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  subscription_status: 'trialing' | 'active' | 'canceled' | 'past_due' | null
+  subscription_plan: 'monthly' | 'annual' | null
+  subscription_ends_at: string | null
 }
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined'

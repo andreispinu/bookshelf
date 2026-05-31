@@ -117,6 +117,56 @@ returned_at  timestamptz  -- NULL until returned
 - The current user is accessed via `supabase.auth.getUser()` — never trust the client-side session for server operations
 - After sign up, a `profiles` row is created automatically via a Supabase database trigger
 
+## Subscription system
+
+### Plans
+| Plan | Price | Stripe Price ID env var |
+|------|-------|------------------------|
+| Monthly | $1/month | `STRIPE_MONTHLY_PRICE_ID` |
+| Annual | $10/year | `STRIPE_ANNUAL_PRICE_ID` |
+
+Free trial: 14 days from signup, full access, no card required.
+
+### How it works
+1. On signup, the DB trigger sets `trial_ends_at = now() + 14 days` and `subscription_status = 'trialing'`
+2. The dashboard layout checks on every page load: is trial still active OR is subscription active?
+3. If neither → redirect to `/subscribe`
+4. If trialing with ≤ 3 days left → amber banner with countdown + subscribe link
+5. User subscribes via Stripe Checkout (hosted page, no custom card form)
+6. Stripe webhook updates `subscription_status → 'active'` in the profiles table
+
+### Access control (dashboard layout)
+```typescript
+const isTrialing = status === 'trialing' && trial_ends_at > now
+const isActive = status === 'active'
+if (!isTrialing && !isActive) redirect('/subscribe')
+```
+
+### Files
+- `lib/stripe.ts` — Stripe server client (API version `2026-05-27.dahlia`)
+- `app/subscribe/page.tsx` — Paywall page. Lives **outside** `(dashboard)` to avoid redirect loop. Two pricing cards (Monthly / Annual highlighted as "Best value")
+- `app/api/stripe/checkout/route.ts` — `POST { priceId }` → creates Stripe Checkout session → returns `{ url }`
+- `app/api/stripe/webhook/route.ts` — handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+
+### Stripe setup (one-time)
+1. Create two products in the Stripe dashboard with recurring prices ($1/month and $10/year)
+2. Copy the price IDs into env vars
+3. Create a webhook endpoint pointing to `https://your-domain.com/api/stripe/webhook`
+4. Subscribe to events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+5. Copy the webhook signing secret into `STRIPE_WEBHOOK_SECRET`
+
+### Webhook note
+`current_period_end` moved to `subscription.items.data[0].current_period_end` in Stripe API v2026 (was previously on the top-level subscription object).
+
+### Database fields (profiles table)
+Run `supabase/add-subscription-fields.sql`:
+- `trial_ends_at` — timestamptz, set by trigger on signup
+- `stripe_customer_id` — text
+- `stripe_subscription_id` — text
+- `subscription_status` — text DEFAULT 'trialing' (`trialing` | `active` | `canceled` | `past_due`)
+- `subscription_plan` — text (`monthly` | `annual` | null)
+- `subscription_ends_at` — timestamptz (current billing period end)
+
 ## Features
 
 ### Add book by photo

@@ -48,5 +48,5 @@ export async function searchUsers(
     .limit(10)
 
   if (error) return { data: null, error: error.message }
-  return { data, error: null }
+  return { data: data as unknown as Profile[], error: null }
 }
