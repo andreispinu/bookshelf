@@ -12,36 +12,54 @@ BookShelf is a personal book library app. Users can:
 
 | Layer | Tool |
 |-------|------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Database + Auth | Supabase (Postgres + Auth) |
 | Styling | Tailwind CSS + shadcn/ui |
 | Language | TypeScript |
 | Hosting | Vercel |
 
+## Deployment
+
+- **Production URL:** https://bookshelf-qq7c.vercel.app
+- **GitHub:** https://github.com/andreispinu/bookshelf
+- **Supabase project:** https://njyugygdhkegagnapbcy.supabase.co
+- Vercel is connected to the `main` branch — every push to `main` triggers a redeploy
+
+## Running locally
+
+```bash
+cd "bookshelf"
+npm run dev       # http://localhost:3000 (Turbopack, PWA disabled)
+npm run build     # production build (webpack, generates service worker)
+```
+
 ## Project structure
 
 ```
-/app                    → Next.js App Router pages and layouts
-  /app/(auth)           → Auth pages (login, signup) — public routes
-  /app/(dashboard)      → Protected pages (require login)
-    /books              → My books list
-    /books/add          → Add a book
-    /friends            → Friends list
-    /loans              → Books lent/borrowed
-/components             → Reusable UI components
-/lib                    → Utility functions and Supabase client
-  /lib/supabase.ts      → Supabase client setup
-  /lib/db               → Database query functions (one file per table)
-/types                  → TypeScript types and interfaces
+/app
+  /(auth)               → Login and signup pages (public)
+  /(dashboard)          → Protected pages (require session)
+    /books              → My books list + lend dialog
+    /books/add          → Add a book form
+    /friends            → Friend search, requests, friends list
+    /loans              → Active loans (lent out / borrowed tabs)
+  /api/users/search     → GET endpoint for user search
+/components/ui          → shadcn/ui components
+/lib
+  supabase.ts           → Browser client (Client Components)
+  supabase-server.ts    → Server client (Server Components + Actions)
+  /db
+    books.ts            → getBooks()
+    friends.ts          → getFriends(), searchUsers()
+    loans.ts            → getLentOut(), getBorrowed()
+/types/index.ts         → Book, Profile, Friendship, Friend, LoanWithDetails
+/supabase/migration.sql → Full DB schema + RLS policies + trigger
+proxy.ts                → Session refresh + route protection (Next.js 16)
 ```
 
 ## Database schema
 
-### `users` (managed by Supabase Auth)
-Supabase creates this automatically. The `id` is a UUID used as a foreign key everywhere.
-
 ### `profiles`
-Extends the Supabase auth user with public data.
 ```sql
 id          uuid  PRIMARY KEY REFERENCES auth.users(id)
 name        text  NOT NULL
@@ -103,25 +121,43 @@ returned_at  timestamptz  -- NULL until returned
 
 - [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes
 - [x] Phase 2 — Books: add book, list books, edit/delete
-- [ ] Phase 3 — Friends: search users, send/accept/decline friend requests
+- [x] Phase 3 — Friends: search users, send/accept/decline friend requests
 - [x] Phase 4 — Sharing: offer book, track loans, mark as returned
 - [x] Phase 5 — PWA: add next-pwa, manifest.json, app icon, offline support (installable on iOS + Android)
 
 ## Environment variables
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_URL=https://njyugygdhkegagnapbcy.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_OjZw6dEXgxUM3sD8qfQAvA_uU_Ek48L
+SUPABASE_SERVICE_ROLE_KEY=<secret — see Supabase dashboard>
 ```
+
+Must be set in Vercel project → Settings → Environment Variables for Production scope.
 
 ## Design system
 
-- **Component library** — shadcn/ui
+- **Component library** — shadcn/ui (base-ui variant, not Radix — no `asChild` prop)
 - **Base color** — `stone` (warm grey, close to aged paper)
-- **shadcn init command** — `npx shadcn@latest init` → choose: TypeScript ✓, App Router ✓, base color: Stone
-- **Dark mode** — off for now; can be added later
+- **Dark mode** — off
 - **Design principle** — warm, readable, minimal. Think a physical library, not a tech product.
+- To add a shadcn component: `npx shadcn@latest add <name>`
+- `buttonVariants` must be used with `<Link>` instead of `<Button asChild>` — this version of shadcn uses `@base-ui/react` which does not support `asChild`
+
+## Next.js 16 specifics
+
+- **`proxy.ts` instead of `middleware.ts`** — Next.js 16 renamed the middleware convention. The exported function must be named `proxy` (not `middleware`). The `config.matcher` export still works the same way.
+- **Turbopack is the default** — `npm run dev` uses Turbopack. `npm run build` uses `--webpack` because `@ducanh2912/next-pwa` is a webpack plugin and is incompatible with Turbopack.
+- **`turbopack: {}`** in `next.config.ts` silences the webpack/Turbopack conflict warning during dev (PWA is disabled in dev anyway).
+- **`asChild` not supported** — shadcn/ui in this project uses `@base-ui/react/button` instead of Radix. Use `buttonVariants({ className })` on a `<Link>` instead.
+
+## PWA setup
+
+- Package: `@ducanh2912/next-pwa` (maintained fork of next-pwa, supports Next.js 13+)
+- Service worker is generated at build time into `public/sw.js` — this file is gitignored
+- PWA is disabled in development (`disable: process.env.NODE_ENV === 'development'`)
+- Icons live in `public/icons/` — generated from `icon.svg` via sharp at 192px, 512px, and 180px (Apple touch icon)
+- Manifest: `public/manifest.json` — theme color `#292524` (stone-800), start URL `/books`
 
 ## Key decisions and why
 
@@ -129,3 +165,5 @@ SUPABASE_SERVICE_ROLE_KEY=
 - **Server Actions for mutations** — simpler than API routes for this app's needs; reduces boilerplate
 - **`profiles` table separate from `auth.users`** — Supabase's `auth.users` is not directly accessible from the client for security reasons; `profiles` is the public-facing user table
 - **`status` field on books** — simple text enum instead of a join; fast to query, easy to understand
+- **`proxy.ts` for session refresh** — Supabase requires the session to be refreshed on every request; the proxy intercepts all non-static requests to do this
+- **User search via API route** — `/api/users/search` rather than a server action, because search is a GET with a query param called from a client component
