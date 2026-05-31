@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -99,18 +100,28 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
           <ul className="divide-y divide-stone-100">
             {accepted.map(f => (
               <li key={f.friendshipId} className="flex items-center gap-3 py-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-stone-200 text-stone-700 text-xs">
-                    {initials(f.profile.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="flex-1 text-sm text-stone-800">{f.profile.name}</span>
+                <Link href={`/friends/${f.profile.id}`} className="flex items-center gap-3 flex-1 min-w-0 group">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarFallback className="bg-stone-200 text-stone-700 text-xs group-hover:bg-stone-300 transition-colors">
+                      {initials(f.profile.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-stone-800 truncate group-hover:text-stone-600 transition-colors">
+                    {f.profile.name}
+                  </span>
+                </Link>
+                <Link
+                  href={`/friends/${f.profile.id}`}
+                  className="text-xs text-stone-400 hover:text-stone-700 transition-colors shrink-0"
+                >
+                  View shelf
+                </Link>
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={isPending}
                   onClick={() => handleCancel(f.friendshipId)}
-                  className="text-stone-300 hover:text-red-500"
+                  className="text-stone-300 hover:text-red-500 shrink-0"
                 >
                   Remove
                 </Button>

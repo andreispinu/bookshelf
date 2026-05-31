@@ -45,6 +45,7 @@ npm run build     # production build (webpack, generates service worker)
     /friends            → Friend search, requests, friends list
     /loans              → Active loans (lent out / borrowed tabs)
     /profile            → Account info, subscription status, plan selection
+    /friends/[id]       → Friend's bookshelf (read-only)
   /subscribe            → Paywall (outside dashboard, no redirect loop)
   /api/users/search     → GET endpoint for user search
   /api/extract-book     → POST multipart image → Claude vision → book data
@@ -263,6 +264,27 @@ Route: `/profile` — account info and subscription management.
 - `app/api/stripe/portal/route.ts` — POST → creates Stripe billing portal session → returns `{ url }`
 
 **Nav:** Avatar in the top-right nav is now a dropdown with "Profile" and "Sign out" (click-outside to close).
+
+### Friend's bookshelf
+Route: `/friends/[id]` — read-only view of an accepted friend's book collection.
+
+**Access control:** Verifies an accepted friendship row exists before rendering. Returns 404 if not friends or friendship is pending/declined. The existing RLS policy on `books` already allows accepted friends to read each other's books.
+
+**Layout:**
+- Header: avatar circle (initials), friend's name, "Member since" date
+- Book count subtitle
+- Responsive list: 2-column card grid on mobile (`grid grid-cols-2`), horizontal list rows on desktop (`sm:block sm:divide-y`)
+- Each book: cover image or 📖 placeholder, title, author, status badge
+- "Request to borrow" button on available books — shows a "Coming soon" toast (borrow requests not yet built)
+
+**Friends list:** Accepted friend rows now have:
+- Name + avatar wrapped in a `<Link href="/friends/[id]">` (hover effect)
+- "View shelf" text link next to each accepted friend
+
+**Files:**
+- `app/(dashboard)/friends/[id]/page.tsx` — server component, friendship check + profile + books fetch
+- `app/(dashboard)/friends/[id]/borrow-button.tsx` — client component for the "Request to borrow" toast
+- `app/(dashboard)/friends/friend-list.tsx` — updated to add links
 
 ### Description field
 Books now have an optional `description` field (text). Added to:
