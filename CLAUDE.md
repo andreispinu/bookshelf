@@ -20,7 +20,7 @@ BookShelf is a personal book library app. Users can:
 
 ## Deployment
 
-- **Production URL:** https://bookshelf-qq7c.vercel.app
+- **Production URL:** https://bookshelf.name
 - **GitHub:** https://github.com/andreispinu/bookshelf
 - **Supabase project:** https://njyugygdhkegagnapbcy.supabase.co
 - Vercel is connected to the `main` branch — every push to `main` triggers a redeploy
@@ -160,7 +160,7 @@ if (!isTrialing && !isActive) redirect('/subscribe')
 ### Stripe setup (one-time)
 1. Create two products in the Stripe dashboard with recurring prices ($1/month and $10/year)
 2. Copy the price IDs into env vars
-3. Create a webhook endpoint pointing to `https://your-domain.com/api/stripe/webhook`
+3. Create a webhook endpoint pointing to `https://bookshelf.name/api/stripe/webhook`
 4. Subscribe to events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
 5. Copy the webhook signing secret into `STRIPE_WEBHOOK_SECRET`
 
