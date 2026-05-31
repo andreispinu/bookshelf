@@ -25,8 +25,8 @@ export default async function ProfilePage() {
       <ProfileClient
         profile={profile as unknown as Profile}
         email={user.email ?? ''}
-        monthlyPriceId={process.env.STRIPE_MONTHLY_PRICE_ID ?? ''}
-        annualPriceId={process.env.STRIPE_ANNUAL_PRICE_ID ?? ''}
+        monthlyPriceId={process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID ?? ''}
+        annualPriceId={process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID ?? ''}
       />
     </div>
   )
