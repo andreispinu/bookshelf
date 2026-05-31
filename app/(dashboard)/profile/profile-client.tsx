@@ -18,8 +18,6 @@ import type { Profile } from '@/types'
 type Props = {
   profile: Profile
   email: string
-  monthlyPriceId: string
-  annualPriceId: string
 }
 
 function initials(name: string) {
@@ -30,7 +28,7 @@ function scrollToPlans() {
   document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })
 }
 
-export default function ProfileClient({ profile, email, monthlyPriceId, annualPriceId }: Props) {
+export default function ProfileClient({ profile, email }: Props) {
   const [editOpen, setEditOpen] = useState(false)
   const [editName, setEditName] = useState(profile.name)
   const [editError, setEditError] = useState<string | null>(null)
@@ -75,14 +73,14 @@ export default function ProfileClient({ profile, email, monthlyPriceId, annualPr
     setEditLoading(false)
   }
 
-  async function handleSubscribe(priceId: string, planId: string) {
+  async function handleSubscribe(planId: string) {
     setSubscribeError(null)
     setSubscribeLoading(planId)
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ plan: planId }),
       })
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.error || 'Failed to start checkout')
@@ -238,7 +236,7 @@ export default function ProfileClient({ profile, email, monthlyPriceId, annualPr
               variant="outline"
               className="mt-auto border-stone-300 text-stone-800 hover:bg-stone-50"
               disabled={subscribeLoading !== null || isActive}
-              onClick={() => handleSubscribe(monthlyPriceId, 'monthly')}
+              onClick={() => handleSubscribe('monthly')}
             >
               {subscribeLoading === 'monthly' ? 'Loading…' : isActive && profile.subscription_plan === 'monthly' ? 'Current plan' : 'Subscribe'}
             </Button>
@@ -266,7 +264,7 @@ export default function ProfileClient({ profile, email, monthlyPriceId, annualPr
             <Button
               className="mt-auto bg-white text-stone-900 hover:bg-stone-100"
               disabled={subscribeLoading !== null || isActive}
-              onClick={() => handleSubscribe(annualPriceId, 'annual')}
+              onClick={() => handleSubscribe('annual')}
             >
               {subscribeLoading === 'annual' ? 'Loading…' : isActive && profile.subscription_plan === 'annual' ? 'Current plan' : 'Subscribe'}
             </Button>

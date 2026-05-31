@@ -8,8 +8,16 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { priceId } = await request.json()
-  if (!priceId) return NextResponse.json({ error: 'priceId required' }, { status: 400 })
+  const { plan } = await request.json()
+  if (plan !== 'monthly' && plan !== 'annual') {
+    return NextResponse.json({ error: 'plan must be "monthly" or "annual"' }, { status: 400 })
+  }
+
+  const priceId = plan === 'monthly'
+    ? process.env.STRIPE_MONTHLY_PRICE_ID
+    : process.env.STRIPE_ANNUAL_PRICE_ID
+
+  if (!priceId) return NextResponse.json({ error: 'Price not configured' }, { status: 500 })
 
   // Get existing Stripe customer ID if any
   const { data: profile } = await supabaseAdmin

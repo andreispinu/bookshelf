@@ -1,39 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-
-const MONTHLY_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!
-const ANNUAL_PRICE_ID  = process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID!
 
 const plans = [
-  {
-    id: 'monthly',
-    priceId: MONTHLY_PRICE_ID,
-    label: 'Monthly',
-    price: '$1',
-    period: 'per month',
-    description: 'Cancel any time.',
-    highlight: false,
-  },
-  {
-    id: 'annual',
-    priceId: ANNUAL_PRICE_ID,
-    label: 'Annual',
-    price: '$10',
-    period: 'per year',
-    description: '2 months free vs monthly.',
-    highlight: true,
-  },
+  { id: 'monthly', label: 'Monthly', price: '$1', period: 'per month', description: 'Cancel any time.', highlight: false },
+  { id: 'annual',  label: 'Annual',  price: '$10', period: 'per year', description: '2 months free vs monthly.', highlight: true },
 ]
 
 export default function SubscribePage() {
-  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-
-  async function handleSubscribe(priceId: string, planId: string) {
+  async function handleSubscribe(planId: string) {
     setError(null)
     setLoading(planId)
 
@@ -41,7 +19,7 @@ export default function SubscribePage() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({ plan: planId }),
       })
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.error || 'Failed to start checkout')
@@ -93,7 +71,7 @@ export default function SubscribePage() {
               </p>
 
               <button
-                onClick={() => handleSubscribe(plan.priceId, plan.id)}
+                onClick={() => handleSubscribe(plan.id)}
                 disabled={loading !== null}
                 className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 ${
                   plan.highlight
