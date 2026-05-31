@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,66 @@ import { Textarea } from '@/components/ui/textarea'
 import { updateBook, deleteBook } from './actions'
 import { lendBook } from '../loans/actions'
 import type { Book, Friend } from '@/types'
+
+function BookMenu({
+  book, isDeleting, onLend, onEdit, onDelete,
+}: {
+  book: Book
+  isDeleting: boolean
+  onLend: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-stone-400 hover:text-stone-700 px-2"
+        onClick={() => setOpen(v => !v)}
+        aria-label="More actions"
+      >
+        ⋯
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-36 rounded-lg border border-stone-200 bg-white shadow-md py-1 z-10">
+          <button
+            className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={book.status === 'lent_out'}
+            onClick={() => { setOpen(false); onLend() }}
+          >
+            Lend
+          </button>
+          <button
+            className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+            onClick={() => { setOpen(false); onEdit() }}
+          >
+            Edit
+          </button>
+          <button
+            className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40"
+            disabled={isDeleting}
+            onClick={() => { setOpen(false); onDelete() }}
+          >
+            {isDeleting ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function initials(name: string) {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
@@ -148,33 +208,13 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
               >
                 View
               </Button>
-              {book.status === 'available' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-stone-400 hover:text-stone-700"
-                  onClick={() => { setLending(book); setLendError(null) }}
-                >
-                  Lend
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-stone-400 hover:text-stone-700"
-                onClick={() => { setEditing(book); setEditError(null) }}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-stone-400 hover:text-red-600"
-                disabled={deletingId === book.id}
-                onClick={() => handleDelete(book.id)}
-              >
-                {deletingId === book.id ? '…' : 'Delete'}
-              </Button>
+              <BookMenu
+                book={book}
+                isDeleting={deletingId === book.id}
+                onLend={() => { setLending(book); setLendError(null) }}
+                onEdit={() => { setEditing(book); setEditError(null) }}
+                onDelete={() => handleDelete(book.id)}
+              />
             </div>
           </li>
         ))}
