@@ -169,11 +169,18 @@ Run `supabase/add-subscription-fields.sql`:
 
 ## Features
 
-### Add book by photo
+### Add book button
+The "Add a book ⌄" button on `/books` opens a dropdown with two options:
+- **Add manually** (pencil icon) — navigates to `/books/add`
+- **Add with AI** (camera icon, dark background) — opens the photo/AI scan modal
+
+**File:** `app/(dashboard)/books/photo-button.tsx` — exports `AddBookButton`, owns both the dropdown state and the photo modal open/close state. No new dependencies — uses lucide-react icons and an inline click-outside handler.
+
+### Add book by photo (AI scan)
 Allows users to scan a book cover with their camera or upload a photo. Claude extracts book details automatically.
 
 **Flow:**
-1. User clicks "Add by photo" on `/books`
+1. User clicks "Add a book" → "Add with AI"
 2. Modal opens with "Take photo" (rear camera) and "Upload photo" (file picker) options
 3. Image is resized client-side to max 1024px (canvas + `toBlob`) before upload
 4. `POST /api/extract-book` sends image to Claude vision → returns `{ title, author, isbn, description }`
@@ -183,7 +190,7 @@ Allows users to scan a book cover with their camera or upload a photo. Claude ex
 **Files:**
 - `app/api/extract-book/route.ts` — receives multipart image, calls Anthropic, returns JSON
 - `app/(dashboard)/books/photo-modal.tsx` — dialog UI, resizes image, calls API, handles navigation
-- `app/(dashboard)/books/photo-button.tsx` — small client wrapper that owns modal open/close state
+- `app/(dashboard)/books/photo-button.tsx` — also owns the photo modal open/close state
 - `app/(dashboard)/books/add/add-book-form.tsx` — form client component, reads `useSearchParams()` for pre-fill
 
 **AI model:** `claude-opus-4-5` via `@anthropic-ai/sdk`
@@ -209,6 +216,14 @@ Before any book is saved (`addBook` server action), a case-insensitive check que
 - The add form detects this and shows a dialog: "You already have this book on your shelf"
 - "Add anyway" calls `addBookForce()` which skips the check and inserts directly
 - "Cancel" dismisses the dialog and returns to the form
+
+### Book list actions
+Each row in the book list shows: status badge, **View** button (navigates to detail page), and **⋯** button. The ⋯ dropdown contains:
+- **Lend** — disabled/grayed when `status === 'lent_out'`
+- **Edit** — opens edit dialog inline
+- **Delete** — red text, disabled while deleting
+
+Implemented as a `BookMenu` component inside `book-list.tsx` using a local `open` state and a click-outside `useEffect`. No external dropdown library.
 
 ### Book detail page
 Route: `/books/[id]` — dedicated page for a single book.
@@ -238,19 +253,28 @@ Books now have an optional `description` field (text). Added to:
 
 ## Environment variables
 
+All must be set in Vercel project → Settings → Environment Variables (Production scope).
+
 ```
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://njyugygdhkegagnapbcy.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_OjZw6dEXgxUM3sD8qfQAvA_uU_Ek48L
 SUPABASE_SERVICE_ROLE_KEY=<secret — see Supabase dashboard>
-```
 
-Must be set in Vercel project → Settings → Environment Variables for Production scope.
-
-```
+# Anthropic
 ANTHROPIC_API_KEY=<secret — from console.anthropic.com>
+
+# Stripe
+STRIPE_SECRET_KEY=<sk_live_...>
+STRIPE_WEBHOOK_SECRET=<whsec_...>
+STRIPE_MONTHLY_PRICE_ID=<price_...>
+STRIPE_ANNUAL_PRICE_ID=<price_...>
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<pk_live_...>
+NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID=<price_...>
+NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID=<price_...>
 ```
 
-Also add `ANTHROPIC_API_KEY` to Vercel project → Settings → Environment Variables.
+Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `getStripe()` from `lib/stripe.ts` (lazy singleton) to avoid Next.js build crashes when the var is absent.
 
 ## Design system
 
