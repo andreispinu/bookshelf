@@ -5,6 +5,7 @@ import { getBooks } from '@/lib/db/books'
 import { getFriends } from '@/lib/db/friends'
 import { buttonVariants } from '@/components/ui/button'
 import BookList from './book-list'
+import PhotoButton from './photo-button'
 
 export default async function BooksPage() {
   const supabase = await createClient()
@@ -25,12 +26,15 @@ export default async function BooksPage() {
             {books?.length ?? 0} {books?.length === 1 ? 'book' : 'books'} in your library
           </p>
         </div>
-        <Link
-          href="/books/add"
-          className={buttonVariants({ className: 'bg-stone-800 hover:bg-stone-700 text-white' })}
-        >
-          + Add book
-        </Link>
+        <div className="flex items-center gap-2">
+          <PhotoButton />
+          <Link
+            href="/books/add"
+            className={buttonVariants({ className: 'bg-stone-800 hover:bg-stone-700 text-white' })}
+          >
+            + Add book
+          </Link>
+        </div>
       </div>
 
       {error && (

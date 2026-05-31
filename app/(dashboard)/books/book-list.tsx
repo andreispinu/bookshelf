@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Textarea } from '@/components/ui/textarea'
 import { updateBook, deleteBook } from './actions'
 import { lendBook } from '../loans/actions'
 import type { Book, Friend } from '@/types'
@@ -264,6 +265,18 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     type="url"
                     defaultValue={editing.cover_url ?? ''}
                     className="border-stone-200 focus-visible:ring-stone-400"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-description" className="text-stone-700">
+                    Description <span className="text-stone-400 font-normal">(optional)</span>
+                  </Label>
+                  <Textarea
+                    id="edit-description"
+                    name="description"
+                    defaultValue={editing.description ?? ''}
+                    rows={3}
+                    className="border-stone-200 focus-visible:ring-stone-400 resize-none"
                   />
                 </div>
                 {editError && <p className="text-sm text-red-600">{editError}</p>}

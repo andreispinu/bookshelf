@@ -10,11 +10,12 @@ export async function addBook(formData: FormData) {
   if (!user) return { error: 'Not authenticated' }
 
   const { error } = await supabase.from('books').insert({
-    user_id: user.id,
-    title:     (formData.get('title')     as string).trim(),
-    author:    (formData.get('author')    as string).trim(),
-    isbn:      (formData.get('isbn')      as string).trim() || null,
-    cover_url: (formData.get('cover_url') as string).trim() || null,
+    user_id:     user.id,
+    title:       (formData.get('title')       as string).trim(),
+    author:      (formData.get('author')      as string).trim(),
+    isbn:        (formData.get('isbn')        as string).trim() || null,
+    cover_url:   (formData.get('cover_url')   as string).trim() || null,
+    description: (formData.get('description') as string).trim() || null,
   })
 
   if (error) return { error: error.message }
@@ -31,10 +32,11 @@ export async function updateBook(bookId: string, formData: FormData) {
   const { error } = await supabase
     .from('books')
     .update({
-      title:     (formData.get('title')     as string).trim(),
-      author:    (formData.get('author')    as string).trim(),
-      isbn:      (formData.get('isbn')      as string).trim() || null,
-      cover_url: (formData.get('cover_url') as string).trim() || null,
+      title:       (formData.get('title')       as string).trim(),
+      author:      (formData.get('author')      as string).trim(),
+      isbn:        (formData.get('isbn')        as string).trim() || null,
+      cover_url:   (formData.get('cover_url')   as string).trim() || null,
+      description: (formData.get('description') as string).trim() || null,
     })
     .eq('id', bookId)
     .eq('user_id', user.id)

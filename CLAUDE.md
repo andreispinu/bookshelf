@@ -117,6 +117,37 @@ returned_at  timestamptz  -- NULL until returned
 - The current user is accessed via `supabase.auth.getUser()` — never trust the client-side session for server operations
 - After sign up, a `profiles` row is created automatically via a Supabase database trigger
 
+## Features
+
+### Add book by photo
+Allows users to scan a book cover with their camera or upload a photo. Claude extracts book details automatically.
+
+**Flow:**
+1. User clicks "Add by photo" on `/books`
+2. Modal opens with "Take photo" (rear camera) and "Upload photo" (file picker) options
+3. Image is resized client-side to max 1024px (canvas + `toBlob`) before upload
+4. `POST /api/extract-book` sends image to Claude vision → returns `{ title, author, isbn, description }`
+5. On success: navigates to `/books/add?title=...&author=...` with pre-filled form
+6. On failure: toast "Couldn't read the cover, please fill in manually" + opens empty form
+
+**Files:**
+- `app/api/extract-book/route.ts` — receives multipart image, calls Anthropic, returns JSON
+- `app/(dashboard)/books/photo-modal.tsx` — dialog UI, resizes image, calls API, handles navigation
+- `app/(dashboard)/books/photo-button.tsx` — small client wrapper that owns modal open/close state
+- `app/(dashboard)/books/add/add-book-form.tsx` — form client component, reads `useSearchParams()` for pre-fill
+
+**AI model:** `claude-opus-4-5` via `@anthropic-ai/sdk`
+
+**Prompt extracts:** title, author, ISBN, publisher, year, and a ≤100-word description from Claude's knowledge of the book.
+
+**Error handling:** JSON parse failures and API errors both fall through to an empty form with a sonner toast.
+
+### Description field
+Books now have an optional `description` field (text). Added to:
+- `books` table via `supabase/add-description.sql`
+- Add book form (pre-filled by photo scan or typed manually)
+- Edit book dialog
+
 ## Build order (phases)
 
 - [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes
@@ -134,6 +165,10 @@ SUPABASE_SERVICE_ROLE_KEY=<secret — see Supabase dashboard>
 ```
 
 Must be set in Vercel project → Settings → Environment Variables for Production scope.
+
+```
+ANTHROPIC_API_KEY=<secret — from console.anthropic.com>
+```
 
 ## Design system
 
