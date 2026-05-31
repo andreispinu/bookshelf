@@ -23,6 +23,8 @@ export type Profile = {
   subscription_status: 'trialing' | 'active' | 'canceled' | 'past_due' | null
   subscription_plan: 'monthly' | 'annual' | null
   subscription_ends_at: string | null
+  username: string | null
+  profile_visibility: 'private' | 'public_minimal' | 'public_full'
 }
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined'

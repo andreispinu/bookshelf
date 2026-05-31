@@ -111,7 +111,7 @@ export default function ProfileClient({ profile, email }: Props) {
   ]
 
   return (
-    <div className="space-y-10 max-w-2xl">
+    <>
 
       {/* User Info */}
       <section>
@@ -313,6 +313,6 @@ export default function ProfileClient({ profile, email }: Props) {
         </DialogContent>
       </Dialog>
 
-    </div>
+    </>
   )
 }

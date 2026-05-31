@@ -46,12 +46,14 @@ npm run build     # production build (webpack, generates service worker)
     /loans              → Active loans (lent out / borrowed tabs)
     /profile            → Account info, subscription status, plan selection
     /friends/[id]       → Friend's bookshelf (read-only)
+  /[username]           → Public profile page (no auth required)
   /subscribe            → Paywall (outside dashboard, no redirect loop)
   /api/users/search     → GET endpoint for user search
   /api/extract-book     → POST multipart image → Claude vision → book data
   /api/stripe/checkout  → POST { priceId } → Stripe Checkout session URL
   /api/stripe/webhook   → Stripe webhook handler
   /api/stripe/portal    → POST → Stripe Customer Portal session URL
+  /api/username/check   → GET ?username=xxx → { available: boolean } (uses supabaseAdmin)
 /components/ui          → shadcn/ui components
 /lib
   supabase.ts           → Browser client (Client Components)
@@ -70,10 +72,18 @@ proxy.ts                → Session refresh + route protection (Next.js 16)
 
 ### `profiles`
 ```sql
-id          uuid  PRIMARY KEY REFERENCES auth.users(id)
-name        text  NOT NULL
-avatar_url  text
-created_at  timestamptz DEFAULT now()
+id                   uuid  PRIMARY KEY REFERENCES auth.users(id)
+name                 text  NOT NULL
+avatar_url           text
+created_at           timestamptz DEFAULT now()
+trial_ends_at        timestamptz
+stripe_customer_id   text
+stripe_subscription_id text
+subscription_status  text DEFAULT 'trialing'
+subscription_plan    text
+subscription_ends_at timestamptz
+username             text UNIQUE  -- ^[a-z0-9-]{3,30}$
+profile_visibility   text DEFAULT 'private'  -- 'private' | 'public_minimal' | 'public_full'
 ```
 
 ### `books`
@@ -264,6 +274,39 @@ Route: `/profile` — account info and subscription management.
 - `app/api/stripe/portal/route.ts` — POST → creates Stripe billing portal session → returns `{ url }`
 
 **Nav:** Avatar in the top-right nav is now a dropdown with "Profile" and "Sign out" (click-outside to close).
+
+### Public profile & username
+Users can set a username and choose a visibility level to share their profile publicly.
+
+**Database fields** (run `supabase/add-username-visibility.sql`):
+- `username` — text UNIQUE, nullable, format `^[a-z0-9-]{3,30}$`, indexed
+- `profile_visibility` — text DEFAULT `'private'` (`'private'` | `'public_minimal'` | `'public_full'`)
+
+**Profile page — Public Profile section** (`username-section.tsx`):
+- Username input with 500ms debounced availability check via `GET /api/username/check`
+- Live indicator: spinner while checking, green ✓ if available, red ✗ if taken/invalid
+- Once saved: shows `bookshelf.name/[username]` with copy and open buttons
+- Visibility selector — three radio-style cards (auto-save on click, no separate button):
+  - **Private** (lock icon) — no public page, 404 if visited
+  - **Public minimal** (eye icon) — shows name, avatar, book count only
+  - **Public full** (library icon) — shows name, avatar, full book list with covers and status
+
+**Public profile page** (`app/[username]/page.tsx`):
+- Outside `(dashboard)`, no auth required
+- Fetches profile + books via `supabaseAdmin` (bypasses RLS)
+- `private` → `notFound()` (404)
+- `public_minimal` → name, avatar initials, book count sentence
+- `public_full` → same 2-col card / list layout as friend shelf page
+- Page title: `[Name]'s BookShelf`
+- Footer: "Powered by BookShelf"
+- Route catches any single-segment path not matched by a specific route
+
+**Files:**
+- `supabase/add-username-visibility.sql` — migration
+- `app/(dashboard)/profile/username-section.tsx` — client component
+- `app/(dashboard)/profile/actions.ts` — `updateUsername()`, `updateProfileVisibility()`
+- `app/api/username/check/route.ts` — availability check endpoint
+- `app/[username]/page.tsx` — public profile page
 
 ### Friend's bookshelf
 Route: `/friends/[id]` — read-only view of an accepted friend's book collection.
