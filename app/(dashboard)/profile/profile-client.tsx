@@ -39,6 +39,8 @@ export default function ProfileClient({ profile, email, monthlyPriceId, annualPr
 
   const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null)
   const [subscribeError, setSubscribeError] = useState<string | null>(null)
+
+  console.log('[profile] price IDs:', { monthly: monthlyPriceId, annual: annualPriceId })
   const [portalLoading, setPortalLoading] = useState(false)
 
   // Subscription state

@@ -32,6 +32,11 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  console.log('[subscribe] price IDs:', {
+    MONTHLY: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID,
+    ANNUAL:  process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID,
+  })
+
   async function handleSubscribe(priceId: string, planId: string) {
     setError(null)
     setLoading(planId)
