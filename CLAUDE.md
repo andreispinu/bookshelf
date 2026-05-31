@@ -41,9 +41,16 @@ npm run build     # production build (webpack, generates service worker)
   /(dashboard)          → Protected pages (require session)
     /books              → My books list + lend dialog
     /books/add          → Add a book form
+    /books/[id]         → Book detail page
     /friends            → Friend search, requests, friends list
     /loans              → Active loans (lent out / borrowed tabs)
+    /profile            → Account info, subscription status, plan selection
+  /subscribe            → Paywall (outside dashboard, no redirect loop)
   /api/users/search     → GET endpoint for user search
+  /api/extract-book     → POST multipart image → Claude vision → book data
+  /api/stripe/checkout  → POST { priceId } → Stripe Checkout session URL
+  /api/stripe/webhook   → Stripe webhook handler
+  /api/stripe/portal    → POST → Stripe Customer Portal session URL
 /components/ui          → shadcn/ui components
 /lib
   supabase.ts           → Browser client (Client Components)
@@ -54,6 +61,7 @@ npm run build     # production build (webpack, generates service worker)
     loans.ts            → getLentOut(), getBorrowed()
 /types/index.ts         → Book, Profile, Friendship, Friend, LoanWithDetails
 /supabase/migration.sql → Full DB schema + RLS policies + trigger
+/lib/stripe.ts          → Lazy Stripe singleton (getStripe())
 proxy.ts                → Session refresh + route protection (Next.js 16)
 ```
 
@@ -236,6 +244,25 @@ Shows:
 - Edit (opens dialog) and Delete buttons
 
 **Files:** `app/(dashboard)/books/[id]/page.tsx` (server), `app/(dashboard)/books/[id]/book-detail-actions.tsx` (client — edit dialog + delete)
+
+### Profile page
+Route: `/profile` — account info and subscription management.
+
+**Sections:**
+1. **Account** — avatar circle (initials), name, email, Edit name button (dialog, calls `updateName` server action)
+2. **Subscription status** — one of three states:
+   - **Free Trial** (amber badge): days remaining, trial end date, "After your trial ends…" message, "View plans ↓" button (scrolls to plans section)
+   - **Active** (green badge): plan name (Monthly/Annual), next billing date, amount, "Manage subscription →" button (calls `/api/stripe/portal` → redirects to Stripe Customer Portal)
+   - **Expired** (red badge): expired message, "Subscribe now ↓" button (scrolls to plans)
+3. **Plans** — two cards (Monthly $1/mo, Annual $10/yr with "Best value" badge). Subscribe buttons call `/api/stripe/checkout`. Current plan button is disabled when already subscribed to that plan.
+
+**Files:**
+- `app/(dashboard)/profile/page.tsx` — server component, fetches full profile + passes price IDs from server env
+- `app/(dashboard)/profile/profile-client.tsx` — all interactive UI
+- `app/(dashboard)/profile/actions.ts` — `updateName()` server action
+- `app/api/stripe/portal/route.ts` — POST → creates Stripe billing portal session → returns `{ url }`
+
+**Nav:** Avatar in the top-right nav is now a dropdown with "Profile" and "Sign out" (click-outside to close).
 
 ### Description field
 Books now have an optional `description` field (text). Added to:

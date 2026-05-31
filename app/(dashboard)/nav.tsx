@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useRef, useEffect, useState } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -16,6 +17,17 @@ export default function Nav({ userName }: { userName: string }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -51,14 +63,37 @@ export default function Nav({ userName }: { userName: string }) {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div ref={menuRef} className="relative flex items-center gap-2">
           <span className="text-sm text-stone-500 hidden sm:block">{userName}</span>
-          <button onClick={handleSignOut} className="text-sm text-stone-400 hover:text-stone-700 transition-colors">
-            Sign out
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+            aria-label="Account menu"
+          >
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-stone-200 text-stone-700 text-xs cursor-pointer hover:bg-stone-300 transition-colors">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           </button>
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-stone-200 text-stone-700 text-xs">{initials}</AvatarFallback>
-          </Avatar>
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-stone-200 bg-white shadow-lg py-1.5 z-10">
+              <Link
+                href="/profile"
+                onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+              >
+                Profile
+              </Link>
+              <div className="my-1 border-t border-stone-100" />
+              <button
+                onClick={() => { setMenuOpen(false); handleSignOut() }}
+                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
