@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
     ? process.env.STRIPE_MONTHLY_PRICE_ID
     : process.env.STRIPE_ANNUAL_PRICE_ID
 
-  if (!priceId) return NextResponse.json({ error: 'Price not configured' }, { status: 500 })
+  if (!priceId) {
+    return NextResponse.json({ error: `Price not configured for plan: ${plan}` }, { status: 500 })
+  }
 
   // Get existing Stripe customer ID if any
   const { data: profile } = await supabaseAdmin
@@ -28,17 +30,21 @@ export async function POST(request: NextRequest) {
 
   const origin = request.nextUrl.origin
 
-  const session = await getStripe().checkout.sessions.create({
-    mode: 'subscription',
-    payment_method_types: ['card'],
-    line_items: [{ price: priceId, quantity: 1 }],
-    ...(profile?.stripe_customer_id
-      ? { customer: profile.stripe_customer_id }
-      : { customer_email: user.email }),
-    metadata: { userId: user.id },
-    success_url: `${origin}/books?subscribed=1`,
-    cancel_url: `${origin}/subscribe`,
-  })
-
-  return NextResponse.json({ url: session.url })
+  try {
+    const session = await getStripe().checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      ...(profile?.stripe_customer_id
+        ? { customer: profile.stripe_customer_id }
+        : { customer_email: user.email }),
+      metadata: { userId: user.id },
+      success_url: `${origin}/books?subscribed=1`,
+      cancel_url: `${origin}/subscribe`,
+    })
+    return NextResponse.json({ url: session.url })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }
