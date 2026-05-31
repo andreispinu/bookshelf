@@ -12,6 +12,16 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- Public read access (bucket is public, but explicit policy is best practice)
-CREATE POLICY IF NOT EXISTS "Public read book covers"
-  ON storage.objects FOR SELECT TO public
-  USING (bucket_id = 'book-covers');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'Public read book covers'
+  ) THEN
+    CREATE POLICY "Public read book covers"
+      ON storage.objects FOR SELECT TO public
+      USING (bucket_id = 'book-covers');
+  END IF;
+END $$;
