@@ -48,6 +48,7 @@ npm run build     # production build (webpack, generates service worker)
     /friends/[id]       → Friend's bookshelf (read-only)
   /[username]           → Public profile page (no auth required)
   /subscribe            → Paywall (outside dashboard, no redirect loop)
+  / (root)              → Landing page (public, no auth required — NOT a redirect)
   /api/users/search     → GET endpoint for user search
   /api/extract-book     → POST multipart image → Claude vision → book data
   /api/stripe/checkout  → POST { priceId } → Stripe Checkout session URL
@@ -328,6 +329,25 @@ Route: `/friends/[id]` — read-only view of an accepted friend's book collectio
 - `app/(dashboard)/friends/[id]/page.tsx` — server component, friendship check + profile + books fetch
 - `app/(dashboard)/friends/[id]/borrow-button.tsx` — client component for the "Request to borrow" toast
 - `app/(dashboard)/friends/friend-list.tsx` — updated to add links
+
+### Landing page
+Route: `/` — public marketing page, no auth required. Replaces the old redirect to `/books`.
+
+**Sections (in order):**
+1. **Nav** — "BookShelf" logo left; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
+2. **Hero** — headline, subheadline, two CTAs ("Start free trial" dark primary, "See how it works" ghost scrolls to `#how-it-works`), note "Free for 14 days. No credit card required."
+3. **Features** — 3-column grid (stacked mobile): Add your library (AI scan), Lend to friends (track loans), Always with you (PWA).
+4. **How it works** (`id="how-it-works"`) — 4 numbered steps: Create account → Add books → Add friends → Start lending.
+5. **Pricing** — 3 cards: Free trial ($0/14 days), Monthly ($1/mo), Annual ($10/yr with "Best value" badge). All CTAs link to `/signup`.
+6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
+
+**File:** `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons.
+
+### Public profile CTA
+At the bottom of every public profile page (`app/[username]/page.tsx`), above the "Powered by BookShelf" footer, there is a subtle CTA card:
+- Heading: "Discover your own bookshelf"
+- Subtext: "Track your books, connect with friends, and lend your favourites."
+- Button: "Try BookShelf free" → `https://bookshelf.name`
 
 ### Description field
 Books now have an optional `description` field (text). Added to:
