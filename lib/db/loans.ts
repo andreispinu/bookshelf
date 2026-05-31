@@ -1,6 +1,22 @@
 import { createClient } from '@/lib/supabase-server'
 import type { LoanWithDetails } from '@/types'
 
+export async function getActiveLoanForBook(bookId: string): Promise<{
+  data: { id: string; loaned_at: string; borrower: { name: string } } | null
+  error: string | null
+}> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('loans')
+    .select('id, loaned_at, borrower:profiles!loans_borrower_id_fkey(name)')
+    .eq('book_id', bookId)
+    .is('returned_at', null)
+    .maybeSingle()
+
+  if (error) return { data: null, error: error.message }
+  return { data: data as unknown as { id: string; loaned_at: string; borrower: { name: string } } | null, error: null }
+}
+
 export async function getLentOut(userId: string): Promise<{ data: LoanWithDetails[] | null; error: string | null }> {
   const supabase = await createClient()
 

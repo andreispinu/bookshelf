@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,7 @@ function initials(name: string) {
 }
 
 export default function BookList({ books: initial, friends }: { books: Book[], friends: Friend[] }) {
+  const router = useRouter()
   const [books, setBooks] = useState(initial)
   const [editing, setEditing] = useState<Book | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
@@ -54,10 +56,13 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
       b.id === editing.id
         ? {
             ...b,
-            title:     formData.get('title')     as string,
-            author:    formData.get('author')    as string,
-            isbn:      (formData.get('isbn')      as string) || null,
-            cover_url: (formData.get('cover_url') as string) || null,
+            title:       formData.get('title')       as string,
+            author:      formData.get('author')      as string,
+            isbn:        (formData.get('isbn')        as string) || null,
+            cover_url:   (formData.get('cover_url')   as string) || null,
+            description: (formData.get('description') as string) || null,
+            publisher:   (formData.get('publisher')   as string) || null,
+            year:        (formData.get('year')        as string) || null,
           }
         : b
     ))
@@ -135,6 +140,14 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
 
             {/* Actions */}
             <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-stone-400 hover:text-stone-700"
+                onClick={() => router.push(`/books/${book.id}`)}
+              >
+                View
+              </Button>
               {book.status === 'available' && (
                 <Button
                   variant="ghost"
@@ -243,6 +256,20 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     required
                     className="border-stone-200 focus-visible:ring-stone-400"
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-publisher" className="text-stone-700">Publisher</Label>
+                    <Input id="edit-publisher" name="publisher"
+                      defaultValue={editing.publisher ?? ''}
+                      className="border-stone-200 focus-visible:ring-stone-400" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="edit-year" className="text-stone-700">Year</Label>
+                    <Input id="edit-year" name="year"
+                      defaultValue={editing.year ?? ''}
+                      className="border-stone-200 focus-visible:ring-stone-400" />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-isbn" className="text-stone-700">

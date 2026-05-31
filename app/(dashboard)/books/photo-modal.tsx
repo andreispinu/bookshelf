@@ -40,8 +40,11 @@ export default function PhotoModal({ open, onClose }: Props) {
       const params = new URLSearchParams()
       if (data.title)       params.set('title',       data.title)
       if (data.author)      params.set('author',      data.author)
-      if (data.isbn)        params.set('isbn',         data.isbn)
+      if (data.isbn)        params.set('isbn',        data.isbn)
+      if (data.publisher)   params.set('publisher',   data.publisher)
+      if (data.year)        params.set('year',        data.year)
       if (data.description) params.set('description', data.description)
+      if (data.cover_url)   params.set('cover_url',   data.cover_url)
 
       onClose()
       router.push(`/books/add?${params.toString()}`)

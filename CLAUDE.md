@@ -142,6 +142,36 @@ Allows users to scan a book cover with their camera or upload a photo. Claude ex
 
 **Error handling:** JSON parse failures and API errors both fall through to an empty form with a sonner toast.
 
+### Cover photo from scan
+When a book is added via photo scan, the image is also uploaded as the book's cover:
+- Server receives the image (already resized to 1024px by the client)
+- `sharp` resizes it to max 400px wide on the server
+- Uploaded to Supabase Storage bucket `book-covers` under `{userId}/{timestamp}.jpg`
+- Public URL saved to `cover_url` field and pre-filled in the add form
+- The list and detail pages display it automatically via the existing `cover_url` display logic
+- Upload uses `supabaseAdmin` (service role) so no storage write policies are needed
+
+**Storage bucket:** `book-covers` — public bucket. Run `supabase/create-book-covers-bucket.sql` in the SQL editor to create it.
+
+### Duplicate detection
+Before any book is saved (`addBook` server action), a case-insensitive check queries for an existing book with the same `title` AND `author` for the current user. If found:
+- Server action returns `{ duplicate: true }` instead of inserting
+- The add form detects this and shows a dialog: "You already have this book on your shelf"
+- "Add anyway" calls `addBookForce()` which skips the check and inserts directly
+- "Cancel" dismisses the dialog and returns to the form
+
+### Book detail page
+Route: `/books/[id]` — dedicated page for a single book.
+
+Shows:
+- Large cover image (if available) alongside title, author, status badge
+- If lent out: borrower name and date lent
+- Publisher, year, ISBN in a metadata grid
+- Full description
+- Edit (opens dialog) and Delete buttons
+
+**Files:** `app/(dashboard)/books/[id]/page.tsx` (server), `app/(dashboard)/books/[id]/book-detail-actions.tsx` (client — edit dialog + delete)
+
 ### Description field
 Books now have an optional `description` field (text). Added to:
 - `books` table via `supabase/add-description.sql`
@@ -169,6 +199,8 @@ Must be set in Vercel project → Settings → Environment Variables for Product
 ```
 ANTHROPIC_API_KEY=<secret — from console.anthropic.com>
 ```
+
+Also add `ANTHROPIC_API_KEY` to Vercel project → Settings → Environment Variables.
 
 ## Design system
 

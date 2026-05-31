@@ -6,6 +6,8 @@ export type Book = {
   isbn: string | null
   cover_url: string | null
   description: string | null
+  publisher: string | null
+  year: string | null
   status: 'available' | 'lent_out'
   created_at: string
 }
