@@ -2,16 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import NotificationsBell from './notifications-bell'
 
-const links = [
-  { href: '/books',   label: 'My Books' },
-  { href: '/friends', label: 'Friends'  },
-  { href: '/loans',   label: 'Loans'    },
+type NavCounts = { unreadMessages: number; pendingRequests: number }
+
+const NAV_LINKS = [
+  { href: '/books',    label: 'My Books',  badge: null as null | keyof NavCounts },
+  { href: '/messages', label: 'Messages',  badge: 'unreadMessages' as keyof NavCounts },
+  { href: '/loans',    label: 'Loans',     badge: 'pendingRequests' as keyof NavCounts },
 ]
 
 export default function Nav({ userName, avatarUrl }: { userName: string; avatarUrl?: string | null }) {
@@ -19,7 +21,23 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
   const router = useRouter()
   const supabase = createClient()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [counts, setCounts] = useState<NavCounts>({ unreadMessages: 0, pendingRequests: 0 })
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const fetchCounts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/nav-counts')
+      if (!res.ok) return
+      const data = await res.json()
+      setCounts(data)
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    fetchCounts()
+    const interval = setInterval(fetchCounts, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchCounts])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -49,19 +67,27 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
         <div className="flex items-center gap-6">
           <span className="font-semibold text-stone-800 tracking-tight">BookShelf</span>
           <nav className="flex items-center gap-1">
-            {links.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  pathname.startsWith(href)
-                    ? 'bg-stone-100 text-stone-900 font-medium'
-                    : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
+            {NAV_LINKS.map(({ href, label, badge }) => {
+              const count = badge ? counts[badge] : 0
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    pathname.startsWith(href)
+                      ? 'bg-stone-100 text-stone-900 font-medium'
+                      : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
+                  }`}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                      {count > 9 ? '9+' : count}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
           </nav>
         </div>
         <div className="flex items-center gap-1">

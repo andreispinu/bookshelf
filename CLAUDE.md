@@ -540,6 +540,81 @@ Books now have an optional `description` field (text). Added to:
 - Add book form (pre-filled by photo scan or typed manually)
 - Edit book dialog
 
+### Messaging
+Users can send direct messages to friends.
+
+**Database table: `messages`** (run `supabase/add-messages-borrow-requests.sql`):
+```sql
+id          uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+sender_id   uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+receiver_id uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+content     text        NOT NULL
+read        boolean     DEFAULT false
+created_at  timestamptz DEFAULT now()
+```
+RLS: participant read (sender OR receiver), sender insert, receiver update.
+
+**Page:** `/messages` — two-panel layout (conversation list left, chat right). On mobile: full-screen chat when a conversation is open, back arrow returns to list. The active conversation is tracked via `?with=<userId>` URL param.
+- Conversations list shows avatar, name, last message, time ago, unread badge
+- Chat shows message bubbles: sent = stone-800 right, received = stone-100 left
+- Optimistic send; polls every 10 seconds; marks received messages read on open
+- Enter to send (Shift+Enter for newline)
+
+**Nav badge:** "Messages" link shows red badge with unread count, polled every 30s via `/api/nav-counts`.
+
+**API routes:**
+- `GET /api/messages?with=<userId>` — fetch conversation messages
+- `POST /api/messages` — send `{ receiverId, content }`
+- `PATCH /api/messages` — mark read `{ senderId }`
+- `GET /api/messages/conversations` — grouped conversation list
+- `GET /api/nav-counts` — `{ unreadMessages, pendingRequests }` for nav badges
+
+**Files:**
+- `app/(dashboard)/messages/page.tsx` — server wrapper (Suspense for useSearchParams)
+- `app/(dashboard)/messages/messages-client.tsx` — full UI client component
+
+### Borrow requests
+Users can request to borrow a specific book from a friend's shelf. Owners can approve or decline.
+
+**Database table: `borrow_requests`** (same migration file):
+```sql
+id                uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+book_id           uuid        NOT NULL REFERENCES books(id) ON DELETE CASCADE
+requester_id      uuid        NOT NULL REFERENCES profiles(id)
+owner_id          uuid        NOT NULL REFERENCES profiles(id)
+status            text        NOT NULL DEFAULT 'pending'  -- 'pending' | 'approved' | 'rejected'
+requester_message text        -- optional message from requester
+owner_message     text        -- optional message from owner on approve/reject
+created_at        timestamptz DEFAULT now()
+updated_at        timestamptz DEFAULT now()
+```
+RLS: participant read, requester insert, owner update.
+
+**Requester flow:**
+1. Click "Request to borrow" on any available book on a friend's shelf
+2. Modal opens with optional message field
+3. POST /api/borrow-requests → creates row + sends notification to owner
+4. Success toast
+
+**Owner flow:**
+1. Receives `borrow_request` notification (bell) → navigate to `/loans/requests`
+2. Nav "Loans" link shows pending count badge
+3. `/loans/requests` page: list of pending incoming requests with book cover, requester avatar, optional message
+4. Approve → creates loan + sets book to `lent_out` + notifies requester (`borrow_approved`)
+5. Decline → updates status + notifies requester (`borrow_rejected`)
+
+**Loans page tabs:** "Lent out" | "Borrowed" | "Requests" — Requests tab shows all sent requests with status badges (Pending/Approved/Declined). Link to `/loans/requests` for incoming.
+
+**Notification types added:** `borrow_request` (→ `/loans/requests`), `borrow_approved` (→ `/loans?tab=requests`), `borrow_rejected` (→ `/loans?tab=requests`)
+
+**API route:** `app/api/borrow-requests/route.ts` — GET pending incoming, POST create, PATCH approve/reject
+
+**Files:**
+- `app/(dashboard)/friends/[id]/borrow-button.tsx` — modal with book props (bookId, bookTitle, ownerId)
+- `app/(dashboard)/loans/requests/page.tsx` + `requests-client.tsx` — incoming requests UI
+- `app/(dashboard)/loans/loan-list.tsx` — updated with Requests tab + `sentRequests` prop
+- `app/(dashboard)/loans/page.tsx` — fetches sent requests, passes `defaultTab` from searchParams
+
 ## Build order (phases)
 
 - [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes

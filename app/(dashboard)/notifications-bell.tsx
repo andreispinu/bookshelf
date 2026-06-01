@@ -6,7 +6,7 @@ import { Bell } from 'lucide-react'
 
 type Notification = {
   id: string
-  type: 'friend_request' | 'friend_accepted' | 'friend_new_book'
+  type: 'friend_request' | 'friend_accepted' | 'friend_new_book' | 'borrow_request' | 'borrow_approved' | 'borrow_rejected'
   read: boolean
   created_at: string
   actor: { id: string; name: string; avatar_url: string | null } | null
@@ -26,14 +26,20 @@ function timeAgo(dateStr: string): string {
 
 function notifMessage(n: Notification): string {
   const name = n.actor?.name ?? 'Someone'
+  const title = n.book?.title ?? 'a book'
   if (n.type === 'friend_request') return `${name} sent you a friend request`
   if (n.type === 'friend_accepted') return `${name} accepted your friend request`
-  if (n.type === 'friend_new_book') return `${name} added ${n.book?.title ?? 'a book'} to their shelf`
+  if (n.type === 'friend_new_book') return `${name} added ${title} to their shelf`
+  if (n.type === 'borrow_request') return `${name} wants to borrow ${title}`
+  if (n.type === 'borrow_approved') return `${name} approved your request to borrow ${title}`
+  if (n.type === 'borrow_rejected') return `${name} declined your request to borrow ${title}`
   return ''
 }
 
 function notifHref(n: Notification): string {
   if (n.type === 'friend_new_book' && n.actor?.id) return `/friends/${n.actor.id}`
+  if (n.type === 'borrow_request') return '/loans/requests'
+  if (n.type === 'borrow_approved' || n.type === 'borrow_rejected') return '/loans?tab=requests'
   return '/friends'
 }
 

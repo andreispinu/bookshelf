@@ -108,7 +108,7 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
                 {/* Borrow button — desktop only shows inline, mobile shows below */}
                 {book.status === 'available' && (
                   <div className="sm:shrink-0">
-                    <BorrowButton />
+                    <BorrowButton bookId={book.id} bookTitle={book.title} ownerId={profile.id} />
                   </div>
                 )}
               </li>

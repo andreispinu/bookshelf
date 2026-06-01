@@ -56,3 +56,49 @@ export type LoanWithDetails = {
   book: Pick<Book, 'id' | 'title' | 'author'>
   otherParty: Pick<Profile, 'id' | 'name'>
 }
+
+export type Message = {
+  id: string
+  sender_id: string
+  receiver_id: string
+  content: string
+  read: boolean
+  created_at: string
+}
+
+export type ConvItem = {
+  userId: string
+  name: string
+  avatar_url: string | null
+  lastMessage: string
+  lastAt: string
+  unread: number
+}
+
+export type BorrowRequest = {
+  id: string
+  book_id: string
+  requester_id: string
+  owner_id: string
+  status: 'pending' | 'approved' | 'rejected'
+  requester_message: string | null
+  owner_message: string | null
+  created_at: string
+  updated_at: string
+  book: Pick<Book, 'id' | 'title' | 'author' | 'cover_url'>
+  requester: Pick<Profile, 'id' | 'name' | 'avatar_url'>
+}
+
+export type SentRequest = {
+  id: string
+  book_id: string
+  requester_id: string
+  owner_id: string
+  status: 'pending' | 'approved' | 'rejected'
+  requester_message: string | null
+  owner_message: string | null
+  created_at: string
+  updated_at: string
+  book: Pick<Book, 'id' | 'title' | 'author' | 'cover_url'>
+  owner: Pick<Profile, 'id' | 'name' | 'avatar_url'>
+}
