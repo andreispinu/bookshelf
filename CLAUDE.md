@@ -360,7 +360,7 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 5. **Pricing** — 3 cards: Free trial ($0/14 days), Monthly ($1/mo), Annual ($10/yr with "Best value" badge). All CTAs link to `/signup`.
 6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
 
-**File:** `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons.
+**File:** `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons. The features grid (12 cards, 3-col desktop / 2-col tablet / 1-col mobile) reflects the full current feature set and should be kept in sync when new features are added.
 
 ### All Friends' Bookshelves
 Route: `/friends/shelf` — combined view of every book owned by all accepted friends.

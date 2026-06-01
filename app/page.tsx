@@ -1,21 +1,70 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
+import {
+  BookOpen, Camera, HandHelping, Users, Tag, Globe,
+  Link as LinkIcon, Smartphone, UserPlus, ClipboardList, Bell, CreditCard,
+} from 'lucide-react'
 
 const features = [
   {
-    icon: '📚',
+    Icon: BookOpen,
     title: 'Add your library',
-    description: 'Catalogue every book you own. Scan the cover with AI and it fills in the details automatically.',
+    description: 'Catalogue every book you own. Search by title or author and build your personal shelf.',
   },
   {
-    icon: '🤝',
+    Icon: Camera,
+    title: 'AI book scanning',
+    description: 'Take a photo of any cover. AI reads it and fills in title, author, category, language and description automatically.',
+  },
+  {
+    Icon: HandHelping,
     title: 'Lend to friends',
-    description: 'See what your friends are reading. Lend your books and track who has what.',
+    description: 'Offer books to friends directly from your shelf. Track who has what and when it was lent.',
   },
   {
-    icon: '📱',
-    title: 'Always with you',
-    description: 'Install on iPhone or Android. Your shelf is always in your pocket.',
+    Icon: Users,
+    title: "Friends' bookshelves",
+    description: 'Browse what your friends are reading. See their full library in one combined view.',
+  },
+  {
+    Icon: Tag,
+    title: 'Book categories',
+    description: 'Organise your library by genre. Filter by Fiction, History, Science, Politics and 17 more categories.',
+  },
+  {
+    Icon: Globe,
+    title: 'Multiple languages',
+    description: "Books in any language. Descriptions are generated in the book's own language.",
+  },
+  {
+    Icon: LinkIcon,
+    title: 'Public profile',
+    description: 'Share your shelf with a personal link at bookshelf.name/username. Control exactly what others can see.',
+  },
+  {
+    Icon: Smartphone,
+    title: 'Installable on mobile',
+    description: 'Add to your iPhone or Android home screen. Your library is always in your pocket.',
+  },
+  {
+    Icon: UserPlus,
+    title: 'Friend requests',
+    description: 'Connect with people you trust. Send, accept or decline friend requests.',
+  },
+  {
+    Icon: ClipboardList,
+    title: 'Loan tracking',
+    description: 'See all books you've lent and borrowed. Mark returns with one tap.',
+  },
+  {
+    Icon: Bell,
+    title: 'Notifications',
+    description: 'Get notified when someone sends a friend request, accepts yours, or adds a new book.',
+  },
+  {
+    Icon: CreditCard,
+    title: 'Subscription plans',
+    description: 'Free 14-day trial. Then $1/month or $10/year. Cancel any time.',
   },
 ]
 
@@ -96,14 +145,20 @@ export default async function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-16 px-4 bg-white border-y border-stone-200">
+      <section className="py-16 px-4 bg-stone-100 border-y border-stone-200">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {features.map(f => (
-              <div key={f.title} className="flex flex-col gap-3">
-                <span className="text-3xl">{f.icon}</span>
-                <h3 className="text-lg font-semibold text-stone-800">{f.title}</h3>
-                <p className="text-stone-500 text-sm leading-relaxed">{f.description}</p>
+          <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">
+            Everything you need for your personal library
+          </h2>
+          <p className="text-center text-stone-500 text-sm mb-10">Built for book lovers who share.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map(({ Icon, title, description }) => (
+              <div key={title} className="bg-white rounded-xl border border-stone-200 p-5 flex flex-col gap-3">
+                <div className="h-9 w-9 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                  <Icon className="h-5 w-5 text-stone-600" />
+                </div>
+                <h3 className="font-semibold text-stone-900">{title}</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">{description}</p>
               </div>
             ))}
           </div>
