@@ -145,49 +145,58 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
     setEditError(null)
     setEditLoading(true)
 
-    let newCoverUrl: string | null = editCoverRemoved ? null : editing.cover_url
+    // Capture before any await — currentTarget is nullified after the handler yields
+    const form = e.currentTarget
 
-    if (editCoverFile) {
-      const fd = new FormData()
-      fd.append('image', editCoverFile)
-      const res = await fetch('/api/upload-book-cover', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) {
-        setEditError(data.error || 'Cover upload failed')
+    try {
+      let newCoverUrl: string | null = editCoverRemoved ? null : editing.cover_url
+
+      if (editCoverFile) {
+        const fd = new FormData()
+        fd.append('image', editCoverFile)
+        const res = await fetch('/api/upload-book-cover', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (!res.ok) {
+          setEditError(data.error || 'Cover upload failed')
+          setEditLoading(false)
+          return
+        }
+        newCoverUrl = data.cover_url
+      }
+
+      const formData = new FormData(form)
+      formData.set('cover_url', newCoverUrl ?? '')
+      const result = await updateBook(editing.id, formData)
+
+      if (result?.error) {
+        setEditError(result.error)
         setEditLoading(false)
         return
       }
-      newCoverUrl = data.cover_url
-    }
 
-    const formData = new FormData(e.currentTarget)
-    formData.set('cover_url', newCoverUrl ?? '')
-    const result = await updateBook(editing.id, formData)
-
-    if (result?.error) {
-      setEditError(result.error)
+      setBooks(prev => prev.map(b =>
+        b.id === editing.id
+          ? {
+              ...b,
+              title:       formData.get('title')       as string,
+              author:      formData.get('author')      as string,
+              isbn:        (formData.get('isbn')        as string) || null,
+              cover_url:   newCoverUrl,
+              description: (formData.get('description') as string) || null,
+              publisher:   (formData.get('publisher')   as string) || null,
+              year:        (formData.get('year')        as string) || null,
+              category:    (formData.get('category')    as string) || null,
+              language:    (formData.get('language')    as string) || null,
+            }
+          : b
+      ))
+      setEditing(null)
       setEditLoading(false)
-      return
+    } catch (err) {
+      console.error('handleUpdate error:', err)
+      setEditError('Something went wrong. Please try again.')
+      setEditLoading(false)
     }
-
-    setBooks(prev => prev.map(b =>
-      b.id === editing.id
-        ? {
-            ...b,
-            title:       formData.get('title')       as string,
-            author:      formData.get('author')      as string,
-            isbn:        (formData.get('isbn')        as string) || null,
-            cover_url:   newCoverUrl,
-            description: (formData.get('description') as string) || null,
-            publisher:   (formData.get('publisher')   as string) || null,
-            year:        (formData.get('year')        as string) || null,
-            category:    (formData.get('category')    as string) || null,
-            language:    (formData.get('language')    as string) || null,
-          }
-        : b
-    ))
-    setEditing(null)
-    setEditLoading(false)
   }
 
   async function handleDelete(bookId: string) {
