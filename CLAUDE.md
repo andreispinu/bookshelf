@@ -421,6 +421,52 @@ At the bottom of every public profile page (`app/[username]/page.tsx`), above th
 - Subtext: "Track your books, connect with friends, and lend your favourites."
 - Button: "Try BookShelf free" → `https://bookshelf.name`
 
+### Book language field
+Books have an optional `language` field from a fixed list of 21 languages.
+
+**Predefined list** (`lib/languages.ts`): English, Romanian, French, Spanish, German, Italian, Portuguese, Dutch, Russian, Polish, Swedish, Norwegian, Danish, Arabic, Chinese, Japanese, Korean, Hebrew, Turkish, Czech, Hungarian
+
+**Database** (run `supabase/add-language.sql`): `ALTER TABLE books ADD COLUMN IF NOT EXISTS language text`
+
+Language appears in:
+- Add book form: dropdown after Category, pre-filled from AI scan
+- Edit book dialog: dropdown alongside Category (side-by-side grid)
+- AI book scan: Claude detects language from cover text/title/author
+- Fill with AI: Claude identifies language from title/author knowledge
+- Description generation: always written in the book's language (if known), else English
+
+### Fill with AI
+Each book's ⋯ menu has a "Fill with AI" option that uses Claude to look up missing metadata.
+
+**Flow:**
+1. Click "Fill with AI" → dialog opens with spinner ("Looking up book details…")
+2. `POST /api/fill-book` is called with `{ bookId }`
+3. Server fetches book (ownership check), calls Claude with title + author + isbn
+4. Response: suggestions for isbn, publisher, year, category, language, description, cover_url
+5. Dialog shows each suggested field with:
+   - Field label (all caps, small)
+   - Current value (strikethrough, muted) if one exists
+   - New suggested value (bold)
+   - Checkbox: auto-checked if field is currently empty, unchecked if it would override existing data
+6. "Apply N fields" button saves only the checked suggestions via `fillBookFields()` server action
+7. Book list updates optimistically; no page redirect
+
+**Cover URL strategy:**
+- If ISBN is known (from book or from Claude's response): always use OpenLibrary: `https://covers.openlibrary.org/b/isbn/{ISBN}-L.jpg`
+- If no ISBN: Claude suggests a URL if confident; null otherwise
+- Cover preview renders in the dialog (with `onError` hiding broken images)
+
+**Files:**
+- `app/api/fill-book/route.ts` — POST handler, calls Claude, applies OpenLibrary logic
+- `app/(dashboard)/books/actions.ts` → `fillBookFields(bookId, fields)` — partial update, no redirect
+
+### AI book scanning — enhanced prompt
+`app/api/extract-book/route.ts` now extracts all fields from the cover image:
+- title, author, isbn, publisher, year, category, language, description, cover_url
+- **Cover priority:** ISBN extracted → OpenLibrary URL; Claude suggests URL for well-known books; uploaded photo as last fallback
+- Description written in the book's language (detected from cover), or English
+- Language detected from cover text, title, and author name
+
 ### Book categories
 Books have an optional `category` field chosen from a fixed list of 20 genres.
 

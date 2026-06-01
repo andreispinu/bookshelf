@@ -3,6 +3,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import sharp from 'sharp'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { CATEGORIES } from '@/lib/categories'
+import { LANGUAGES } from '@/lib/languages'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -38,8 +40,10 @@ export async function POST(request: NextRequest) {
 - isbn: ISBN number if visible (string or null)
 - publisher: publisher name if visible (string or null)
 - year: publication year if visible (string or null)
-- description: a short description of this book — what it's about, its genre, and tone — based on your knowledge. Maximum 100 words. If you don't know this book, return null.
-- category: pick exactly one category from this list based on the book's genre and content: Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & Memoir, History, Science & Technology, Self-Help & Personal Development, Business & Economics, Philosophy, Psychology, Romance, Children & Young Adult, Travel, Art & Design, Poetry, Religion & Spirituality, Health & Wellness, Cooking. Return the category as a string, or null if none fits.
+- category: pick exactly one from: ${CATEGORIES.join(', ')}. Return null if none fits.
+- language: the language this book is written in. Pick from: ${LANGUAGES.join(', ')}. Detect from the cover text, title, and author. Return null if uncertain.
+- description: what this book is about, its genre, and tone — based on your knowledge. Maximum 100 words. Write in the same language as the book if known, otherwise in English. Return null if you don't know this book.
+- cover_url: if this is a well-known book, provide a reliable public cover image URL. Prefer OpenLibrary format if you know the ISBN: https://covers.openlibrary.org/b/isbn/{ISBN}-L.jpg. Return null if not confident.
 
 Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
           },
@@ -80,5 +84,13 @@ Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
     return NextResponse.json({ error: 'Could not read book details from cover' }, { status: 422 })
   }
 
-  return NextResponse.json({ ...extracted, cover_url })
+  // Cover priority: OpenLibrary (if ISBN known) > Claude's URL > uploaded photo
+  const isbn = extracted.isbn?.replace(/[-\s]/g, '')
+  if (isbn) {
+    extracted.cover_url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
+  } else {
+    extracted.cover_url = extracted.cover_url ?? cover_url
+  }
+
+  return NextResponse.json({ ...extracted })
 }

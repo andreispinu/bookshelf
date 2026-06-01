@@ -46,6 +46,7 @@ export default function PhotoModal({ open, onClose }: Props) {
       if (data.description) params.set('description', data.description)
       if (data.cover_url)   params.set('cover_url',   data.cover_url)
       if (data.category)    params.set('category',    data.category)
+      if (data.language)    params.set('language',    data.language)
 
       onClose()
       router.push(`/books/add?${params.toString()}`)

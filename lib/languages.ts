@@ -1,0 +1,25 @@
+export const LANGUAGES = [
+  'English',
+  'Romanian',
+  'French',
+  'Spanish',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Dutch',
+  'Russian',
+  'Polish',
+  'Swedish',
+  'Norwegian',
+  'Danish',
+  'Arabic',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'Hebrew',
+  'Turkish',
+  'Czech',
+  'Hungarian',
+] as const
+
+export type Language = typeof LANGUAGES[number]

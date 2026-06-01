@@ -4,6 +4,33 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 
+type BookFields = {
+  isbn?: string | null
+  publisher?: string | null
+  year?: string | null
+  category?: string | null
+  language?: string | null
+  description?: string | null
+  cover_url?: string | null
+}
+
+export async function fillBookFields(bookId: string, fields: BookFields) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('books')
+    .update(fields)
+    .eq('id', bookId)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/books')
+  revalidatePath(`/books/${bookId}`)
+  return { error: null }
+}
+
 function extractFields(formData: FormData) {
   return {
     title:       (formData.get('title')       as string).trim(),
@@ -14,6 +41,7 @@ function extractFields(formData: FormData) {
     publisher:   (formData.get('publisher')   as string | null)?.trim() || null,
     year:        (formData.get('year')        as string | null)?.trim() || null,
     category:    (formData.get('category')    as string | null)?.trim() || null,
+    language:    (formData.get('language')    as string | null)?.trim() || null,
   }
 }
 

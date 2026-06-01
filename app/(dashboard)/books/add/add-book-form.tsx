@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import { addBook, addBookForce } from '../actions'
 import { CATEGORIES } from '@/lib/categories'
+import { LANGUAGES } from '@/lib/languages'
 
 export default function AddBookForm() {
   const searchParams = useSearchParams()
@@ -37,6 +38,7 @@ export default function AddBookForm() {
     description: searchParams.get('description') ?? '',
     cover_url:   searchParams.get('cover_url')   ?? '',
     category:    searchParams.get('category')    ?? '',
+    language:    searchParams.get('language')    ?? '',
   }
 
   const hasPreFill = !!(prefill.title || prefill.author)
@@ -164,6 +166,20 @@ export default function AddBookForm() {
               >
                 <option value="">No category</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="language" className="text-stone-700">
+                Language <span className="text-stone-400 font-normal">(optional)</span>
+              </Label>
+              <select
+                id="language"
+                name="language"
+                defaultValue={prefill.language}
+                className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
+              >
+                <option value="">No language</option>
+                {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">
