@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
+import LandingNav from './landing-nav'
 import {
   BookOpen, Camera, HandHelping, Users, Tag, Globe,
   Link as LinkIcon, Smartphone, UserPlus, ClipboardList, Bell, CreditCard,
@@ -85,37 +86,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800">
 
-      {/* Nav */}
-      <header className="border-b border-stone-200 bg-white sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="font-semibold text-stone-800 tracking-tight">BookShelf</span>
-          <div className="flex items-center gap-2">
-            {isLoggedIn ? (
-              <Link
-                href="/books"
-                className="px-4 py-1.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
-              >
-                Go to my shelf
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="px-3 py-1.5 text-sm text-stone-600 hover:text-stone-800 transition-colors"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="px-4 py-1.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
-                >
-                  Start free trial
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <LandingNav isLoggedIn={isLoggedIn} />
 
       {/* Hero */}
       <section className="py-20 px-4 text-center">
@@ -145,7 +116,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-16 px-4 bg-stone-100 border-y border-stone-200">
+      <section id="features" className="py-16 px-4 bg-stone-100 border-y border-stone-200">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">
             Everything you need for your personal library
@@ -184,7 +155,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Install */}
-      <section className="py-16 px-4">
+      <section id="install" className="py-16 px-4">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">Use it like a native app</h2>
           <p className="text-center text-stone-500 text-sm mb-10">
@@ -258,7 +229,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-16 px-4 bg-white border-y border-stone-200">
+      <section id="pricing" className="py-16 px-4 bg-white border-y border-stone-200">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-stone-800 text-center mb-3">Simple pricing</h2>
           <p className="text-center text-stone-500 text-sm mb-10">Start free. Upgrade when you're ready.</p>
