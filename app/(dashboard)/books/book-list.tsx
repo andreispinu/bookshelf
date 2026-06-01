@@ -106,6 +106,11 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   const [editing, setEditing] = useState<Book | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const [editLoading, setEditLoading] = useState(false)
+  const [editCoverFile, setEditCoverFile] = useState<File | null>(null)
+  const [editCoverPreview, setEditCoverPreview] = useState<string | null>(null)
+  const [editCoverRemoved, setEditCoverRemoved] = useState(false)
+  const editCameraRef = useRef<HTMLInputElement>(null)
+  const editUploadRef = useRef<HTMLInputElement>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [lending, setLending] = useState<Book | null>(null)
   const [lendError, setLendError] = useState<string | null>(null)
@@ -128,13 +133,35 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
 
   const filteredBooks = activeCategory ? books.filter(b => b.category === activeCategory) : books
 
+  function handleEditCoverSelect(file: File) {
+    setEditCoverFile(file)
+    setEditCoverPreview(URL.createObjectURL(file))
+    setEditCoverRemoved(false)
+  }
+
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!editing) return
     setEditError(null)
     setEditLoading(true)
 
+    let newCoverUrl: string | null = editCoverRemoved ? null : editing.cover_url
+
+    if (editCoverFile) {
+      const fd = new FormData()
+      fd.append('image', editCoverFile)
+      const res = await fetch('/api/upload-book-cover', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        setEditError(data.error || 'Cover upload failed')
+        setEditLoading(false)
+        return
+      }
+      newCoverUrl = data.cover_url
+    }
+
     const formData = new FormData(e.currentTarget)
+    formData.set('cover_url', newCoverUrl ?? '')
     const result = await updateBook(editing.id, formData)
 
     if (result?.error) {
@@ -150,7 +177,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
             title:       formData.get('title')       as string,
             author:      formData.get('author')      as string,
             isbn:        (formData.get('isbn')        as string) || null,
-            cover_url:   (formData.get('cover_url')   as string) || null,
+            cover_url:   newCoverUrl,
             description: (formData.get('description') as string) || null,
             publisher:   (formData.get('publisher')   as string) || null,
             year:        (formData.get('year')        as string) || null,
@@ -344,7 +371,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                   book={book}
                   isDeleting={deletingId === book.id}
                   onLend={() => { setLending(book); setLendError(null) }}
-                  onEdit={() => { setEditing(book); setEditError(null) }}
+                  onEdit={() => { setEditing(book); setEditError(null); setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(false) }}
                   onFill={() => handleFillWithAI(book)}
                   onDelete={() => handleDelete(book.id)}
                 />
@@ -487,16 +514,44 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-cover" className="text-stone-700">
-                    Cover URL <span className="text-stone-400 font-normal">(optional)</span>
-                  </Label>
-                  <Input
-                    id="edit-cover"
-                    name="cover_url"
-                    type="url"
-                    defaultValue={editing.cover_url ?? ''}
-                    className="border-stone-200 focus-visible:ring-stone-400"
-                  />
+                  <Label className="text-stone-700">Cover <span className="text-stone-400 font-normal">(optional)</span></Label>
+                  <div className="flex flex-col items-center gap-3 pt-1">
+                    <div className="w-24 h-36 rounded-lg bg-stone-100 overflow-hidden flex items-center justify-center border border-stone-200 shrink-0">
+                      {editCoverPreview
+                        ? <img src={editCoverPreview} alt="Cover" className="w-full h-full object-cover" />
+                        : !editCoverRemoved && editing.cover_url
+                        ? <img src={editing.cover_url} alt="Cover" className="w-full h-full object-cover" />
+                        : <span className="text-stone-400 text-3xl">📖</span>
+                      }
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm"
+                        className="text-stone-600 border-stone-200"
+                        onClick={() => editCameraRef.current?.click()}
+                      >
+                        Take photo
+                      </Button>
+                      <Button type="button" variant="outline" size="sm"
+                        className="text-stone-600 border-stone-200"
+                        onClick={() => editUploadRef.current?.click()}
+                      >
+                        Upload photo
+                      </Button>
+                    </div>
+                    {(editCoverPreview || (!editCoverRemoved && editing.cover_url)) && (
+                      <button
+                        type="button"
+                        className="text-xs text-stone-400 hover:text-red-500 transition-colors"
+                        onClick={() => { setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(true) }}
+                      >
+                        Remove cover
+                      </button>
+                    )}
+                  </div>
+                  <input ref={editCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleEditCoverSelect(f) }} />
+                  <input ref={editUploadRef} type="file" accept="image/*" className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleEditCoverSelect(f) }} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-description" className="text-stone-700">

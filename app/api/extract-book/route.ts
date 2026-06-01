@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
 - category: pick exactly one from: ${CATEGORIES.join(', ')}. Return null if none fits.
 - language: the language this book is written in. Pick from: ${LANGUAGES.join(', ')}. Detect from the cover text, title, and author. Return null if uncertain.
 - description: what this book is about, its genre, and tone — based on your knowledge. Maximum 100 words. Write in the same language as the book if known, otherwise in English. Return null if you don't know this book.
-- cover_url: if this is a well-known book, provide a reliable public cover image URL. Prefer OpenLibrary format if you know the ISBN: https://covers.openlibrary.org/b/isbn/{ISBN}-L.jpg. Return null if not confident.
+
+Do NOT return a cover_url field — the user's photo will be used as the cover.
 
 Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
           },
@@ -84,13 +85,8 @@ Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
     return NextResponse.json({ error: 'Could not read book details from cover' }, { status: 422 })
   }
 
-  // Cover priority: OpenLibrary (if ISBN known) > Claude's URL > uploaded photo
-  const isbn = extracted.isbn?.replace(/[-\s]/g, '')
-  if (isbn) {
-    extracted.cover_url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
-  } else {
-    extracted.cover_url = extracted.cover_url ?? cover_url
-  }
+  // User's uploaded photo always wins
+  extracted.cover_url = cover_url
 
   return NextResponse.json({ ...extracted })
 }

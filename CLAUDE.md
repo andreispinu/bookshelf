@@ -37,7 +37,7 @@ npm run build     # production build (webpack, generates service worker)
 
 ```
 /app
-  /(auth)               → Login and signup pages (public)
+  /(auth)               → Login, signup, forgot-password, reset-password pages (public)
   /(dashboard)          → Protected pages (require session)
     /books              → My books list + lend dialog
     /books/add          → Add a book form
@@ -57,6 +57,7 @@ npm run build     # production build (webpack, generates service worker)
   /api/stripe/portal    → POST → Stripe Customer Portal session URL
   /api/username/check   → GET ?username=xxx → { available: boolean } (uses supabaseAdmin)
   /api/notifications    → GET last 20 notifications | PATCH mark read
+  /api/upload-book-cover → POST multipart image → resize 600px → Supabase Storage → { cover_url }
 /components/ui          → shadcn/ui components
 /lib
   supabase.ts           → Browser client (Client Components)
@@ -138,6 +139,22 @@ returned_at  timestamptz  -- NULL until returned
 - Protected routes live under `/app/(dashboard)` and check for a session in the layout
 - The current user is accessed via `supabase.auth.getUser()` — never trust the client-side session for server operations
 - After sign up, a `profiles` row is created automatically via a Supabase database trigger
+
+### Forgot password flow
+1. User clicks "Forgot password?" on the login page → `/forgot-password`
+2. They enter their email; the page calls `supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://bookshelf.name/reset-password' })` using the **browser client** (`lib/supabase.ts`)
+3. Always shows success message regardless of whether the email exists (security)
+4. Supabase emails a magic link → user clicks it → lands on `/reset-password` with a recovery token in the URL hash
+5. The browser Supabase client picks up the token automatically; the page calls `supabase.auth.updateUser({ password })` to set the new password
+6. On success: shows a toast and redirects to `/books`
+
+**Supabase dashboard setup (one-time):**
+- Authentication → URL Configuration → Add `https://bookshelf.name/reset-password` to allowed redirect URLs
+- Authentication → Email Templates → Reset Password: confirm the `{{ .ConfirmationURL }}` variable is present (default template is fine)
+
+**Files:**
+- `app/(auth)/forgot-password/page.tsx` — email form, calls resetPasswordForEmail
+- `app/(auth)/reset-password/page.tsx` — new password form, calls updateUser
 
 ## Subscription system
 
