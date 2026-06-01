@@ -19,6 +19,7 @@ export const CATEGORIES = [
   'Religion & Spirituality',
   'Health & Wellness',
   'Cooking',
+  'Governance & Politics',
 ] as const
 
 export type Category = typeof CATEGORIES[number]
