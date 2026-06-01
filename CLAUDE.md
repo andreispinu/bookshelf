@@ -513,10 +513,10 @@ Each book's ⋯ menu has a "Fill with AI" option that uses Claude to look up mis
 - Language detected from cover text, title, and author name
 
 ### Book categories
-Books have an optional `category` field chosen from a fixed list of 20 genres.
+Books have an optional `category` field chosen from a fixed list of 22 genres.
 
 **Predefined list** (`lib/categories.ts`):
-Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & Memoir, History, Science & Technology, Self-Help & Personal Development, Business & Economics, Philosophy, Psychology, Romance, Children & Young Adult, Travel, Art & Design, Poetry, Religion & Spirituality, Health & Wellness, Cooking
+Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & Memoir, History, Science & Technology, Self-Help & Personal Development, Business & Economics, Philosophy, Psychology, Romance, Children & Young Adult, Travel, Art & Design, Poetry, Religion & Spirituality, Health & Wellness, Cooking, Governance & Politics, School Books
 
 **Database** (run `supabase/add-category.sql`): `ALTER TABLE books ADD COLUMN IF NOT EXISTS category text`
 
