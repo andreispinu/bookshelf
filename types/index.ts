@@ -8,6 +8,7 @@ export type Book = {
   description: string | null
   publisher: string | null
   year: string | null
+  category: string | null
   status: 'available' | 'lent_out'
   created_at: string
 }

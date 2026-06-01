@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { addBook, addBookForce } from '../actions'
+import { CATEGORIES } from '@/lib/categories'
 
 export default function AddBookForm() {
   const searchParams = useSearchParams()
@@ -35,6 +36,7 @@ export default function AddBookForm() {
     year:        searchParams.get('year')        ?? '',
     description: searchParams.get('description') ?? '',
     cover_url:   searchParams.get('cover_url')   ?? '',
+    category:    searchParams.get('category')    ?? '',
   }
 
   const hasPreFill = !!(prefill.title || prefill.author)
@@ -149,6 +151,20 @@ export default function AddBookForm() {
               <Input id="cover_url" name="cover_url" type="url" defaultValue={prefill.cover_url}
                 placeholder="https://…"
                 className="border-stone-200 focus-visible:ring-stone-400" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="category" className="text-stone-700">
+                Category <span className="text-stone-400 font-normal">(optional)</span>
+              </Label>
+              <select
+                id="category"
+                name="category"
+                defaultValue={prefill.category}
+                className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
+              >
+                <option value="">No category</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="description" className="text-stone-700">

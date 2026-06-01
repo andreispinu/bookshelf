@@ -90,6 +90,9 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-stone-800 truncate text-sm sm:text-base">{book.title}</p>
                   <p className="text-xs sm:text-sm text-stone-500 truncate">{book.author}</p>
+                  {book.category && (
+                    <p className="text-xs text-stone-400 mt-0.5 truncate">{book.category}</p>
+                  )}
                   <Badge
                     variant="outline"
                     className={`mt-1.5 text-xs ${

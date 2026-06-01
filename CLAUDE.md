@@ -421,6 +421,28 @@ At the bottom of every public profile page (`app/[username]/page.tsx`), above th
 - Subtext: "Track your books, connect with friends, and lend your favourites."
 - Button: "Try BookShelf free" → `https://bookshelf.name`
 
+### Book categories
+Books have an optional `category` field chosen from a fixed list of 20 genres.
+
+**Predefined list** (`lib/categories.ts`):
+Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & Memoir, History, Science & Technology, Self-Help & Personal Development, Business & Economics, Philosophy, Psychology, Romance, Children & Young Adult, Travel, Art & Design, Poetry, Religion & Spirituality, Health & Wellness, Cooking
+
+**Database** (run `supabase/add-category.sql`): `ALTER TABLE books ADD COLUMN IF NOT EXISTS category text`
+
+**AI auto-assignment:** The Claude prompt in `app/api/extract-book/route.ts` instructs Claude to pick exactly one category from the list. The category is returned in the JSON response alongside title/author/etc., passed via URL param `?category=...` to the add form, and pre-selected in the dropdown (user can change it).
+
+**Forms:**
+- Add book form (`/books/add`): category dropdown with "No category" blank option at top
+- Edit book dialog (`book-list.tsx`): same dropdown, pre-filled with existing category
+- Server action (`books/actions.ts`): `extractFields()` reads `category` from FormData, saves as null if blank
+
+**Books page filter:** When ≥1 book has a category, a pill filter bar appears above the list. Pills show "All" + one pill per category that exists in the user's books (ordered by the canonical CATEGORIES list). Active pill: `bg-stone-800 text-white`. Clicking active pill deselects (returns to All).
+
+**Category badge:** Shows as a muted `text-xs text-stone-400` line under the author name on:
+- My Books list (`book-list.tsx`)
+- Friend's bookshelf (`/friends/[id]`)
+- Combined shelf (`/friends/shelf`) — also has category filter pills
+
 ### Description field
 Books now have an optional `description` field (text). Added to:
 - `books` table via `supabase/add-description.sql`

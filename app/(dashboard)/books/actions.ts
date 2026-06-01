@@ -13,6 +13,7 @@ function extractFields(formData: FormData) {
     description: (formData.get('description') as string).trim() || null,
     publisher:   (formData.get('publisher')   as string | null)?.trim() || null,
     year:        (formData.get('year')        as string | null)?.trim() || null,
+    category:    (formData.get('category')    as string | null)?.trim() || null,
   }
 }
 

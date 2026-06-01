@@ -23,6 +23,7 @@ export type BookGroup = {
   author: string
   isbn: string | null
   cover_url: string | null
+  category: string | null
   copies: BookCopy[]
   latestAddedAt: string
 }
@@ -76,6 +77,7 @@ function BookGroupRow({ group }: { group: BookGroup }) {
       <div className="flex-1 min-w-0">
         <p className="font-medium text-stone-800 truncate">{group.title}</p>
         <p className="text-sm text-stone-500 truncate">{group.author}</p>
+        {group.category && <p className="text-xs text-stone-400 mt-0.5">{group.category}</p>}
 
         <div className="mt-1.5">
           {!isMulti ? (
@@ -131,14 +133,18 @@ function BookGroupRow({ group }: { group: BookGroup }) {
 export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'recent' | 'title' | 'popular'>('recent')
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+
+  const uniqueCategories = useMemo(() =>
+    [...new Set(groups.filter(g => g.category).map(g => g.category as string))].sort(),
+    [groups]
+  )
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
-    let result = q
-      ? groups.filter(g =>
-          g.title.toLowerCase().includes(q) || g.author.toLowerCase().includes(q)
-        )
-      : groups
+    let result = groups
+    if (q) result = result.filter(g => g.title.toLowerCase().includes(q) || g.author.toLowerCase().includes(q))
+    if (activeCategory) result = result.filter(g => g.category === activeCategory)
 
     if (sort === 'title') {
       result = [...result].sort((a, b) => a.title.localeCompare(b.title))
@@ -153,7 +159,7 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <Input
           placeholder="Search by title or author…"
           value={query}
@@ -170,6 +176,30 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
           <option value="popular">Most popular</option>
         </select>
       </div>
+
+      {uniqueCategories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
+          >
+            All
+          </button>
+          {uniqueCategories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-stone-400">

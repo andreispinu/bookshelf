@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
 - publisher: publisher name if visible (string or null)
 - year: publication year if visible (string or null)
 - description: a short description of this book — what it's about, its genre, and tone — based on your knowledge. Maximum 100 words. If you don't know this book, return null.
+- category: pick exactly one category from this list based on the book's genre and content: Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & Memoir, History, Science & Technology, Self-Help & Personal Development, Business & Economics, Philosophy, Psychology, Romance, Children & Young Adult, Travel, Art & Design, Poetry, Religion & Spirituality, Health & Wellness, Cooking. Return the category as a string, or null if none fits.
 
 Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
           },

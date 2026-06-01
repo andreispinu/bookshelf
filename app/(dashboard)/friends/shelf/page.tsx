@@ -28,7 +28,7 @@ export default async function FriendsShelfPage() {
 
     const { data: books } = await supabase
       .from('books')
-      .select('id, user_id, title, author, isbn, cover_url, status, created_at')
+      .select('id, user_id, title, author, isbn, cover_url, status, category, created_at')
       .in('user_id', friendIds)
       .order('created_at', { ascending: false })
 
@@ -62,6 +62,7 @@ export default async function FriendsShelfPage() {
           author: book.author,
           isbn: book.isbn ?? null,
           cover_url: book.cover_url ?? null,
+          category: book.category ?? null,
           copies: [copy],
           latestAddedAt: book.created_at,
         })

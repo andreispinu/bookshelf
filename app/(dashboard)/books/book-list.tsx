@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { updateBook, deleteBook } from './actions'
 import { lendBook } from '../loans/actions'
 import type { Book, Friend } from '@/types'
+import { CATEGORIES } from '@/lib/categories'
 
 function BookMenu({
   book, isDeleting, onLend, onEdit, onDelete,
@@ -94,8 +95,15 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   const [lendError, setLendError] = useState<string | null>(null)
   const [lendingTo, setLendingTo] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const acceptedFriends = friends.filter(f => f.status === 'accepted')
+
+  const uniqueCategories = [...new Set(
+    books.filter(b => b.category).map(b => b.category as string)
+  )].sort((a, b) => CATEGORIES.indexOf(a as typeof CATEGORIES[number]) - CATEGORIES.indexOf(b as typeof CATEGORIES[number]))
+
+  const filteredBooks = activeCategory ? books.filter(b => b.category === activeCategory) : books
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -123,6 +131,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
             description: (formData.get('description') as string) || null,
             publisher:   (formData.get('publisher')   as string) || null,
             year:        (formData.get('year')        as string) || null,
+            category:    (formData.get('category')    as string) || null,
           }
         : b
     ))
@@ -168,57 +177,86 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
 
   return (
     <>
-      <ul className="divide-y divide-stone-100">
-        {books.map(book => (
-          <li key={book.id} className="flex items-center gap-4 py-4">
-            {/* Cover thumbnail or placeholder */}
-            <div className="shrink-0 w-10 h-14 rounded bg-stone-200 overflow-hidden flex items-center justify-center">
-              {book.cover_url
-                ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
-                : <span className="text-stone-400 text-lg">📖</span>
-              }
-            </div>
-
-            {/* Details */}
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-stone-800 truncate">{book.title}</p>
-              <p className="text-sm text-stone-500 truncate">{book.author}</p>
-              {book.isbn && <p className="text-xs text-stone-400 mt-0.5">ISBN {book.isbn}</p>}
-            </div>
-
-            {/* Status */}
-            <Badge
-              variant="outline"
-              className={
-                book.status === 'available'
-                  ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                  : 'border-amber-200 text-amber-700 bg-amber-50'
-              }
+      {uniqueCategories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
+          >
+            All
+          </button>
+          {uniqueCategories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              }`}
             >
-              {book.status === 'available' ? 'Available' : 'Lent out'}
-            </Badge>
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
-            {/* Actions */}
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-stone-400 hover:text-stone-700"
-                onClick={() => router.push(`/books/${book.id}`)}
+      {filteredBooks.length === 0 ? (
+        <div className="text-center py-12 text-stone-400 text-sm">No books in this category.</div>
+      ) : (
+        <ul className="divide-y divide-stone-100">
+          {filteredBooks.map(book => (
+            <li key={book.id} className="flex items-center gap-4 py-4">
+              {/* Cover thumbnail or placeholder */}
+              <div className="shrink-0 w-10 h-14 rounded bg-stone-200 overflow-hidden flex items-center justify-center">
+                {book.cover_url
+                  ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+                  : <span className="text-stone-400 text-lg">📖</span>
+                }
+              </div>
+
+              {/* Details */}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-stone-800 truncate">{book.title}</p>
+                <p className="text-sm text-stone-500 truncate">{book.author}</p>
+                {book.category && <p className="text-xs text-stone-400 mt-0.5">{book.category}</p>}
+                {book.isbn && <p className="text-xs text-stone-400 mt-0.5">ISBN {book.isbn}</p>}
+              </div>
+
+              {/* Status */}
+              <Badge
+                variant="outline"
+                className={
+                  book.status === 'available'
+                    ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                    : 'border-amber-200 text-amber-700 bg-amber-50'
+                }
               >
-                View
-              </Button>
-              <BookMenu
-                book={book}
-                isDeleting={deletingId === book.id}
-                onLend={() => { setLending(book); setLendError(null) }}
-                onEdit={() => { setEditing(book); setEditError(null) }}
-                onDelete={() => handleDelete(book.id)}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+                {book.status === 'available' ? 'Available' : 'Lent out'}
+              </Badge>
+
+              {/* Actions */}
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-stone-400 hover:text-stone-700"
+                  onClick={() => router.push(`/books/${book.id}`)}
+                >
+                  View
+                </Button>
+                <BookMenu
+                  book={book}
+                  isDeleting={deletingId === book.id}
+                  onLend={() => { setLending(book); setLendError(null) }}
+                  onEdit={() => { setEditing(book); setEditError(null) }}
+                  onDelete={() => handleDelete(book.id)}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {/* Lend dialog */}
       <Dialog open={!!lending} onOpenChange={open => !open && setLending(null)}>
@@ -321,6 +359,20 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     defaultValue={editing.isbn ?? ''}
                     className="border-stone-200 focus-visible:ring-stone-400"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="edit-category" className="text-stone-700">
+                    Category <span className="text-stone-400 font-normal">(optional)</span>
+                  </Label>
+                  <select
+                    id="edit-category"
+                    name="category"
+                    defaultValue={editing.category ?? ''}
+                    className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
+                  >
+                    <option value="">No category</option>
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-cover" className="text-stone-700">
