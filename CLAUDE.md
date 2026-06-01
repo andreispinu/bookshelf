@@ -352,7 +352,7 @@ Route: `/friends/[id]` — read-only view of an accepted friend's book collectio
 - `app/(dashboard)/friends/friend-list.tsx` — updated to add links
 
 ### Landing page
-Route: `/` — public marketing page, no auth required. Replaces the old redirect to `/books`.
+Route: `/` — public marketing page, no auth required. Replaces the old redirect to `/books`. Fully multilingual (EN/RO/RU).
 
 **Sections (in order):**
 1. **Nav** — "BookShelf" logo left; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
@@ -362,7 +362,12 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 5. **Pricing** — 3 cards: Free trial ($0/14 days), Monthly ($1/mo), Annual ($10/yr with "Best value" badge). All CTAs link to `/signup`.
 6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
 
-**File:** `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons. The features grid (12 cards, 3-col desktop / 2-col tablet / 1-col mobile) reflects the full current feature set and should be kept in sync when new features are added.
+**Files:**
+- `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons. Features grid (12 cards) and steps array built dynamically from translation keys. Should be kept in sync when new features are added.
+- `app/landing-nav.tsx` — `'use client'` component. Includes EN/RO/RU language switcher (pill buttons). Accepts `currentLocale` prop from `page.tsx` (via `getLocale()`). Calls `setLocale()` server action on language change.
+- `app/landing-actions.ts` — `setLocale(lang)` server action: sets `NEXT_LOCALE` cookie, also saves `ui_language` to DB if user is logged in. Works without authentication (cookie-only fallback).
+
+**Language switcher behavior:** Always sets `NEXT_LOCALE` cookie. If user is logged in, also saves to their `profiles.ui_language`. `router.refresh()` triggers re-render with new locale.
 
 ### All Friends' Bookshelves
 Route: `/friends/shelf` — combined view of every book owned by all accepted friends.

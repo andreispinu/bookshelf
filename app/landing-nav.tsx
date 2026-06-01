@@ -1,19 +1,37 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { setLocale } from './landing-actions'
 
-const navLinks = [
-  { label: 'Features', href: '#features' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Install', href: '#install' },
-  { label: 'Pricing', href: '#pricing' },
+const LANGUAGES = [
+  { code: 'en', label: 'EN' },
+  { code: 'ro', label: 'RO' },
+  { code: 'ru', label: 'RU' },
 ]
 
-export default function LandingNav({ isLoggedIn }: { isLoggedIn: boolean }) {
+export default function LandingNav({
+  isLoggedIn,
+  currentLocale,
+}: {
+  isLoggedIn: boolean
+  currentLocale: string
+}) {
+  const t = useTranslations('landing')
+  const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const navLinks = [
+    { label: t('navFeatures'), href: '#features' },
+    { label: t('navHowItWorks'), href: '#how-it-works' },
+    { label: t('navInstall'), href: '#install' },
+    { label: t('navPricing'), href: '#pricing' },
+  ]
 
   useEffect(() => {
     if (!menuOpen) return
@@ -25,6 +43,14 @@ export default function LandingNav({ isLoggedIn }: { isLoggedIn: boolean }) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen])
+
+  function handleLocale(code: string) {
+    if (code === currentLocale || isPending) return
+    startTransition(async () => {
+      await setLocale(code)
+      router.refresh()
+    })
+  }
 
   return (
     <header className="sticky top-0 z-20 bg-white border-b border-stone-200">
@@ -48,14 +74,30 @@ export default function LandingNav({ isLoggedIn }: { isLoggedIn: boolean }) {
           ))}
         </nav>
 
-        {/* Desktop right CTAs */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Desktop right: lang switcher + CTAs */}
+        <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 p-0.5">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => handleLocale(lang.code)}
+                disabled={isPending}
+                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                  currentLocale === lang.code
+                    ? 'bg-stone-800 text-white'
+                    : 'text-stone-500 hover:text-stone-800 disabled:opacity-50'
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
           {isLoggedIn ? (
             <Link
               href="/books"
               className="px-4 py-1.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
             >
-              Go to my shelf
+              {t('navGoToShelf')}
             </Link>
           ) : (
             <>
@@ -63,13 +105,13 @@ export default function LandingNav({ isLoggedIn }: { isLoggedIn: boolean }) {
                 href="/login"
                 className="px-3 py-1.5 text-sm text-stone-600 hover:text-stone-900 transition-colors"
               >
-                Log in
+                {t('navLogIn')}
               </Link>
               <Link
                 href="/signup"
                 className="px-4 py-1.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
               >
-                Start free trial
+                {t('navStartFreeTrial')}
               </Link>
             </>
           )}
@@ -109,14 +151,33 @@ export default function LandingNav({ isLoggedIn }: { isLoggedIn: boolean }) {
               </a>
             ))}
           </nav>
-          <div className="flex flex-col gap-2 border-t border-stone-100 pt-4">
+
+          {/* Mobile language switcher */}
+          <div className="flex items-center gap-1.5 mb-3">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => { handleLocale(lang.code); setMenuOpen(false) }}
+                disabled={isPending}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentLocale === lang.code
+                    ? 'bg-stone-800 text-white'
+                    : 'border border-stone-200 text-stone-600 hover:bg-stone-50'
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-stone-100 pt-3">
             {isLoggedIn ? (
               <Link
                 href="/books"
                 className="block text-center py-2.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
-                Go to my shelf
+                {t('navGoToShelf')}
               </Link>
             ) : (
               <>
@@ -125,14 +186,14 @@ export default function LandingNav({ isLoggedIn }: { isLoggedIn: boolean }) {
                   className="block text-center py-2.5 rounded-lg border border-stone-200 text-stone-700 text-sm font-medium hover:bg-stone-50 transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Log in
+                  {t('navLogIn')}
                 </Link>
                 <Link
                   href="/signup"
                   className="block text-center py-2.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Start free trial
+                  {t('navStartFreeTrial')}
                 </Link>
               </>
             )}
