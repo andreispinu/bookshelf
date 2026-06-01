@@ -431,13 +431,13 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
 
       {/* Edit dialog */}
       <Dialog open={!!editing} onOpenChange={open => !open && setEditing(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md flex flex-col max-h-[95vh] sm:max-h-[90vh] p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
             <DialogTitle className="text-stone-800">Edit book</DialogTitle>
           </DialogHeader>
           {editing && (
-            <form onSubmit={handleUpdate}>
-              <div className="space-y-4 py-2">
+            <form onSubmit={handleUpdate} className="flex flex-col flex-1 min-h-0">
+              <div className="space-y-4 px-6 py-2 overflow-y-auto flex-1">
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-title" className="text-stone-700">Title</Label>
                   <Input
@@ -567,7 +567,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                 </div>
                 {editError && <p className="text-sm text-red-600">{editError}</p>}
               </div>
-              <DialogFooter className="mt-4">
+              <DialogFooter className="px-6 py-4 border-t border-stone-100 shrink-0">
                 <Button
                   type="button"
                   variant="ghost"
