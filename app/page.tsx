@@ -183,6 +183,80 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Install */}
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">Use it like a native app</h2>
+          <p className="text-center text-stone-500 text-sm mb-10">
+            No App Store needed. Install BookShelf directly from your browser in seconds.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            {/* iOS */}
+            <div className="rounded-xl border border-stone-200 bg-white p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                  <Smartphone className="h-5 w-5 text-stone-600" />
+                </div>
+                <h3 className="font-semibold text-stone-900">iPhone &amp; iPad</h3>
+              </div>
+              <ol className="space-y-2.5">
+                {[
+                  'Open bookshelf.name in Safari',
+                  'Tap the Share button (box with arrow ↑) at the bottom',
+                  'Scroll down and tap "Add to Home Screen"',
+                  'Tap "Add" in the top right corner',
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-stone-600">
+                    <span className="shrink-0 h-5 w-5 rounded-full bg-stone-800 text-white text-xs flex items-center justify-center font-semibold mt-0.5">
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-stone-400 border-t border-stone-100 pt-3">
+                Safari only — does not work in Chrome or Firefox on iOS
+              </p>
+            </div>
+
+            {/* Android */}
+            <div className="rounded-xl border border-stone-200 bg-white p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+                  <Smartphone className="h-5 w-5 text-stone-600" />
+                </div>
+                <h3 className="font-semibold text-stone-900">Android</h3>
+              </div>
+              <ol className="space-y-2.5">
+                {[
+                  'Open bookshelf.name in Chrome',
+                  'Tap the three-dot menu (⋮) in the top right corner',
+                  'Tap "Add to Home screen"',
+                  'Tap "Add" to confirm',
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3 text-sm text-stone-600">
+                    <span className="shrink-0 h-5 w-5 rounded-full bg-stone-800 text-white text-xs flex items-center justify-center font-semibold mt-0.5">
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-stone-400 border-t border-stone-100 pt-3">
+                Works in Chrome, Edge, and most Android browsers
+              </p>
+            </div>
+
+          </div>
+
+          <p className="text-center text-sm text-stone-400 mt-8">
+            Once installed, BookShelf works just like a native app — full screen, fast, and always available from your home screen.
+          </p>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section className="py-16 px-4 bg-white border-y border-stone-200">
         <div className="max-w-3xl mx-auto">
