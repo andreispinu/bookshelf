@@ -1,5 +1,6 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase-server'
 import { revalidatePath } from 'next/cache'
 
@@ -82,5 +83,29 @@ export async function updateLocation(
   if (error) return { error: error.message }
 
   revalidatePath('/profile')
+  return { error: null }
+}
+
+export async function updateUiLanguage(lang: string): Promise<{ error: string | null }> {
+  const LOCALES = ['en', 'ro', 'ru']
+  if (!LOCALES.includes(lang)) return { error: 'Invalid language' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  await supabase
+    .from('profiles')
+    .update({ ui_language: lang })
+    .eq('id', user.id)
+
+  const cookieStore = await cookies()
+  cookieStore.set('NEXT_LOCALE', lang, {
+    maxAge: 365 * 24 * 60 * 60,
+    path: '/',
+    sameSite: 'lax',
+  })
+
+  revalidatePath('/', 'layout')
   return { error: null }
 }

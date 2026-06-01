@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,8 @@ function scrollToPlans() {
 }
 
 export default function ProfileClient({ profile, email }: Props) {
+  const t = useTranslations('profile')
+  const tc = useTranslations('common')
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url)
@@ -58,8 +61,8 @@ export default function ProfileClient({ profile, email }: Props) {
   const msLeft = trialEndsAt ? trialEndsAt.getTime() - now.getTime() : 0
   const daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
 
-  const planLabel = profile.subscription_plan === 'monthly' ? 'Monthly' : 'Annual'
   const planPrice = profile.subscription_plan === 'monthly' ? '$1/month' : '$10/year'
+  const planTypeLabel = profile.subscription_plan === 'monthly' ? t('monthlyPlan') : t('annualPlan')
   const nextBilling = profile.subscription_ends_at
     ? new Date(profile.subscription_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null
@@ -127,16 +130,16 @@ export default function ProfileClient({ profile, email }: Props) {
       const data = await res.json()
       if (!res.ok || !data.url) throw new Error(data.error || 'Failed to open portal')
       window.location.href = data.url
-    } catch (err) {
+    } catch {
       setPortalLoading(false)
     }
   }
 
   const features = [
-    'Full book library',
-    'Friends & lending',
-    'AI book scanning',
-    'PWA mobile app',
+    t('featureLibrary'),
+    t('featureFriends'),
+    t('featureAI'),
+    t('featurePWA'),
   ]
 
   return (
@@ -144,7 +147,7 @@ export default function ProfileClient({ profile, email }: Props) {
 
       {/* User Info */}
       <section>
-        <h2 className="text-lg font-semibold text-stone-800 mb-4">Account</h2>
+        <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('account')}</h2>
         <div className="bg-white rounded-xl border border-stone-200 p-6 flex items-center gap-5">
           <button
             type="button"
@@ -187,38 +190,36 @@ export default function ProfileClient({ profile, email }: Props) {
             className="border-stone-200 text-stone-700 hover:bg-stone-50 shrink-0"
             onClick={() => { setEditName(currentName); setEditError(null); setEditOpen(true) }}
           >
-            Edit name
+            {t('editName')}
           </Button>
         </div>
       </section>
 
       {/* Subscription Status */}
       <section>
-        <h2 className="text-lg font-semibold text-stone-800 mb-4">Subscription</h2>
+        <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('subscription')}</h2>
         <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-4">
 
           {isTrialing && (
             <>
               <div className="flex items-center gap-3">
                 <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                  Free Trial
+                  {t('freeTrial')}
                 </Badge>
                 <span className="text-sm font-medium text-stone-700">
-                  {daysLeft === 0 ? 'Expires today' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`}
+                  {daysLeft === 0 ? t('expiresToday') : t('daysRemaining', { count: daysLeft })}
                 </span>
               </div>
               {trialEndDate && (
-                <p className="text-sm text-stone-500">Trial ends on {trialEndDate}</p>
+                <p className="text-sm text-stone-500">{t('trialEndsOn', { date: trialEndDate })}</p>
               )}
-              <p className="text-sm text-stone-500">
-                After your trial ends, choose a plan to keep access.
-              </p>
+              <p className="text-sm text-stone-500">{t('afterTrialEnds')}</p>
               <Button
                 variant="outline"
                 className="border-stone-300 text-stone-700 hover:bg-stone-50"
                 onClick={scrollToPlans}
               >
-                View plans ↓
+                {t('viewPlans')}
               </Button>
             </>
           )}
@@ -227,13 +228,13 @@ export default function ProfileClient({ profile, email }: Props) {
             <>
               <div className="flex items-center gap-3">
                 <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100">
-                  Active
+                  {t('active')}
                 </Badge>
-                <span className="text-sm font-medium text-stone-700">{planLabel} plan</span>
+                <span className="text-sm font-medium text-stone-700">{planTypeLabel}</span>
               </div>
               <div className="text-sm text-stone-500 space-y-0.5">
-                {nextBilling && <p>Next billing date: {nextBilling}</p>}
-                <p>Amount: {planPrice}</p>
+                {nextBilling && <p>{t('nextBilling', { date: nextBilling })}</p>}
+                <p>{t('amount', { price: planPrice })}</p>
               </div>
               <Button
                 variant="outline"
@@ -241,7 +242,7 @@ export default function ProfileClient({ profile, email }: Props) {
                 disabled={portalLoading}
                 onClick={handleManageSubscription}
               >
-                {portalLoading ? 'Loading…' : 'Manage subscription →'}
+                {portalLoading ? t('managingSubscription') : t('manageSubscription')}
               </Button>
             </>
           )}
@@ -250,17 +251,15 @@ export default function ProfileClient({ profile, email }: Props) {
             <>
               <div className="flex items-center gap-3">
                 <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
-                  Expired
+                  {t('expired')}
                 </Badge>
               </div>
-              <p className="text-sm text-stone-500">
-                Your trial has ended. Subscribe to regain access.
-              </p>
+              <p className="text-sm text-stone-500">{t('trialExpiredMessage')}</p>
               <Button
                 className="bg-stone-800 hover:bg-stone-700 text-white"
                 onClick={scrollToPlans}
               >
-                Subscribe now ↓
+                {t('subscribeNow')}
               </Button>
             </>
           )}
@@ -270,13 +269,13 @@ export default function ProfileClient({ profile, email }: Props) {
 
       {/* Plans */}
       <section id="plans">
-        <h2 className="text-lg font-semibold text-stone-800 mb-4">Plans</h2>
+        <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('plans')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
           {/* Monthly */}
           <div className="bg-white rounded-xl border border-stone-200 p-6 flex flex-col gap-4">
             <div>
-              <span className="text-sm font-medium text-stone-500">Monthly</span>
+              <span className="text-sm font-medium text-stone-500">{t('monthly')}</span>
             </div>
             <div>
               <span className="text-3xl font-bold text-stone-800">$1</span>
@@ -295,16 +294,16 @@ export default function ProfileClient({ profile, email }: Props) {
               disabled={subscribeLoading !== null || isActive}
               onClick={() => handleSubscribe('monthly')}
             >
-              {subscribeLoading === 'monthly' ? 'Loading…' : isActive && profile.subscription_plan === 'monthly' ? 'Current plan' : 'Subscribe'}
+              {subscribeLoading === 'monthly' ? tc('loading') : isActive && profile.subscription_plan === 'monthly' ? t('currentPlan') : t('subscribe')}
             </Button>
           </div>
 
           {/* Annual */}
           <div className="bg-stone-800 rounded-xl border border-stone-700 p-6 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-stone-300">Annual</span>
+              <span className="text-sm font-medium text-stone-300">{t('annual')}</span>
               <span className="text-xs bg-amber-400 text-amber-900 font-semibold px-2 py-0.5 rounded-full">
-                Best value
+                {t('bestValue')}
               </span>
             </div>
             <div>
@@ -323,7 +322,7 @@ export default function ProfileClient({ profile, email }: Props) {
               disabled={subscribeLoading !== null || isActive}
               onClick={() => handleSubscribe('annual')}
             >
-              {subscribeLoading === 'annual' ? 'Loading…' : isActive && profile.subscription_plan === 'annual' ? 'Current plan' : 'Subscribe'}
+              {subscribeLoading === 'annual' ? tc('loading') : isActive && profile.subscription_plan === 'annual' ? t('currentPlan') : t('subscribe')}
             </Button>
           </div>
 
@@ -331,20 +330,18 @@ export default function ProfileClient({ profile, email }: Props) {
         {subscribeError && (
           <p className="text-sm text-red-600 mt-3">{subscribeError}</p>
         )}
-        <p className="text-xs text-stone-400 mt-4">
-          Payments processed securely by Stripe. Cancel any time.
-        </p>
+        <p className="text-xs text-stone-400 mt-4">{t('stripeNote')}</p>
       </section>
 
       {/* Edit name dialog */}
       <Dialog open={editOpen} onOpenChange={open => !open && setEditOpen(false)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-stone-800">Edit name</DialogTitle>
+            <DialogTitle className="text-stone-800">{t('editName')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-name" className="text-stone-700">Name</Label>
+              <Label htmlFor="edit-name" className="text-stone-700">{t('name')}</Label>
               <Input
                 id="edit-name"
                 value={editName}
@@ -357,14 +354,14 @@ export default function ProfileClient({ profile, email }: Props) {
           </div>
           <DialogFooter>
             <Button variant="ghost" className="text-stone-500" onClick={() => setEditOpen(false)}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button
               disabled={editLoading}
               className="bg-stone-800 hover:bg-stone-700 text-white"
               onClick={handleSaveName}
             >
-              {editLoading ? 'Saving…' : 'Save'}
+              {editLoading ? tc('saving') : tc('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

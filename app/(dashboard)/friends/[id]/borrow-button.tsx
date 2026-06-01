@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 
 type Props = {
@@ -11,6 +12,8 @@ type Props = {
 }
 
 export default function BorrowButton({ bookId, bookTitle, ownerId }: Props) {
+  const t = useTranslations('loans')
+  const tc = useTranslations('common')
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,14 +28,14 @@ export default function BorrowButton({ bookId, bookTitle, ownerId }: Props) {
       })
       const data = await res.json()
       if (!res.ok) {
-        toast.error(data.error ?? 'Something went wrong')
+        toast.error(data.error ?? tc('somethingWentWrong'))
         return
       }
-      toast.success('Borrow request sent!')
+      toast.success(t('borrowRequestSent'))
       setOpen(false)
       setMessage('')
     } catch {
-      toast.error('Something went wrong')
+      toast.error(tc('somethingWentWrong'))
     } finally {
       setLoading(false)
     }
@@ -46,7 +49,7 @@ export default function BorrowButton({ bookId, bookTitle, ownerId }: Props) {
         className="border-stone-300 text-stone-700 hover:bg-stone-50 shrink-0"
         onClick={() => setOpen(true)}
       >
-        Request to borrow
+        {t('requestToBorrow')}
       </Button>
 
       {open && (
@@ -55,16 +58,16 @@ export default function BorrowButton({ bookId, bookTitle, ownerId }: Props) {
           onClick={e => { if (e.target === e.currentTarget) { setOpen(false); setMessage('') } }}
         >
           <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl p-6">
-            <h3 className="font-semibold text-stone-800 text-base mb-1">Request to borrow</h3>
+            <h3 className="font-semibold text-stone-800 text-base mb-1">{t('requestToBorrow')}</h3>
             <p className="text-sm text-stone-500 mb-4 truncate">"{bookTitle}"</p>
 
             <label className="block text-xs font-medium text-stone-600 mb-1.5">
-              Message <span className="text-stone-400 font-normal">(optional)</span>
+              {t('messageLabel')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
             </label>
             <textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder="Add a note for the owner…"
+              placeholder={t('addNoteForOwner')}
               rows={3}
               className="w-full resize-none rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-transparent"
             />
@@ -75,7 +78,7 @@ export default function BorrowButton({ bookId, bookTitle, ownerId }: Props) {
                 disabled={loading}
                 className="flex-1 bg-stone-800 text-white hover:bg-stone-700"
               >
-                {loading ? 'Sending…' : 'Send request'}
+                {loading ? t('sending') : t('sendRequest')}
               </Button>
               <Button
                 variant="outline"
@@ -83,7 +86,7 @@ export default function BorrowButton({ bookId, bookTitle, ownerId }: Props) {
                 disabled={loading}
                 className="border-stone-200 text-stone-600 hover:bg-stone-50"
               >
-                Cancel
+                {tc('cancel')}
               </Button>
             </div>
           </div>

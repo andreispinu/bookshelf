@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -26,6 +27,8 @@ export default function UserSearch({
   currentUserId: string
   existingFriends: Friend[]
 }) {
+  const t = useTranslations('friends')
+  const tc = useTranslations('common')
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Profile[]>([])
   const [searched, setSearched] = useState(false)
@@ -55,19 +58,19 @@ export default function UserSearch({
         <Input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search by name…"
+          placeholder={t('searchByName')}
           className="border-stone-200 focus-visible:ring-stone-400"
         />
         <Button
           type="submit"
           className="bg-stone-800 hover:bg-stone-700 text-white shrink-0"
         >
-          Search
+          {tc('search')}
         </Button>
       </form>
 
       {searched && results.length === 0 && (
-        <p className="text-sm text-stone-400">No users found.</p>
+        <p className="text-sm text-stone-400">{t('noUsersFound')}</p>
       )}
 
       {results.length > 0 && (
@@ -84,9 +87,9 @@ export default function UserSearch({
                 </Avatar>
                 <span className="flex-1 text-sm text-stone-800">{user.name}</span>
                 {alreadyFriend ? (
-                  <span className="text-xs text-stone-400">Already connected</span>
+                  <span className="text-xs text-stone-400">{t('alreadyConnected')}</span>
                 ) : justSent ? (
-                  <span className="text-xs text-stone-400">Request sent</span>
+                  <span className="text-xs text-stone-400">{t('requestSent')}</span>
                 ) : (
                   <Button
                     size="sm"
@@ -94,7 +97,7 @@ export default function UserSearch({
                     onClick={() => handleSend(user.id)}
                     className="bg-stone-800 hover:bg-stone-700 text-white"
                   >
-                    Add friend
+                    {t('addFriend')}
                   </Button>
                 )}
               </li>

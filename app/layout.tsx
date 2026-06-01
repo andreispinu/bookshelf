@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner";
 
@@ -35,19 +37,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster position="bottom-center" />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+          <Toaster position="bottom-center" />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

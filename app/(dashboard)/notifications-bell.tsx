@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Bell } from 'lucide-react'
 
 type Notification = {
@@ -24,18 +25,6 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`
 }
 
-function notifMessage(n: Notification): string {
-  const name = n.actor?.name ?? 'Someone'
-  const title = n.book?.title ?? 'a book'
-  if (n.type === 'friend_request') return `${name} sent you a friend request`
-  if (n.type === 'friend_accepted') return `${name} accepted your friend request`
-  if (n.type === 'friend_new_book') return `${name} added ${title} to their shelf`
-  if (n.type === 'borrow_request') return `${name} wants to borrow ${title}`
-  if (n.type === 'borrow_approved') return `${name} approved your request to borrow ${title}`
-  if (n.type === 'borrow_rejected') return `${name} declined your request to borrow ${title}`
-  return ''
-}
-
 function notifHref(n: Notification): string {
   if (n.type === 'friend_new_book' && n.actor?.id) return `/friends/${n.actor.id}`
   if (n.type === 'borrow_request') return '/loans/requests'
@@ -48,12 +37,25 @@ function initials(name: string) {
 }
 
 export default function NotificationsBell() {
+  const t = useTranslations('notifications')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const unreadCount = notifications.filter(n => !n.read).length
+
+  function notifMessage(n: Notification): string {
+    const name = n.actor?.name ?? 'Someone'
+    const title = n.book?.title ?? 'a book'
+    if (n.type === 'friend_request') return t('friendRequest', { name })
+    if (n.type === 'friend_accepted') return t('friendAccepted', { name })
+    if (n.type === 'friend_new_book') return t('friendNewBook', { name, title })
+    if (n.type === 'borrow_request') return t('borrowRequest', { name, title })
+    if (n.type === 'borrow_approved') return t('borrowApproved', { name, title })
+    if (n.type === 'borrow_rejected') return t('borrowRejected', { name, title })
+    return ''
+  }
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -108,7 +110,7 @@ export default function NotificationsBell() {
       <button
         onClick={() => setOpen(v => !v)}
         className="relative p-1.5 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
-        aria-label="Notifications"
+        aria-label={t('title')}
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
@@ -121,20 +123,20 @@ export default function NotificationsBell() {
       {open && (
         <div className="absolute right-0 top-full mt-1.5 w-80 rounded-xl border border-stone-200 bg-white shadow-lg z-20 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-stone-100">
-            <span className="text-sm font-semibold text-stone-800">Notifications</span>
+            <span className="text-sm font-semibold text-stone-800">{t('title')}</span>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
               >
-                Mark all as read
+                {t('markAllRead')}
               </button>
             )}
           </div>
 
           {notifications.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-stone-400">
-              No notifications yet
+              {t('noNotifications')}
             </div>
           ) : (
             <ul className="max-h-96 overflow-y-auto divide-y divide-stone-100">

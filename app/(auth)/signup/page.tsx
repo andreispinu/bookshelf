@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { signup } from '../actions'
 
 export default function SignupPage() {
+  const t = useTranslations('auth')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -29,23 +31,23 @@ export default function SignupPage() {
   return (
     <Card className="border-stone-200 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-stone-800 text-xl">Create account</CardTitle>
+        <CardTitle className="text-stone-800 text-xl">{t('createAccount')}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-stone-700">Name</Label>
+            <Label htmlFor="name" className="text-stone-700">{t('name')}</Label>
             <Input
               id="name"
               name="name"
               type="text"
-              placeholder="Your name"
+              placeholder={t('yourName')}
               required
               className="border-stone-200 focus-visible:ring-stone-400"
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-stone-700">Email</Label>
+            <Label htmlFor="email" className="text-stone-700">{t('email')}</Label>
             <Input
               id="email"
               name="email"
@@ -56,7 +58,7 @@ export default function SignupPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-stone-700">Password</Label>
+            <Label htmlFor="password" className="text-stone-700">{t('password')}</Label>
             <Input
               id="password"
               name="password"
@@ -77,12 +79,12 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full bg-stone-800 hover:bg-stone-700 text-white"
           >
-            {loading ? 'Creating account…' : 'Create account'}
+            {loading ? t('creatingAccount') : t('createAccount')}
           </Button>
           <p className="text-sm text-stone-500 text-center">
-            Already have an account?{' '}
+            {t('alreadyHaveAccount')}{' '}
             <Link href="/login" className="text-stone-800 underline underline-offset-2">
-              Sign in
+              {t('signIn')}
             </Link>
           </p>
         </CardFooter>

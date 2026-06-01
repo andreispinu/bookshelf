@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -10,19 +11,20 @@ import NotificationsBell from './notifications-bell'
 
 type NavCounts = { unreadMessages: number; pendingRequests: number }
 
-const NAV_LINKS = [
-  { href: '/books',    label: 'My Books',  badge: null as null | keyof NavCounts },
-  { href: '/messages', label: 'Messages',  badge: 'unreadMessages' as keyof NavCounts },
-  { href: '/loans',    label: 'Loans',     badge: 'pendingRequests' as keyof NavCounts },
-]
-
 export default function Nav({ userName, avatarUrl }: { userName: string; avatarUrl?: string | null }) {
+  const t = useTranslations('nav')
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
   const [menuOpen, setMenuOpen] = useState(false)
   const [counts, setCounts] = useState<NavCounts>({ unreadMessages: 0, pendingRequests: 0 })
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const NAV_LINKS = [
+    { href: '/books',    label: t('myBooks'),  badge: null as null | keyof NavCounts },
+    { href: '/messages', label: t('messages'), badge: 'unreadMessages' as keyof NavCounts },
+    { href: '/loans',    label: t('loans'),    badge: 'pendingRequests' as keyof NavCounts },
+  ]
 
   const fetchCounts = useCallback(async () => {
     try {
@@ -114,14 +116,14 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
                 onClick={() => setMenuOpen(false)}
                 className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
               >
-                Profile
+                {t('profile')}
               </Link>
               <div className="my-1 border-t border-stone-100" />
               <button
                 onClick={() => { setMenuOpen(false); handleSignOut() }}
                 className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
               >
-                Sign out
+                {t('signOut')}
               </button>
             </div>
           )}

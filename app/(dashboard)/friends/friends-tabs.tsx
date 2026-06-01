@@ -1,6 +1,9 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
-export default function FriendsTabs({ active }: { active: 'friends' | 'shelf' }) {
+export default async function FriendsTabs({ active }: { active: 'friends' | 'shelf' }) {
+  const t = await getTranslations('friends')
+
   return (
     <div className="flex gap-1 mb-6">
       <Link
@@ -11,7 +14,7 @@ export default function FriendsTabs({ active }: { active: 'friends' | 'shelf' })
             : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
         }`}
       >
-        Friends
+        {t('title')}
       </Link>
       <Link
         href="/friends/shelf"
@@ -21,7 +24,7 @@ export default function FriendsTabs({ active }: { active: 'friends' | 'shelf' })
             : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
         }`}
       >
-        Friends' Shelf
+        {t('friendsShelf')}
       </Link>
     </div>
   )

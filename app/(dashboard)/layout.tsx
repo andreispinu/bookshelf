@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import Nav from './nav'
 
@@ -14,7 +15,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
-  // Access control: allow trialing (within window) or active subscriptions
   const now = new Date()
   const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
   const isTrialing = profile?.subscription_status === 'trialing' && !!trialEndsAt && trialEndsAt > now
@@ -24,10 +24,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect('/subscribe')
   }
 
-  // Trial countdown banner (shown when ≤ 3 days remain)
   const msLeft = trialEndsAt ? trialEndsAt.getTime() - now.getTime() : 0
   const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
   const showBanner = isTrialing && daysLeft <= 3
+
+  const t = await getTranslations('profile')
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -35,11 +36,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {showBanner && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-800">
           {daysLeft <= 1
-            ? 'Your free trial expires today.'
-            : `${daysLeft} days left in your free trial.`}
+            ? t('expiresToday')
+            : t('daysRemaining', { count: daysLeft })}
           {' '}
           <Link href="/subscribe" className="font-semibold underline underline-offset-2">
-            Subscribe to keep access →
+            {t('subscribeNow').replace(' ↓', '')} →
           </Link>
         </div>
       )}

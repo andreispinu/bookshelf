@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { getLentOut, getBorrowed } from '@/lib/db/loans'
 import LoanList from './loan-list'
@@ -13,6 +14,7 @@ export default async function LoansPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const t = await getTranslations('loans')
   const { tab } = await searchParams
 
   const [{ data: lentOut, error: lentError }, { data: borrowed, error: borrowedError }, { data: sentData }] =
@@ -34,8 +36,8 @@ export default async function LoansPage({
   return (
     <div className="max-w-lg">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-stone-800">Loans</h2>
-        <p className="text-stone-500 text-sm mt-0.5">Books you've lent out, borrowed, and requested.</p>
+        <h2 className="text-2xl font-semibold text-stone-800">{t('title')}</h2>
+        <p className="text-stone-500 text-sm mt-0.5">{t('subtitle')}</p>
       </div>
 
       {(lentError || borrowedError) && (

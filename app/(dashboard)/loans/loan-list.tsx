@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,12 +11,6 @@ import type { LoanWithDetails, SentRequest } from '@/types'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-const STATUS_BADGE: Record<SentRequest['status'], { label: string; className: string }> = {
-  pending:  { label: 'Pending',  className: 'border-amber-200 text-amber-700 bg-amber-50' },
-  approved: { label: 'Approved', className: 'border-emerald-200 text-emerald-700 bg-emerald-50' },
-  rejected: { label: 'Declined', className: 'border-stone-200 text-stone-500 bg-stone-50' },
 }
 
 export default function LoanList({
@@ -29,6 +24,7 @@ export default function LoanList({
   sentRequests: SentRequest[]
   defaultTab?: string
 }) {
+  const t = useTranslations('loans')
   const [lentOut, setLentOut] = useState(initialLentOut)
   const [isPending, startTransition] = useTransition()
 
@@ -43,11 +39,23 @@ export default function LoanList({
 
   const pendingCount = sentRequests.filter(r => r.status === 'pending').length
 
+  const statusLabel: Record<SentRequest['status'], string> = {
+    pending:  t('pending'),
+    approved: t('approved'),
+    rejected: t('rejected'),
+  }
+
+  const statusClass: Record<SentRequest['status'], string> = {
+    pending:  'border-amber-200 text-amber-700 bg-amber-50',
+    approved: 'border-emerald-200 text-emerald-700 bg-emerald-50',
+    rejected: 'border-stone-200 text-stone-500 bg-stone-50',
+  }
+
   return (
     <Tabs defaultValue={defaultTab ?? 'lent'}>
       <TabsList className="mb-6">
         <TabsTrigger value="lent">
-          Lent out
+          {t('lentOut')}
           {lentOut.length > 0 && (
             <Badge variant="outline" className="ml-1.5 border-amber-200 text-amber-700 bg-amber-50">
               {lentOut.length}
@@ -55,7 +63,7 @@ export default function LoanList({
           )}
         </TabsTrigger>
         <TabsTrigger value="borrowed">
-          Borrowed
+          {t('borrowed')}
           {borrowed.length > 0 && (
             <Badge variant="outline" className="ml-1.5 border-stone-200 text-stone-600">
               {borrowed.length}
@@ -63,7 +71,7 @@ export default function LoanList({
           )}
         </TabsTrigger>
         <TabsTrigger value="requests">
-          Requests
+          {t('borrowRequests')}
           {pendingCount > 0 && (
             <Badge variant="outline" className="ml-1.5 border-amber-200 text-amber-700 bg-amber-50">
               {pendingCount}
@@ -75,9 +83,7 @@ export default function LoanList({
       {/* Lent out */}
       <TabsContent value="lent">
         {lentOut.length === 0 ? (
-          <p className="text-sm text-stone-400 py-8 text-center">
-            You haven't lent out any books. Use the "Lend" button on your books page.
-          </p>
+          <p className="text-sm text-stone-400 py-8 text-center">{t('noLentOut')}</p>
         ) : (
           <ul className="divide-y divide-stone-100">
             {lentOut.map(loan => (
@@ -86,7 +92,7 @@ export default function LoanList({
                   <p className="font-medium text-stone-800 truncate">{loan.book.title}</p>
                   <p className="text-sm text-stone-500">{loan.book.author}</p>
                   <p className="text-xs text-stone-400 mt-1">
-                    Lent to <span className="text-stone-600">{loan.otherParty.name}</span> · {formatDate(loan.loaned_at)}
+                    {t('lentTo', { name: loan.otherParty.name, date: formatDate(loan.loaned_at) })}
                   </p>
                 </div>
                 <Button
@@ -96,7 +102,7 @@ export default function LoanList({
                   onClick={() => handleMarkReturned(loan.id, loan.book.id)}
                   className="shrink-0 border-stone-200 text-stone-600 hover:bg-stone-100"
                 >
-                  Mark returned
+                  {t('markReturned')}
                 </Button>
               </li>
             ))}
@@ -107,9 +113,7 @@ export default function LoanList({
       {/* Borrowed */}
       <TabsContent value="borrowed">
         {borrowed.length === 0 ? (
-          <p className="text-sm text-stone-400 py-8 text-center">
-            You haven't borrowed any books from friends.
-          </p>
+          <p className="text-sm text-stone-400 py-8 text-center">{t('noBorrowed')}</p>
         ) : (
           <ul className="divide-y divide-stone-100">
             {borrowed.map(loan => (
@@ -117,7 +121,7 @@ export default function LoanList({
                 <p className="font-medium text-stone-800">{loan.book.title}</p>
                 <p className="text-sm text-stone-500">{loan.book.author}</p>
                 <p className="text-xs text-stone-400 mt-1">
-                  Borrowed from <span className="text-stone-600">{loan.otherParty.name}</span> · {formatDate(loan.loaned_at)}
+                  {t('borrowedFrom', { name: loan.otherParty.name, date: formatDate(loan.loaned_at) })}
                 </p>
               </li>
             ))}
@@ -128,9 +132,7 @@ export default function LoanList({
       {/* Borrow requests sent */}
       <TabsContent value="requests">
         {sentRequests.length === 0 ? (
-          <p className="text-sm text-stone-400 py-8 text-center">
-            You haven't sent any borrow requests yet.
-          </p>
+          <p className="text-sm text-stone-400 py-8 text-center">{t('noSentRequests')}</p>
         ) : (
           <ul className="divide-y divide-stone-100">
             {sentRequests.map(req => (
@@ -145,14 +147,14 @@ export default function LoanList({
                   <p className="font-medium text-stone-800 truncate">{req.book.title}</p>
                   <p className="text-sm text-stone-500 truncate">{req.book.author}</p>
                   <p className="text-xs text-stone-400 mt-0.5">
-                    From <span className="text-stone-600">{req.owner.name}</span> · {formatDate(req.created_at)}
+                    {t('ownedBy', { name: req.owner.name, date: formatDate(req.created_at) })}
                   </p>
                   {req.owner_message && req.status !== 'pending' && (
                     <p className="text-xs text-stone-500 mt-1 italic">"{req.owner_message}"</p>
                   )}
                 </div>
-                <Badge variant="outline" className={`shrink-0 text-xs ${STATUS_BADGE[req.status].className}`}>
-                  {STATUS_BADGE[req.status].label}
+                <Badge variant="outline" className={`shrink-0 text-xs ${statusClass[req.status]}`}>
+                  {statusLabel[req.status]}
                 </Badge>
               </li>
             ))}
@@ -161,7 +163,7 @@ export default function LoanList({
         {/* Link to review incoming requests */}
         <div className="mt-4 pt-4 border-t border-stone-100">
           <Link href="/loans/requests" className="text-sm text-stone-500 hover:text-stone-800 transition-colors">
-            View incoming borrow requests →
+            {t('viewIncomingRequests')}
           </Link>
         </div>
       </TabsContent>

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { getFriends } from '@/lib/db/friends'
 import { Separator } from '@/components/ui/separator'
@@ -11,14 +12,16 @@ export default async function FriendsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const t = await getTranslations('friends')
+
   const { data: friends, error } = await getFriends(user.id)
 
   return (
     <div className="max-w-lg">
       <FriendsTabs active="friends" />
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-stone-800">Friends</h2>
-        <p className="text-stone-500 text-sm mt-0.5">Search for people to connect with.</p>
+        <h2 className="text-2xl font-semibold text-stone-800">{t('title')}</h2>
+        <p className="text-stone-500 text-sm mt-0.5">{t('connectWith')}</p>
       </div>
 
       <UserSearch currentUserId={user.id} existingFriends={friends ?? []} />

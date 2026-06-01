@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +15,7 @@ function initials(name: string) {
 }
 
 export default function FriendList({ friends: initial }: { friends: Friend[] }) {
+  const t = useTranslations('friends')
   const [friends, setFriends] = useState(initial)
   const [isPending, startTransition] = useTransition()
 
@@ -54,7 +56,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
       {incoming.length > 0 && (
         <section>
           <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-3">
-            Pending requests <Badge variant="outline" className="ml-1 border-amber-200 text-amber-700 bg-amber-50">{incoming.length}</Badge>
+            {t('friendRequests')} <Badge variant="outline" className="ml-1 border-amber-200 text-amber-700 bg-amber-50">{incoming.length}</Badge>
           </h3>
           <ul className="divide-y divide-stone-100">
             {incoming.map(f => (
@@ -73,7 +75,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                     onClick={() => handleRespond(f.friendshipId, 'accepted')}
                     className="bg-stone-800 hover:bg-stone-700 text-white"
                   >
-                    Accept
+                    {t('accept')}
                   </Button>
                   <Button
                     size="sm"
@@ -82,7 +84,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                     onClick={() => handleRespond(f.friendshipId, 'declined')}
                     className="text-stone-400 hover:text-red-600"
                   >
-                    Decline
+                    {t('decline')}
                   </Button>
                 </div>
               </li>
@@ -94,10 +96,10 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
       {/* Friends */}
       <section>
         <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-3">
-          Friends <span className="text-stone-400 font-normal normal-case">({accepted.length})</span>
+          {t('friendsCount', { count: accepted.length })}
         </h3>
         {accepted.length === 0 ? (
-          <p className="text-sm text-stone-400">No friends yet. Search for someone above.</p>
+          <p className="text-sm text-stone-400">{t('noFriends')}</p>
         ) : (
           <ul className="divide-y divide-stone-100">
             {accepted.map(f => (
@@ -122,7 +124,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                   href={`/friends/${f.profile.id}`}
                   className="text-xs text-stone-400 hover:text-stone-700 transition-colors shrink-0"
                 >
-                  View shelf
+                  {t('viewShelf')}
                 </Link>
                 <Button
                   size="sm"
@@ -131,7 +133,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                   onClick={() => handleCancel(f.friendshipId)}
                   className="text-stone-300 hover:text-red-500 shrink-0"
                 >
-                  Remove
+                  {t('remove')}
                 </Button>
               </li>
             ))}
@@ -143,7 +145,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
       {outgoing.length > 0 && (
         <section>
           <h3 className="text-sm font-medium text-stone-500 uppercase tracking-wide mb-3">
-            Sent requests
+            {t('sentRequests')}
           </h3>
           <ul className="divide-y divide-stone-100">
             {outgoing.map(f => (
@@ -155,7 +157,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                   </AvatarFallback>
                 </Avatar>
                 <span className="flex-1 text-sm text-stone-800">{f.profile.name}</span>
-                <span className="text-xs text-stone-400 mr-2">Pending</span>
+                <span className="text-xs text-stone-400 mr-2">{t('pending')}</span>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -163,7 +165,7 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                   onClick={() => handleCancel(f.friendshipId)}
                   className="text-stone-300 hover:text-red-500"
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
               </li>
             ))}

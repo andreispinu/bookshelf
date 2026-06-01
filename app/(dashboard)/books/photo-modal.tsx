@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -17,6 +18,7 @@ type Props = {
 }
 
 export default function PhotoModal({ open, onClose }: Props) {
+  const t = useTranslations('books')
   const router = useRouter()
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const uploadInputRef = useRef<HTMLInputElement>(null)
@@ -25,7 +27,6 @@ export default function PhotoModal({ open, onClose }: Props) {
   async function handleFile(file: File) {
     setLoading(true)
 
-    // Resize client-side to max 1024px before sending
     const resized = await resizeImage(file, 1024)
 
     const formData = new FormData()
@@ -68,13 +69,13 @@ export default function PhotoModal({ open, onClose }: Props) {
     <Dialog open={open} onOpenChange={open => !open && !loading && onClose()}>
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>
-          <DialogTitle className="text-stone-800">Add by photo</DialogTitle>
+          <DialogTitle className="text-stone-800">{t('addByPhoto')}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
           <div className="py-8 flex flex-col items-center gap-3 text-stone-500">
             <div className="h-8 w-8 rounded-full border-2 border-stone-300 border-t-stone-700 animate-spin" />
-            <p className="text-sm">Reading cover…</p>
+            <p className="text-sm">{t('readingCover')}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3 py-2">
@@ -82,19 +83,18 @@ export default function PhotoModal({ open, onClose }: Props) {
               className="w-full bg-stone-800 hover:bg-stone-700 text-white"
               onClick={() => cameraInputRef.current?.click()}
             >
-              Take photo
+              {t('takePhoto')}
             </Button>
             <Button
               variant="outline"
               className="w-full border-stone-200 text-stone-700"
               onClick={() => uploadInputRef.current?.click()}
             >
-              Upload photo
+              {t('uploadPhoto')}
             </Button>
           </div>
         )}
 
-        {/* Hidden file inputs */}
         <input
           ref={cameraInputRef}
           type="file"
@@ -115,7 +115,6 @@ export default function PhotoModal({ open, onClose }: Props) {
   )
 }
 
-// Resize image to maxPx on longest side, preserving aspect ratio
 function resizeImage(file: File, maxPx: number): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new Image()

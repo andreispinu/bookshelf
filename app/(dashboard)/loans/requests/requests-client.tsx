@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import type { BorrowRequest } from '@/types'
 
@@ -14,6 +15,8 @@ function initials(name: string) {
 }
 
 export default function RequestsClient({ requests: initialRequests }: { requests: BorrowRequest[] }) {
+  const t = useTranslations('loans')
+  const tc = useTranslations('common')
   const [requests, setRequests] = useState(initialRequests)
   const [loading, setLoading] = useState<string | null>(null)
 
@@ -27,13 +30,13 @@ export default function RequestsClient({ requests: initialRequests }: { requests
       })
       if (!res.ok) {
         const data = await res.json()
-        toast.error(data.error ?? 'Something went wrong')
+        toast.error(data.error ?? tc('somethingWentWrong'))
         return
       }
       setRequests(prev => prev.filter(r => r.id !== id))
-      toast.success(action === 'approve' ? 'Request approved — loan created!' : 'Request declined.')
+      toast.success(action === 'approve' ? t('requestApproved') : t('requestDeclined'))
     } catch {
-      toast.error('Something went wrong')
+      toast.error(tc('somethingWentWrong'))
     } finally {
       setLoading(null)
     }
@@ -42,7 +45,7 @@ export default function RequestsClient({ requests: initialRequests }: { requests
   if (requests.length === 0) {
     return (
       <p className="text-sm text-stone-400 py-8 text-center">
-        No pending borrow requests.
+        {t('noPendingRequests')}
       </p>
     )
   }
@@ -86,7 +89,7 @@ export default function RequestsClient({ requests: initialRequests }: { requests
                 onClick={() => handleAction(req.id, 'approve')}
                 className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs"
               >
-                Approve
+                {t('approve')}
               </Button>
               <Button
                 size="sm"
@@ -95,7 +98,7 @@ export default function RequestsClient({ requests: initialRequests }: { requests
                 onClick={() => handleAction(req.id, 'reject')}
                 className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs"
               >
-                Decline
+                {t('decline')}
               </Button>
             </div>
           </div>

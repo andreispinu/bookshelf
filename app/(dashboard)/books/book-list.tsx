@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,6 +40,8 @@ function BookMenu({
   onFill: () => void
   onDelete: () => void
 }) {
+  const t = useTranslations('books')
+  const tc = useTranslations('common')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -69,26 +72,26 @@ function BookMenu({
             disabled={book.status === 'lent_out'}
             onClick={() => { setOpen(false); onLend() }}
           >
-            Lend
+            {t('lend')}
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
             onClick={() => { setOpen(false); onEdit() }}
           >
-            Edit
+            {tc('edit')}
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
             onClick={() => { setOpen(false); onFill() }}
           >
-            Fill with AI
+            {t('fillWithAI')}
           </button>
           <button
             className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40"
             disabled={isDeleting}
             onClick={() => { setOpen(false); onDelete() }}
           >
-            {isDeleting ? 'Deleting…' : 'Delete'}
+            {isDeleting ? tc('saving') : tc('delete')}
           </button>
         </div>
       )}
@@ -101,6 +104,8 @@ function initials(name: string) {
 }
 
 export default function BookList({ books: initial, friends }: { books: Book[], friends: Friend[] }) {
+  const t = useTranslations('books')
+  const tc = useTranslations('common')
   const router = useRouter()
   const [books, setBooks] = useState(initial)
   const [editing, setEditing] = useState<Book | null>(null)
@@ -118,7 +123,6 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   const [isPending, startTransition] = useTransition()
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
-  // Fill with AI state
   const [fillingBook, setFillingBook] = useState<Book | null>(null)
   const [fillLoading, setFillLoading] = useState(false)
   const [fillError, setFillError] = useState<string | null>(null)
@@ -145,7 +149,6 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
     setEditError(null)
     setEditLoading(true)
 
-    // Capture before any await — currentTarget is nullified after the handler yields
     const form = e.currentTarget
 
     try {
@@ -243,12 +246,12 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
 
       const fields: Array<{ field: FillSuggestion['field']; label: string }> = [
         { field: 'isbn',        label: 'ISBN' },
-        { field: 'publisher',   label: 'Publisher' },
-        { field: 'year',        label: 'Year' },
-        { field: 'category',    label: 'Category' },
-        { field: 'language',    label: 'Language' },
-        { field: 'description', label: 'Description' },
-        { field: 'cover_url',   label: 'Cover image' },
+        { field: 'publisher',   label: t('publisher') },
+        { field: 'year',        label: t('year') },
+        { field: 'category',    label: t('category') },
+        { field: 'language',    label: t('language') },
+        { field: 'description', label: t('description') },
+        { field: 'cover_url',   label: t('coverImage') },
       ]
 
       const suggestions: FillSuggestion[] = []
@@ -257,13 +260,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
         if (!suggested) continue
         const current = book[field] as string | null
         if (suggested === current) continue
-        suggestions.push({
-          field,
-          label,
-          current,
-          suggested,
-          accepted: !current, // auto-accept fields that are currently empty
-        })
+        suggestions.push({ field, label, current, suggested, accepted: !current })
       }
 
       setFillSuggestions(suggestions)
@@ -304,8 +301,8 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   if (books.length === 0) {
     return (
       <div className="text-center py-20 text-stone-400">
-        <p className="text-lg">No books yet.</p>
-        <p className="text-sm mt-1">Add your first book to get started.</p>
+        <p className="text-lg">{t('noBooksYet')}</p>
+        <p className="text-sm mt-1">{t('addFirstBook')}</p>
       </div>
     )
   }
@@ -320,7 +317,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
               !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            All
+            {tc('all')}
           </button>
           {uniqueCategories.map(cat => (
             <button
@@ -337,7 +334,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
       )}
 
       {filteredBooks.length === 0 ? (
-        <div className="text-center py-12 text-stone-400 text-sm">No books in this category.</div>
+        <div className="text-center py-12 text-stone-400 text-sm">{t('noBooksInCategory')}</div>
       ) : (
         <ul className="divide-y divide-stone-100">
           {filteredBooks.map(book => (
@@ -364,7 +361,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     : 'border-amber-200 text-amber-700 bg-amber-50'
                 }
               >
-                {book.status === 'available' ? 'Available' : 'Lent out'}
+                {book.status === 'available' ? t('available') : t('lentOut')}
               </Badge>
 
               <div className="flex items-center gap-1 shrink-0">
@@ -374,7 +371,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                   className="text-stone-400 hover:text-stone-700"
                   onClick={() => router.push(`/books/${book.id}`)}
                 >
-                  View
+                  {t('view')}
                 </Button>
                 <BookMenu
                   book={book}
@@ -394,17 +391,15 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
       <Dialog open={!!lending} onOpenChange={open => !open && setLending(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-stone-800">Lend book</DialogTitle>
+            <DialogTitle className="text-stone-800">{t('lendBook')}</DialogTitle>
           </DialogHeader>
           {lending && (
             <div>
               <p className="text-sm text-stone-500 mb-4">
-                Who are you lending <span className="font-medium text-stone-700">"{lending.title}"</span> to?
+                {t('lendTo', { title: lending.title })}
               </p>
               {acceptedFriends.length === 0 ? (
-                <p className="text-sm text-stone-400">
-                  You have no friends yet. Add friends on the Friends page first.
-                </p>
+                <p className="text-sm text-stone-400">{t('noFriendsToLend')}</p>
               ) : (
                 <ul className="divide-y divide-stone-100">
                   {acceptedFriends.map(f => (
@@ -421,7 +416,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                         onClick={() => handleLend(f.profile.id)}
                         className="bg-stone-800 hover:bg-stone-700 text-white"
                       >
-                        {isPending && lendingTo === f.profile.id ? '…' : 'Lend'}
+                        {isPending && lendingTo === f.profile.id ? '…' : t('lend')}
                       </Button>
                     </li>
                   ))}
@@ -432,7 +427,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
           )}
           <DialogFooter>
             <Button variant="ghost" className="text-stone-500" onClick={() => setLending(null)}>
-              Cancel
+              {tc('cancel')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -442,88 +437,64 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
       <Dialog open={!!editing} onOpenChange={open => !open && setEditing(null)}>
         <DialogContent className="sm:max-w-md flex flex-col max-h-[95vh] sm:max-h-[90vh] p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-            <DialogTitle className="text-stone-800">Edit book</DialogTitle>
+            <DialogTitle className="text-stone-800">{t('editBook')}</DialogTitle>
           </DialogHeader>
           {editing && (
             <form onSubmit={handleUpdate} className="flex flex-col flex-1 min-h-0">
               <div className="space-y-4 px-6 py-2 overflow-y-auto flex-1">
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-title" className="text-stone-700">Title</Label>
-                  <Input
-                    id="edit-title"
-                    name="title"
-                    defaultValue={editing.title}
-                    required
-                    className="border-stone-200 focus-visible:ring-stone-400"
-                  />
+                  <Label htmlFor="edit-title" className="text-stone-700">{t('titleField')}</Label>
+                  <Input id="edit-title" name="title" defaultValue={editing.title} required
+                    className="border-stone-200 focus-visible:ring-stone-400" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="edit-author" className="text-stone-700">Author</Label>
-                  <Input
-                    id="edit-author"
-                    name="author"
-                    defaultValue={editing.author}
-                    required
-                    className="border-stone-200 focus-visible:ring-stone-400"
-                  />
+                  <Label htmlFor="edit-author" className="text-stone-700">{t('author')}</Label>
+                  <Input id="edit-author" name="author" defaultValue={editing.author} required
+                    className="border-stone-200 focus-visible:ring-stone-400" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="edit-publisher" className="text-stone-700">Publisher</Label>
-                    <Input id="edit-publisher" name="publisher"
-                      defaultValue={editing.publisher ?? ''}
+                    <Label htmlFor="edit-publisher" className="text-stone-700">{t('publisher')}</Label>
+                    <Input id="edit-publisher" name="publisher" defaultValue={editing.publisher ?? ''}
                       className="border-stone-200 focus-visible:ring-stone-400" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="edit-year" className="text-stone-700">Year</Label>
-                    <Input id="edit-year" name="year"
-                      defaultValue={editing.year ?? ''}
+                    <Label htmlFor="edit-year" className="text-stone-700">{t('year')}</Label>
+                    <Input id="edit-year" name="year" defaultValue={editing.year ?? ''}
                       className="border-stone-200 focus-visible:ring-stone-400" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-isbn" className="text-stone-700">
-                    ISBN <span className="text-stone-400 font-normal">(optional)</span>
+                    {t('isbn')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
                   </Label>
-                  <Input
-                    id="edit-isbn"
-                    name="isbn"
-                    defaultValue={editing.isbn ?? ''}
-                    className="border-stone-200 focus-visible:ring-stone-400"
-                  />
+                  <Input id="edit-isbn" name="isbn" defaultValue={editing.isbn ?? ''}
+                    className="border-stone-200 focus-visible:ring-stone-400" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="edit-category" className="text-stone-700">
-                      Category <span className="text-stone-400 font-normal">(optional)</span>
+                      {t('category')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
                     </Label>
-                    <select
-                      id="edit-category"
-                      name="category"
-                      defaultValue={editing.category ?? ''}
-                      className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
-                    >
-                      <option value="">No category</option>
+                    <select id="edit-category" name="category" defaultValue={editing.category ?? ''}
+                      className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400">
+                      <option value="">{t('noCategory')}</option>
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="edit-language" className="text-stone-700">
-                      Language <span className="text-stone-400 font-normal">(optional)</span>
+                      {t('language')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
                     </Label>
-                    <select
-                      id="edit-language"
-                      name="language"
-                      defaultValue={editing.language ?? ''}
-                      className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
-                    >
-                      <option value="">No language</option>
+                    <select id="edit-language" name="language" defaultValue={editing.language ?? ''}
+                      className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400">
+                      <option value="">{t('noLanguage')}</option>
                       {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-stone-700">Cover <span className="text-stone-400 font-normal">(optional)</span></Label>
+                  <Label className="text-stone-700">{t('cover')} <span className="text-stone-400 font-normal">({tc('optional')})</span></Label>
                   <div className="flex flex-col items-center gap-3 pt-1">
                     <div className="w-24 h-36 rounded-lg bg-stone-100 overflow-hidden flex items-center justify-center border border-stone-200 shrink-0">
                       {editCoverPreview
@@ -536,24 +507,20 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm"
                         className="text-stone-600 border-stone-200"
-                        onClick={() => editCameraRef.current?.click()}
-                      >
-                        Take photo
+                        onClick={() => editCameraRef.current?.click()}>
+                        {t('takePhoto')}
                       </Button>
                       <Button type="button" variant="outline" size="sm"
                         className="text-stone-600 border-stone-200"
-                        onClick={() => editUploadRef.current?.click()}
-                      >
-                        Upload photo
+                        onClick={() => editUploadRef.current?.click()}>
+                        {t('uploadPhoto')}
                       </Button>
                     </div>
                     {(editCoverPreview || (!editCoverRemoved && editing.cover_url)) && (
-                      <button
-                        type="button"
+                      <button type="button"
                         className="text-xs text-stone-400 hover:text-red-500 transition-colors"
-                        onClick={() => { setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(true) }}
-                      >
-                        Remove cover
+                        onClick={() => { setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(true) }}>
+                        {t('removeCover')}
                       </button>
                     )}
                   </div>
@@ -564,33 +531,19 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="edit-description" className="text-stone-700">
-                    Description <span className="text-stone-400 font-normal">(optional)</span>
+                    {t('description')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
                   </Label>
-                  <Textarea
-                    id="edit-description"
-                    name="description"
-                    defaultValue={editing.description ?? ''}
-                    rows={3}
-                    className="border-stone-200 focus-visible:ring-stone-400 resize-none"
-                  />
+                  <Textarea id="edit-description" name="description" defaultValue={editing.description ?? ''}
+                    rows={3} className="border-stone-200 focus-visible:ring-stone-400 resize-none" />
                 </div>
                 {editError && <p className="text-sm text-red-600">{editError}</p>}
               </div>
               <DialogFooter className="px-6 py-4 border-t border-stone-100 shrink-0">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="text-stone-500"
-                  onClick={() => setEditing(null)}
-                >
-                  Cancel
+                <Button type="button" variant="ghost" className="text-stone-500" onClick={() => setEditing(null)}>
+                  {tc('cancel')}
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={editLoading}
-                  className="bg-stone-800 hover:bg-stone-700 text-white"
-                >
-                  {editLoading ? 'Saving…' : 'Save'}
+                <Button type="submit" disabled={editLoading} className="bg-stone-800 hover:bg-stone-700 text-white">
+                  {editLoading ? tc('saving') : tc('save')}
                 </Button>
               </DialogFooter>
             </form>
@@ -599,21 +552,18 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
       </Dialog>
 
       {/* Fill with AI dialog */}
-      <Dialog
-        open={!!fillingBook}
-        onOpenChange={open => { if (!open && !fillLoading && !fillConfirming) setFillingBook(null) }}
-      >
+      <Dialog open={!!fillingBook} onOpenChange={open => { if (!open && !fillLoading && !fillConfirming) setFillingBook(null) }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-stone-800">
-              Fill with AI{fillingBook ? ` — ${fillingBook.title}` : ''}
+              {fillingBook ? t('fillWithAITitle', { title: fillingBook.title }) : t('fillWithAI')}
             </DialogTitle>
           </DialogHeader>
 
           {fillLoading && (
             <div className="py-8 flex flex-col items-center gap-3 text-stone-500">
               <div className="h-8 w-8 rounded-full border-2 border-stone-300 border-t-stone-700 animate-spin" />
-              <p className="text-sm">Looking up book details…</p>
+              <p className="text-sm">{t('lookingUpDetails')}</p>
             </div>
           )}
 
@@ -622,9 +572,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
           )}
 
           {!fillLoading && !fillError && fillSuggestions.length === 0 && fillingBook && (
-            <p className="text-sm text-stone-500 py-4 text-center">
-              No new information found for this book.
-            </p>
+            <p className="text-sm text-stone-500 py-4 text-center">{t('noNewInfo')}</p>
           )}
 
           {!fillLoading && fillSuggestions.length > 0 && (
@@ -640,19 +588,14 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     className="mt-1 h-4 w-4 shrink-0 accent-stone-800"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">
-                      {s.label}
-                    </p>
+                    <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1">{s.label}</p>
                     {s.current && (
                       <p className="text-xs text-stone-400 line-through mb-0.5 truncate">{s.current}</p>
                     )}
                     {s.field === 'cover_url' ? (
-                      <img
-                        src={s.suggested}
-                        alt="Cover preview"
+                      <img src={s.suggested} alt="Cover preview"
                         className="h-28 w-auto rounded shadow-sm object-cover mt-1"
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                      />
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     ) : s.field === 'description' ? (
                       <p className="text-sm text-stone-800 leading-snug">{s.suggested}</p>
                     ) : (
@@ -665,21 +608,15 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
           )}
 
           <DialogFooter>
-            <Button
-              variant="ghost"
-              className="text-stone-500"
-              onClick={() => setFillingBook(null)}
-              disabled={fillLoading || fillConfirming}
-            >
-              Cancel
+            <Button variant="ghost" className="text-stone-500"
+              onClick={() => setFillingBook(null)} disabled={fillLoading || fillConfirming}>
+              {tc('cancel')}
             </Button>
             {!fillLoading && fillSuggestions.length > 0 && (
-              <Button
-                className="bg-stone-800 hover:bg-stone-700 text-white"
+              <Button className="bg-stone-800 hover:bg-stone-700 text-white"
                 onClick={handleFillConfirm}
-                disabled={fillConfirming || !fillSuggestions.some(s => s.accepted)}
-              >
-                {fillConfirming ? 'Saving…' : `Apply ${fillSuggestions.filter(s => s.accepted).length} field${fillSuggestions.filter(s => s.accepted).length !== 1 ? 's' : ''}`}
+                disabled={fillConfirming || !fillSuggestions.some(s => s.accepted)}>
+                {fillConfirming ? tc('saving') : t('applyFields', { count: fillSuggestions.filter(s => s.accepted).length })}
               </Button>
             )}
           </DialogFooter>

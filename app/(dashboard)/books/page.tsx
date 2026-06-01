@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { getBooks } from '@/lib/db/books'
 import { getFriends } from '@/lib/db/friends'
@@ -10,6 +11,8 @@ export default async function BooksPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const t = await getTranslations('books')
+
   const [{ data: books, error }, { data: friends }] = await Promise.all([
     getBooks(user.id),
     getFriends(user.id),
@@ -19,9 +22,9 @@ export default async function BooksPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-stone-800">My Books</h2>
+          <h2 className="text-2xl font-semibold text-stone-800">{t('title')}</h2>
           <p className="text-stone-500 text-sm mt-0.5">
-            {books?.length ?? 0} {books?.length === 1 ? 'book' : 'books'} in your library
+            {t('booksCount', { count: books?.length ?? 0 })}
           </p>
         </div>
         <AddBookButton />

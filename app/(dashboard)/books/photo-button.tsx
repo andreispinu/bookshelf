@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ChevronDown, Pencil, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PhotoModal from './photo-modal'
 
 export default function AddBookButton() {
+  const t = useTranslations('books')
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -28,7 +30,7 @@ export default function AddBookButton() {
           className="bg-stone-800 hover:bg-stone-700 text-white flex items-center gap-1.5"
           onClick={() => setDropdownOpen(v => !v)}
         >
-          Add a book
+          {t('addBook')}
           <ChevronDown className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
         </Button>
 
@@ -42,8 +44,8 @@ export default function AddBookButton() {
                 <Pencil className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-medium text-stone-800">Add manually</p>
-                <p className="text-xs text-stone-400">Fill in the details yourself</p>
+                <p className="text-sm font-medium text-stone-800">{t('addManually')}</p>
+                <p className="text-xs text-stone-400">{t('addManuallyDesc')}</p>
               </div>
             </button>
 
@@ -55,8 +57,8 @@ export default function AddBookButton() {
                 <Camera className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-medium text-stone-800">Add with AI</p>
-                <p className="text-xs text-stone-400">Scan the cover with your camera</p>
+                <p className="text-sm font-medium text-stone-800">{t('addWithAI')}</p>
+                <p className="text-xs text-stone-400">{t('addWithAIDesc')}</p>
               </div>
             </button>
           </div>

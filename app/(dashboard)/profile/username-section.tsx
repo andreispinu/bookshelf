@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Lock, Eye, Library, Copy, ExternalLink, Check, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,33 +18,36 @@ type Props = {
   initialVisibility: Visibility
 }
 
-const visibilityOptions: {
-  value: Visibility
-  label: string
-  description: string
-  icon: React.ReactNode
-}[] = [
-  {
-    value: 'private',
-    label: 'Private',
-    description: 'Only you can see your profile',
-    icon: <Lock className="h-4 w-4" />,
-  },
-  {
-    value: 'public_minimal',
-    label: 'Public minimal',
-    description: 'Anyone with the link can see your name and book count',
-    icon: <Eye className="h-4 w-4" />,
-  },
-  {
-    value: 'public_full',
-    label: 'Public full',
-    description: 'Anyone with the link can see your full library',
-    icon: <Library className="h-4 w-4" />,
-  },
-]
-
 export default function UsernameSection({ initialUsername, initialVisibility }: Props) {
+  const t = useTranslations('profile')
+  const tc = useTranslations('common')
+
+  const visibilityOptions: {
+    value: Visibility
+    label: string
+    description: string
+    icon: React.ReactNode
+  }[] = [
+    {
+      value: 'private',
+      label: t('private'),
+      description: t('privateDescription'),
+      icon: <Lock className="h-4 w-4" />,
+    },
+    {
+      value: 'public_minimal',
+      label: t('publicMinimal'),
+      description: t('publicMinimalDescription'),
+      icon: <Eye className="h-4 w-4" />,
+    },
+    {
+      value: 'public_full',
+      label: t('publicFull'),
+      description: t('publicFullDescription'),
+      icon: <Library className="h-4 w-4" />,
+    },
+  ]
+
   const [username, setUsername] = useState(initialUsername ?? '')
   const [savedUsername, setSavedUsername] = useState(initialUsername)
   const [checking, setChecking] = useState(false)
@@ -89,7 +93,7 @@ export default function UsernameSection({ initialUsername, initialVisibility }: 
     } else {
       setSavedUsername(username)
       setAvailable(null)
-      toast.success('Username saved')
+      toast.success(t('usernameSaved'))
     }
     setSaving(false)
   }
@@ -104,7 +108,7 @@ export default function UsernameSection({ initialUsername, initialVisibility }: 
 
   function copyLink() {
     navigator.clipboard.writeText(`https://bookshelf.name/${savedUsername}`)
-    toast.success('Link copied!')
+    toast.success(tc('copied'))
   }
 
   // Status indicator for the input
@@ -120,12 +124,12 @@ export default function UsernameSection({ initialUsername, initialVisibility }: 
 
   return (
     <section>
-      <h2 className="text-lg font-semibold text-stone-800 mb-4">Public Profile</h2>
+      <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('publicProfile')}</h2>
       <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-6">
 
         {/* Username */}
         <div className="space-y-2">
-          <Label className="text-stone-700">Username</Label>
+          <Label className="text-stone-700">{t('username')}</Label>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Input
@@ -146,24 +150,20 @@ export default function UsernameSection({ initialUsername, initialVisibility }: 
               onClick={handleSave}
               className="bg-stone-800 hover:bg-stone-700 text-white shrink-0"
             >
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? tc('saving') : tc('save')}
             </Button>
           </div>
 
           {/* Hint / error */}
           {saveError && <p className="text-xs text-red-600">{saveError}</p>}
           {!saveError && username && !isValidFormat && (
-            <p className="text-xs text-red-500">
-              3–30 characters, lowercase letters, numbers, and hyphens only.
-            </p>
+            <p className="text-xs text-red-500">{t('usernameFormat')}</p>
           )}
           {!saveError && isValidFormat && !isUnchanged && available === false && (
-            <p className="text-xs text-red-500">That username is already taken.</p>
+            <p className="text-xs text-red-500">{t('usernameTaken')}</p>
           )}
           {!saveError && !username && (
-            <p className="text-xs text-stone-400">
-              Your public link will be bookshelf.name/[username]
-            </p>
+            <p className="text-xs text-stone-400">{t('usernameHint')}</p>
           )}
 
           {/* Public link (once saved) */}
@@ -175,7 +175,7 @@ export default function UsernameSection({ initialUsername, initialVisibility }: 
               <button
                 onClick={copyLink}
                 className="text-stone-400 hover:text-stone-700 transition-colors"
-                title="Copy link"
+                title={tc('copy')}
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -195,7 +195,7 @@ export default function UsernameSection({ initialUsername, initialVisibility }: 
         {/* Visibility */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-stone-700">Visibility</Label>
+            <Label className="text-stone-700">{t('visibility')}</Label>
             {savingVisibility && <Loader2 className="h-3.5 w-3.5 animate-spin text-stone-400" />}
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">

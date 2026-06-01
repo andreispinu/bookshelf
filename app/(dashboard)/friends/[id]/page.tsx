@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { getBooks } from '@/lib/db/books'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +15,11 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const [t, tb] = await Promise.all([
+    getTranslations('friends'),
+    getTranslations('books'),
+  ])
 
   // Verify accepted friendship
   const { data: friendship } = await supabase
@@ -55,21 +61,21 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
           }
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-stone-800">{profile.name}'s shelf</h2>
-          <p className="text-stone-500 text-sm mt-0.5">Member since {memberSince}</p>
+          <h2 className="text-2xl font-semibold text-stone-800">{t('friendShelf', { name: profile.name })}</h2>
+          <p className="text-stone-500 text-sm mt-0.5">{t('memberSince', { date: memberSince })}</p>
         </div>
       </div>
 
       {/* Books */}
       {!books || books.length === 0 ? (
         <div className="text-center py-20 text-stone-400">
-          <p className="text-lg">No books yet.</p>
-          <p className="text-sm mt-1">{profile.name} hasn't added any books.</p>
+          <p className="text-lg">{t('noBooksYet')}</p>
+          <p className="text-sm mt-1">{t('friendNoBooksAdded', { name: profile.name })}</p>
         </div>
       ) : (
         <>
           <p className="text-stone-500 text-sm mb-4">
-            {books.length} {books.length === 1 ? 'book' : 'books'}
+            {t('bookCount', { count: books.length })}
           </p>
           <ul className="grid grid-cols-2 gap-3 sm:block sm:divide-y sm:divide-stone-100">
             {books.map(book => (
@@ -101,7 +107,7 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
                         : 'border-amber-200 text-amber-700 bg-amber-50'
                     }`}
                   >
-                    {book.status === 'available' ? 'Available' : 'Lent out'}
+                    {book.status === 'available' ? tb('available') : tb('lentOut')}
                   </Badge>
                 </div>
 

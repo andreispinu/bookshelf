@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,8 @@ type Props = {
 }
 
 export default function LocationSection({ initialCountry, initialCity }: Props) {
+  const t = useTranslations('profile')
+  const tc = useTranslations('common')
   const [country, setCountry] = useState(initialCountry ?? '')
   const [city, setCity] = useState(initialCity ?? '')
   const [saving, setSaving] = useState(false)
@@ -60,7 +63,7 @@ export default function LocationSection({ initialCountry, initialCity }: Props) 
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success('Location saved')
+      toast.success(t('locationSaved'))
     }
     setSaving(false)
   }
@@ -69,12 +72,12 @@ export default function LocationSection({ initialCountry, initialCity }: Props) 
 
   return (
     <section>
-      <h2 className="text-lg font-semibold text-stone-800 mb-4">Location</h2>
+      <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('location')}</h2>
       <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-4">
 
         {/* Country */}
         <div className="space-y-1.5">
-          <Label className="text-stone-700">Country</Label>
+          <Label className="text-stone-700">{t('country')}</Label>
           <div ref={countryRef} className="relative">
             <div className="relative">
               <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400 pointer-events-none" />
@@ -87,7 +90,7 @@ export default function LocationSection({ initialCountry, initialCity }: Props) 
                   if (!e.target.value) clearCountry()
                 }}
                 onFocus={() => setCountryOpen(true)}
-                placeholder="Search country…"
+                placeholder={t('searchCountry')}
                 className="border-stone-200 focus-visible:ring-stone-400 pl-8"
               />
               {countryQuery && (
@@ -125,11 +128,11 @@ export default function LocationSection({ initialCountry, initialCity }: Props) 
         {/* City — only shown when country is selected */}
         {country && (
           <div className="space-y-1.5">
-            <Label className="text-stone-700">City</Label>
+            <Label className="text-stone-700">{t('city')}</Label>
             <Input
               value={city}
               onChange={e => setCity(e.target.value)}
-              placeholder={`City in ${country}…`}
+              placeholder={t('cityInCountry', { country })}
               className="border-stone-200 focus-visible:ring-stone-400"
             />
           </div>
@@ -140,7 +143,7 @@ export default function LocationSection({ initialCountry, initialCity }: Props) 
           disabled={saving || !isDirty}
           className="bg-stone-800 hover:bg-stone-700 text-white"
         >
-          {saving ? 'Saving…' : 'Save location'}
+          {saving ? tc('saving') : t('saveLocation')}
         </Button>
 
       </div>

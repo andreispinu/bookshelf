@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,7 @@ import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
 
 export default function ResetPasswordPage() {
+  const t = useTranslations('auth')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -23,11 +25,11 @@ export default function ResetPasswordPage() {
     const confirm = formData.get('confirm') as string
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t('passwordTooShort'))
       return
     }
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setError(t('passwordMismatch'))
       return
     }
 
@@ -48,12 +50,12 @@ export default function ResetPasswordPage() {
   return (
     <Card className="border-stone-200 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-stone-800 text-xl">Set new password</CardTitle>
+        <CardTitle className="text-stone-800 text-xl">{t('setNewPassword')}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-stone-700">New password</Label>
+            <Label htmlFor="password" className="text-stone-700">{t('newPassword')}</Label>
             <Input
               id="password"
               name="password"
@@ -65,7 +67,7 @@ export default function ResetPasswordPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirm" className="text-stone-700">Confirm password</Label>
+            <Label htmlFor="confirm" className="text-stone-700">{t('confirmPassword')}</Label>
             <Input
               id="confirm"
               name="confirm"
@@ -84,7 +86,7 @@ export default function ResetPasswordPage() {
             disabled={loading}
             className="w-full bg-stone-800 hover:bg-stone-700 text-white"
           >
-            {loading ? 'Updating…' : 'Update password'}
+            {loading ? t('updating') : t('updatePassword')}
           </Button>
         </CardFooter>
       </form>

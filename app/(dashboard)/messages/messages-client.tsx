@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Send, ArrowLeft } from 'lucide-react'
 import type { ConvItem, Message } from '@/types'
 
@@ -21,6 +22,7 @@ function initials(name: string) {
 }
 
 export default function MessagesClient({ userId }: { userId: string }) {
+  const t = useTranslations('messages')
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeConvId = searchParams.get('with')
@@ -145,11 +147,11 @@ export default function MessagesClient({ userId }: { userId: string }) {
       {/* Conversation list — hidden on mobile when a chat is open */}
       <div className={`w-full sm:w-72 border-r border-stone-200 flex flex-col shrink-0 ${activeConvId ? 'hidden sm:flex' : 'flex'}`}>
         <div className="px-4 py-3 border-b border-stone-100">
-          <h2 className="font-semibold text-stone-800">Messages</h2>
+          <h2 className="font-semibold text-stone-800">{t('title')}</h2>
         </div>
         {conversations.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-8 text-center text-sm text-stone-400">
-            No conversations yet. Message a friend from their bookshelf.
+            {t('noConversations')}
           </div>
         ) : (
           <ul className="flex-1 overflow-y-auto divide-y divide-stone-100">
@@ -194,7 +196,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
       <div className={`flex-1 flex flex-col min-w-0 ${!activeConvId ? 'hidden sm:flex' : 'flex'}`}>
         {!activeConvId ? (
           <div className="flex-1 flex items-center justify-center text-sm text-stone-400">
-            Select a conversation to start messaging
+            {t('selectConversation')}
           </div>
         ) : (
           <>
@@ -203,7 +205,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
               <button
                 onClick={() => router.push('/messages')}
                 className="sm:hidden p-1 -ml-1 rounded-md text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors"
-                aria-label="Back to conversations"
+                aria-label={t('backToConversations')}
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
@@ -224,7 +226,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
               {messages.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-sm text-stone-400">
-                  No messages yet — say hello!
+                  {t('noMessages')}
                 </div>
               ) : (
                 messages.map(msg => {
@@ -252,7 +254,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
                 value={content}
                 onChange={e => setContent(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Write a message… (Enter to send)"
+                placeholder={t('placeholder')}
                 rows={1}
                 className="flex-1 resize-none rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-transparent"
                 style={{ maxHeight: '120px', overflowY: 'auto' }}
@@ -261,7 +263,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
                 onClick={sendMessage}
                 disabled={!content.trim() || sending}
                 className="p-2.5 rounded-xl bg-stone-800 text-white hover:bg-stone-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                aria-label="Send message"
+                aria-label={t('send')}
               >
                 <Send className="h-4 w-4" />
               </button>

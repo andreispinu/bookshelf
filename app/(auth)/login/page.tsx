@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { login } from '../actions'
 
 export default function LoginPage() {
+  const t = useTranslations('auth')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -31,12 +33,12 @@ export default function LoginPage() {
   return (
     <Card className="border-stone-200 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-stone-800 text-xl">Sign in</CardTitle>
+        <CardTitle className="text-stone-800 text-xl">{t('signInTitle')}</CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-stone-700">Email</Label>
+            <Label htmlFor="email" className="text-stone-700">{t('email')}</Label>
             <Input
               id="email"
               name="email"
@@ -48,9 +50,9 @@ export default function LoginPage() {
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-stone-700">Password</Label>
+              <Label htmlFor="password" className="text-stone-700">{t('password')}</Label>
               <Link href="/forgot-password" className="text-xs text-stone-400 hover:text-stone-600 transition-colors">
-                Forgot password?
+                {t('forgotPassword')}
               </Link>
             </div>
             <Input
@@ -72,12 +74,12 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-stone-800 hover:bg-stone-700 text-white"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? t('signingIn') : t('signIn')}
           </Button>
           <p className="text-sm text-stone-500 text-center">
-            No account?{' '}
+            {t('noAccount')}{' '}
             <Link href="/signup" className="text-stone-800 underline underline-offset-2">
-              Sign up
+              {t('signUp')}
             </Link>
           </p>
         </CardFooter>
