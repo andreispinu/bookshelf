@@ -6,6 +6,7 @@ import { useRef, useEffect, useState } from 'react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import NotificationsBell from './notifications-bell'
 
 const links = [
   { href: '/books',   label: 'My Books' },
@@ -62,6 +63,9 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
               </Link>
             ))}
           </nav>
+        </div>
+        <div className="flex items-center gap-1">
+          <NotificationsBell />
         </div>
         <div ref={menuRef} className="relative flex items-center gap-2">
           <span className="text-sm text-stone-500 hidden sm:block">{userName}</span>

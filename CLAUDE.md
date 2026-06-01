@@ -55,6 +55,7 @@ npm run build     # production build (webpack, generates service worker)
   /api/stripe/webhook   → Stripe webhook handler
   /api/stripe/portal    → POST → Stripe Customer Portal session URL
   /api/username/check   → GET ?username=xxx → { available: boolean } (uses supabaseAdmin)
+  /api/notifications    → GET last 20 notifications | PATCH mark read
 /components/ui          → shadcn/ui components
 /lib
   supabase.ts           → Browser client (Client Components)
@@ -342,6 +343,45 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
 
 **File:** `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons.
+
+### In-app notifications
+Users receive notifications for friend activity. A bell icon in the nav shows the unread count and opens a dropdown panel.
+
+**Database table: `notifications`** (run `supabase/add-notifications.sql`):
+```sql
+id         uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+user_id    uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+type       text        NOT NULL  -- 'friend_request' | 'friend_accepted' | 'friend_new_book'
+actor_id   uuid        REFERENCES profiles(id)   -- who triggered it
+book_id    uuid        REFERENCES books(id)       -- nullable, only for friend_new_book
+read       boolean     DEFAULT false
+created_at timestamptz DEFAULT now()
+```
+
+**Triggers (automatic, no app code needed):**
+| Trigger | Event | Recipient | Type |
+|---------|-------|-----------|------|
+| `on_friend_request` | INSERT friendships (status=pending) | addressee_id | `friend_request` |
+| `on_friend_accepted` | UPDATE friendships (pending→accepted) | requester_id | `friend_accepted` |
+| `on_new_book` | INSERT books | all accepted friends of book owner | `friend_new_book` |
+
+**Nav bell** (`app/(dashboard)/notifications-bell.tsx`):
+- Polls `GET /api/notifications` every 60 seconds + on mount
+- Red badge shows unread count (capped at "9+")
+- Dropdown (320px, max-h 384px scrollable): avatar, message text, time ago, unread dot + amber highlight
+- Clicking a notification: marks read (optimistic), navigates to `/friends` or `/friends/[actorId]` for new books
+- "Mark all as read" button clears all unread
+
+**API route** (`app/api/notifications/route.ts`):
+- `GET` — returns last 20 notifications with joined actor (name, avatar_url) and book (title)
+- `PATCH { id }` — marks single notification read
+- `PATCH { all: true }` — marks all as read
+
+**Files:**
+- `supabase/add-notifications.sql` — table + RLS + 3 trigger functions
+- `app/api/notifications/route.ts` — GET + PATCH
+- `app/(dashboard)/notifications-bell.tsx` — bell icon + dropdown client component
+- `app/(dashboard)/nav.tsx` — imports NotificationsBell, placed between nav links and account menu
 
 ### Public profile CTA
 At the bottom of every public profile page (`app/[username]/page.tsx`), above the "Powered by BookShelf" footer, there is a subtle CTA card:
