@@ -54,7 +54,7 @@ const features = [
   {
     Icon: ClipboardList,
     title: 'Loan tracking',
-    description: 'See all books you've lent and borrowed. Mark returns with one tap.',
+    description: "See all books you've lent and borrowed. Mark returns with one tap.",
   },
   {
     Icon: Bell,
