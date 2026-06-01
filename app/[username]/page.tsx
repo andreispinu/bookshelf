@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { Badge } from '@/components/ui/badge'
 import type { Metadata } from 'next'
+import PublicShelf from './public-shelf'
 
 type Props = { params: Promise<{ username: string }> }
 
@@ -37,11 +37,11 @@ export default async function PublicProfilePage({ params }: Props) {
   const visibility = profile.profile_visibility as 'public_minimal' | 'public_full'
 
   // Fetch books for public_full
-  let books: { id: string; title: string; author: string; cover_url: string | null; status: string }[] = []
+  let books: { id: string; title: string; author: string; cover_url: string | null; status: string; category: string | null }[] = []
   if (visibility === 'public_full') {
     const { data } = await supabaseAdmin
       .from('books')
-      .select('id, title, author, cover_url, status')
+      .select('id, title, author, cover_url, status, category')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
     books = data ?? []
@@ -84,38 +84,9 @@ export default async function PublicProfilePage({ params }: Props) {
           </div>
         )}
 
-        {/* Full — book grid */}
+        {/* Full — filterable book grid */}
         {visibility === 'public_full' && books.length > 0 && (
-          <ul className="grid grid-cols-2 gap-3 sm:block sm:divide-y sm:divide-stone-100">
-            {books.map(book => (
-              <li
-                key={book.id}
-                className="flex flex-col gap-2 p-3 bg-white rounded-xl border border-stone-200
-                           sm:flex-row sm:items-center sm:gap-4 sm:py-4 sm:px-0 sm:bg-transparent sm:rounded-none sm:border-0"
-              >
-                <div className="shrink-0 w-full aspect-[2/3] sm:w-10 sm:h-14 sm:aspect-auto rounded bg-stone-200 overflow-hidden flex items-center justify-center">
-                  {book.cover_url
-                    ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
-                    : <span className="text-stone-400 text-2xl sm:text-lg">📖</span>
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-stone-800 truncate text-sm sm:text-base">{book.title}</p>
-                  <p className="text-xs sm:text-sm text-stone-500 truncate">{book.author}</p>
-                  <Badge
-                    variant="outline"
-                    className={`mt-1.5 text-xs ${
-                      book.status === 'available'
-                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                        : 'border-amber-200 text-amber-700 bg-amber-50'
-                    }`}
-                  >
-                    {book.status === 'available' ? 'Available' : 'Lent out'}
-                  </Badge>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <PublicShelf books={books} />
         )}
 
         {visibility === 'public_full' && books.length === 0 && (
