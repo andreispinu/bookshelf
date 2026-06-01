@@ -27,6 +27,8 @@ export type Profile = {
   subscription_ends_at: string | null
   username: string | null
   profile_visibility: 'private' | 'public_minimal' | 'public_full'
+  country: string | null
+  city: string | null
 }
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined'

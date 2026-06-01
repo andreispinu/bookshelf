@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import ProfileClient from './profile-client'
 import UsernameSection from './username-section'
+import LocationSection from './location-section'
 import type { Profile } from '@/types'
 
 export default async function ProfilePage() {
@@ -11,7 +12,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, name, avatar_url, created_at, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_ends_at, username, profile_visibility')
+    .select('id, name, avatar_url, created_at, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_ends_at, username, profile_visibility, country, city')
     .eq('id', user.id)
     .single()
 
@@ -31,6 +32,10 @@ export default async function ProfilePage() {
         <UsernameSection
           initialUsername={profile.username ?? null}
           initialVisibility={(profile.profile_visibility as Profile['profile_visibility']) ?? 'private'}
+        />
+        <LocationSection
+          initialCountry={profile.country ?? null}
+          initialCity={profile.city ?? null}
         />
       </div>
     </div>

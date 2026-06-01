@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation'
+import { MapPin } from 'lucide-react'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { COUNTRY_FLAGS } from '@/lib/countries'
 import type { Metadata } from 'next'
 import PublicShelf from './public-shelf'
 
@@ -28,7 +30,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('id, name, avatar_url, created_at, profile_visibility')
+    .select('id, name, avatar_url, created_at, profile_visibility, country, city')
     .eq('username', username)
     .single()
 
@@ -73,6 +75,17 @@ export default async function PublicProfilePage({ params }: Props) {
             <p className="text-stone-500 text-sm mt-0.5">
               {bookCount} {bookCount === 1 ? 'book' : 'books'} on their shelf
             </p>
+            {(profile.city || profile.country) && (
+              <p className="flex items-center gap-1 text-sm text-stone-400 mt-1">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {[profile.city, profile.country].filter(Boolean).join(', ')}
+                  {profile.country && COUNTRY_FLAGS[profile.country] && (
+                    <span className="ml-1">{COUNTRY_FLAGS[profile.country]}</span>
+                  )}
+                </span>
+              </p>
+            )}
           </div>
         </div>
 

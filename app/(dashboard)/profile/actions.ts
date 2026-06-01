@@ -65,3 +65,22 @@ export async function updateProfileVisibility(
   revalidatePath('/profile')
   return { error: null }
 }
+
+export async function updateLocation(
+  country: string | null,
+  city: string | null,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ country: country || null, city: city || null })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/profile')
+  return { error: null }
+}

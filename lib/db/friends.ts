@@ -12,8 +12,8 @@ export async function getFriends(userId: string): Promise<{ data: Friend[] | nul
       addressee_id,
       status,
       created_at,
-      requester:profiles!friendships_requester_id_fkey(id, name, avatar_url, created_at),
-      addressee:profiles!friendships_addressee_id_fkey(id, name, avatar_url, created_at)
+      requester:profiles!friendships_requester_id_fkey(id, name, avatar_url, created_at, country),
+      addressee:profiles!friendships_addressee_id_fkey(id, name, avatar_url, created_at, country)
     `)
     .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
     .order('created_at', { ascending: false })

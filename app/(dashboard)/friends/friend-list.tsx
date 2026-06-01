@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { respondToRequest, cancelOrRemoveFriend } from './actions'
+import { COUNTRY_FLAGS } from '@/lib/countries'
 import type { Friend } from '@/types'
 
 function initials(name: string) {
@@ -110,6 +111,11 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                   </Avatar>
                   <span className="text-sm text-stone-800 truncate group-hover:text-stone-600 transition-colors">
                     {f.profile.name}
+                    {f.profile.country && COUNTRY_FLAGS[f.profile.country] && (
+                      <span className="ml-1.5" title={f.profile.country}>
+                        {COUNTRY_FLAGS[f.profile.country]}
+                      </span>
+                    )}
                   </span>
                 </Link>
                 <Link

@@ -88,6 +88,8 @@ subscription_plan    text
 subscription_ends_at timestamptz
 username             text UNIQUE  -- ^[a-z0-9-]{3,30}$
 profile_visibility   text DEFAULT 'private'  -- 'private' | 'public_minimal' | 'public_full'
+country              text  -- nullable, clean country name from lib/countries.ts
+city                 text  -- nullable, free-text city name
 ```
 
 ### `books`
@@ -437,6 +439,32 @@ At the bottom of every public profile page (`app/[username]/page.tsx`), above th
 - Heading: "Discover your own bookshelf"
 - Subtext: "Track your books, connect with friends, and lend your favourites."
 - Button: "Try BookShelf free" → `https://bookshelf.name`
+
+### Location (country & city)
+Users can set their country and city on their profile.
+
+**Database fields** (run `supabase/add-location.sql`):
+- `country` — text, nullable, clean name from `lib/countries.ts`
+- `city` — text, nullable, free-text
+
+**Profile page — Location section** (`location-section.tsx`):
+- Searchable country dropdown: type to filter the full world country list, click to select, ✕ to clear
+- City text input: appears after a country is selected; free-text, placeholder shows the country name
+- "Save location" button — disabled until a change is made, success toast on save
+- Server action: `updateLocation(country, city)` in `profile/actions.ts`
+
+**Country list** (`lib/countries.ts`):
+- Sourced from `country-list` npm package (ISO 3166-1), cleaned up with `OVERRIDES` map for user-friendly names
+- Exports `COUNTRIES: string[]` (sorted A–Z) and `COUNTRY_FLAGS: Record<string, string>` (country name → flag emoji via Unicode regional indicators)
+- `codeToFlag(code)` — converts ISO alpha-2 code to flag emoji
+
+**Public profile page** (`app/[username]/page.tsx`):
+- Shows `City, Country 🏳️` below the book count if either field is set (public_minimal and public_full)
+- Uses `MapPin` icon from lucide-react
+
+**Friends list** (`friend-list.tsx`):
+- Shows the country flag emoji next to the accepted friend's name if their country is set
+- Uses `COUNTRY_FLAGS` from `lib/countries.ts`
 
 ### Book language field
 Books have an optional `language` field from a fixed list of 21 languages.
