@@ -46,6 +46,7 @@ npm run build     # production build (webpack, generates service worker)
     /loans              → Active loans (lent out / borrowed tabs)
     /profile            → Account info, subscription status, plan selection
     /friends/[id]       → Friend's bookshelf (read-only)
+    /friends/shelf      → All friends' books combined (search + sort + dedup by ISBN/title)
   /[username]           → Public profile page (no auth required)
   /subscribe            → Paywall (outside dashboard, no redirect loop)
   / (root)              → Landing page (public, no auth required — NOT a redirect)
@@ -343,6 +344,37 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
 
 **File:** `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons.
+
+### All Friends' Bookshelves
+Route: `/friends/shelf` — combined view of every book owned by all accepted friends.
+
+**Tab strip** (`friends-tabs.tsx`): appears at the top of both `/friends` and `/friends/shelf`, styled as pill tabs (active = `bg-stone-100`). Server component, receives `active: 'friends' | 'shelf'` prop.
+
+**Data flow (server component `shelf/page.tsx`):**
+1. Fetch accepted friends via `getFriends()`
+2. Query `books` with `.in('user_id', friendIds)` — RLS allows reading friends' books
+3. Group books by dedup key: `isbn:<value>` if ISBN present, else `title:<normalized>|<author_normalized>` (lowercase + trimmed)
+4. A group with 2+ copies means multiple friends own the same book
+5. Pass `BookGroup[]` to `ShelfClient`
+
+**`ShelfClient` (client component `shelf/shelf-client.tsx`):**
+- Search bar: filters by title or author (case-insensitive)
+- Sort dropdown: Recently added (default) | Title A–Z | Most popular (most copies first)
+- For single-owner book: avatar + name + status badge inline
+- For multi-owner book: stacked avatars (max 3 shown) + "X friends have this" toggle button → expands to list each friend with their own status badge
+
+**Types** (exported from `shelf-client.tsx`): `FriendInfo`, `BookCopy`, `BookGroup`
+
+**Empty states:**
+- No accepted friends → "Add friends to see their books here"
+- Friends exist but no books → "Your friends haven't added any books yet"
+- No search matches → "No books match your search"
+
+**Files:**
+- `app/(dashboard)/friends/friends-tabs.tsx` — shared tab strip
+- `app/(dashboard)/friends/shelf/page.tsx` — server component (data fetch + grouping)
+- `app/(dashboard)/friends/shelf/shelf-client.tsx` — client component (search, sort, render)
+- `app/(dashboard)/friends/page.tsx` — updated to include FriendsTabs
 
 ### In-app notifications
 Users receive notifications for friend activity. A bell icon in the nav shows the unread count and opens a dropdown panel.

@@ -4,6 +4,7 @@ import { getFriends } from '@/lib/db/friends'
 import { Separator } from '@/components/ui/separator'
 import UserSearch from './user-search'
 import FriendList from './friend-list'
+import FriendsTabs from './friends-tabs'
 
 export default async function FriendsPage() {
   const supabase = await createClient()
@@ -14,6 +15,7 @@ export default async function FriendsPage() {
 
   return (
     <div className="max-w-lg">
+      <FriendsTabs active="friends" />
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-stone-800">Friends</h2>
         <p className="text-stone-500 text-sm mt-0.5">Search for people to connect with.</p>
