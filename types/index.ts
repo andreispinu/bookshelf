@@ -91,6 +91,29 @@ export type BorrowRequest = {
   requester: Pick<Profile, 'id' | 'name' | 'avatar_url'>
 }
 
+export type WishlistItem = {
+  id: string
+  user_id: string
+  title: string
+  author: string
+  isbn: string | null
+  cover_url: string | null
+  category: string | null
+  language: string | null
+  description: string | null
+  status: 'wanted' | 'borrowed' | 'purchased'
+  has_friend_copy: boolean
+  created_at: string
+}
+
+export type FriendMatch = {
+  bookId: string
+  ownerId: string
+  ownerName: string
+  ownerAvatar: string | null
+  status: 'available' | 'lent_out'
+}
+
 export type SentRequest = {
   id: string
   book_id: string

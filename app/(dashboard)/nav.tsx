@@ -21,10 +21,11 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
   const menuRef = useRef<HTMLDivElement>(null)
 
   const NAV_LINKS = [
-    { href: '/books',    label: t('myBooks'),  badge: null as null | keyof NavCounts },
-    { href: '/friends',  label: t('friends'),  badge: null as null | keyof NavCounts },
-    { href: '/messages', label: t('messages'), badge: 'unreadMessages' as keyof NavCounts },
-    { href: '/loans',    label: t('loans'),    badge: 'pendingRequests' as keyof NavCounts },
+    { href: '/books',      label: t('myBooks'),    badge: null as null | keyof NavCounts },
+    { href: '/friends',    label: t('friends'),    badge: null as null | keyof NavCounts },
+    { href: '/messages',   label: t('messages'),   badge: 'unreadMessages' as keyof NavCounts },
+    { href: '/loans',      label: t('loans'),      badge: 'pendingRequests' as keyof NavCounts },
+    { href: '/bookstore',  label: t('bookstore'),  badge: null as null | keyof NavCounts },
   ]
 
   const fetchCounts = useCallback(async () => {

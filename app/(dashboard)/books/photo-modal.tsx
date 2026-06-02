@@ -16,9 +16,10 @@ import { Button } from '@/components/ui/button'
 type Props = {
   open: boolean
   onClose: () => void
+  redirectTo?: string
 }
 
-export default function PhotoModal({ open, onClose }: Props) {
+export default function PhotoModal({ open, onClose, redirectTo = '/books/add' }: Props) {
   const t = useTranslations('books')
   const router = useRouter()
   const coverCameraRef = useRef<HTMLInputElement>(null)
@@ -97,12 +98,12 @@ export default function PhotoModal({ open, onClose }: Props) {
 
       resetState()
       onClose()
-      router.push(`/books/add?${params.toString()}`)
+      router.push(`${redirectTo}?${params.toString()}`)
     } catch {
       resetState()
       onClose()
       toast.error("Couldn't read the cover, please fill in manually")
-      router.push('/books/add')
+      router.push(redirectTo)
     } finally {
       setLoading(false)
     }

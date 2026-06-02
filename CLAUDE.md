@@ -698,6 +698,62 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 
 **Message email debounce:** Before sending, checks if a `new_message` notification already exists (`read = false`, same `actor_id`) — if so, user is likely actively chatting and email is skipped. Also skips JSON borrow card messages (content starts with `{`).
 
+### Bookstore (Wishlist)
+Users can maintain a wishlist of books they want to read or buy. When adding a book, the app immediately checks if any accepted friend owns it.
+
+**Route:** `/bookstore`
+
+**Database table: `wishlist`** (run `supabase/add-wishlist.sql`):
+```sql
+id              uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+user_id         uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+title           text        NOT NULL
+author          text        NOT NULL
+isbn            text
+cover_url       text
+category        text
+language        text
+description     text
+status          text        NOT NULL DEFAULT 'wanted'  -- 'wanted' | 'borrowed' | 'purchased'
+has_friend_copy boolean     NOT NULL DEFAULT false
+created_at      timestamptz DEFAULT now()
+```
+RLS: user can read/insert/update/delete only their own rows.
+
+**Add flow:**
+1. "Add a book" dropdown: Add manually (`/bookstore/add`) or Add with AI (photo scan → `/bookstore/add?params`)
+2. User fills/reviews form (title, author, ISBN, category, language, description)
+3. On submit: `addToWishlistAndCheck(data)` inserts row AND checks friend availability
+4. If any friend owns the book: sets `has_friend_copy = true` on the row
+5. Shows result modal immediately — either "Added\! No friends have this yet" or friend list with borrow buttons
+
+**Friend availability check (`checkFriendAvailability` in actions.ts):**
+- Fetches accepted friend IDs from `friendships` via `supabaseAdmin`
+- Queries all books owned by those friends via `supabaseAdmin`
+- Matches by ISBN (strips dashes) OR exact title+author (case-insensitive, trimmed)
+- Returns list of `FriendMatch`: bookId, ownerId, ownerName, ownerAvatar, status (available/lent_out)
+- Available friends get a "Request to borrow" button → calls `/api/borrow-requests` inline
+
+**Wishlist list:**
+- Same row layout as My Books (cover thumbnail, title, author, category, status badge)
+- Status badges: Wanted (stone), Borrowed (amber), Purchased (green)
+- Teal "A friend has this\!" badge on items where `has_friend_copy = true` — clicking it re-runs the check and shows the friend modal
+- ⋯ menu: Edit, Mark as purchased, Check friends again, Delete
+- "Check friends again" re-runs the availability check and updates `has_friend_copy`
+
+**Add with AI:** reuses `PhotoModal` with `redirectTo="/bookstore/add"` prop (added to PhotoModal signature)
+
+**Files:**
+- `supabase/add-wishlist.sql` — migration
+- `types/index.ts` — `WishlistItem` and `FriendMatch` types
+- `app/(dashboard)/bookstore/page.tsx` — server component, fetches wishlist
+- `app/(dashboard)/bookstore/bookstore-client.tsx` — list UI, edit/delete/check dialogs
+- `app/(dashboard)/bookstore/photo-button.tsx` — add dropdown (reuses PhotoModal with redirectTo)
+- `app/(dashboard)/bookstore/actions.ts` — `addToWishlistAndCheck`, `checkFriendAvailability`, `updateWishlistItem`, `markAsPurchased`, `deleteWishlistItem`
+- `app/(dashboard)/bookstore/add/page.tsx` — add page wrapper (Suspense)
+- `app/(dashboard)/bookstore/add/add-wishlist-form.tsx` — add form with Fill with AI, friend availability modal
+- `app/(dashboard)/books/photo-modal.tsx` — added `redirectTo?: string` prop (defaults to `/books/add`)
+
 ## Build order (phases)
 
 - [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes
