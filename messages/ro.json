@@ -127,7 +127,9 @@
     "memberSince": "Membru din {date}",
     "noBooksYet": "Nicio carte încă.",
     "friendNoBooksAdded": "{name} nu a adăugat nicio carte.",
-    "bookCount": "{count, plural, one {# carte} other {# cărți}}"
+    "bookCount": "{count, plural, one {# carte} other {# cărți}}",
+    "peopleYouMayKnow": "Persoane pe care le-ai putea cunoaște",
+    "mutualFriends": "{count, plural, one {# prieten comun} other {# prieteni comuni}}"
   },
   "messages": {
     "title": "Mesaje",
@@ -255,16 +257,13 @@
     "navLogIn": "Conectare",
     "navStartFreeTrial": "Încearcă gratuit",
     "navGoToShelf": "Mergi la raftul meu",
-
     "heroHeadline": "Biblioteca ta personală, împărtășită cu prietenii",
     "heroSubheadline": "Adaugă cărțile tale, conectează-te cu prietenii și împrumută-ți favoritele — totul într-un singur loc.",
     "heroStartFreeTrial": "Încearcă gratuit",
     "heroSeeHowItWorks": "Vezi cum funcționează",
     "heroTrialNote": "Gratuit 14 zile. Fără card de credit.",
-
     "featuresHeading": "Tot ce ai nevoie pentru biblioteca ta personală",
     "featuresSubheading": "Creat pentru iubitorii de cărți care împrumută.",
-
     "f_addLibrary_title": "Adaugă biblioteca ta",
     "f_addLibrary_desc": "Cataloghează fiecare carte pe care o deții. Caută după titlu sau autor și construiește-ți raftul personal.",
     "f_aiScan_title": "Scanare AI",
@@ -289,7 +288,6 @@
     "f_notifications_desc": "Primești notificări când cineva îți trimite o cerere de prietenie, o acceptă sau adaugă o carte nouă.",
     "f_plans_title": "Planuri de abonament",
     "f_plans_desc": "14 zile gratuit. Apoi 1$/lună sau 10$/an. Anulezi oricând.",
-
     "howItWorksHeading": "Cum funcționează",
     "s_createAccount_title": "Creează-ți contul",
     "s_createAccount_desc": "14 zile gratuit. Fără card de credit.",
@@ -299,7 +297,6 @@
     "s_addFriends_desc": "Conectează-te cu oameni în care ai încredere.",
     "s_startLending_title": "Începe să împrumuți",
     "s_startLending_desc": "Oferă cărți, urmărește împrumuturile, marchează returnările.",
-
     "installHeading": "Folosește-l ca o aplicație nativă",
     "installSubheading": "Nu ai nevoie de App Store. Instalează BookShelf direct din browser în câteva secunde.",
     "installIphone": "iPhone & iPad",
@@ -315,7 +312,6 @@
     "installAndroid4": "Apasă \"Adaugă\" pentru a confirma",
     "installAndroidNote": "Funcționează în Chrome, Edge și majoritatea browserelor Android",
     "installNote": "Odată instalat, BookShelf funcționează ca o aplicație nativă — ecran complet, rapid și mereu disponibil de pe ecranul de start.",
-
     "pricingHeading": "Prețuri simple",
     "pricingSubheading": "Începe gratuit. Abonează-te când ești pregătit.",
     "pricingFreeTrial": "Perioadă de probă",
@@ -334,7 +330,6 @@
     "pricingPwa": "Aplicație mobilă PWA",
     "pricingStartFreeTrial": "Încearcă gratuit",
     "pricingStripeNote": "Plăți procesate în siguranță de Stripe. Anulezi oricând.",
-
     "footerLogIn": "Conectare",
     "footerSignUp": "Înregistrare"
   }

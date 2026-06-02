@@ -127,7 +127,9 @@
     "memberSince": "Member since {date}",
     "noBooksYet": "No books yet.",
     "friendNoBooksAdded": "{name} hasn't added any books.",
-    "bookCount": "{count, plural, one {# book} other {# books}}"
+    "bookCount": "{count, plural, one {# book} other {# books}}",
+    "peopleYouMayKnow": "People you may know",
+    "mutualFriends": "{count, plural, one {# mutual friend} other {# mutual friends}}"
   },
   "messages": {
     "title": "Messages",
@@ -255,16 +257,13 @@
     "navLogIn": "Log in",
     "navStartFreeTrial": "Start free trial",
     "navGoToShelf": "Go to my shelf",
-
     "heroHeadline": "Your personal library, shared with friends",
     "heroSubheadline": "Add your books, connect with friends, and lend your favourites — all in one place.",
     "heroStartFreeTrial": "Start free trial",
     "heroSeeHowItWorks": "See how it works",
     "heroTrialNote": "Free for 14 days. No credit card required.",
-
     "featuresHeading": "Everything you need for your personal library",
     "featuresSubheading": "Built for book lovers who share.",
-
     "f_addLibrary_title": "Add your library",
     "f_addLibrary_desc": "Catalogue every book you own. Search by title or author and build your personal shelf.",
     "f_aiScan_title": "AI book scanning",
@@ -289,7 +288,6 @@
     "f_notifications_desc": "Get notified when someone sends a friend request, accepts yours, or adds a new book.",
     "f_plans_title": "Subscription plans",
     "f_plans_desc": "Free 14-day trial. Then $1/month or $10/year. Cancel any time.",
-
     "howItWorksHeading": "How it works",
     "s_createAccount_title": "Create your account",
     "s_createAccount_desc": "Free 14-day trial. No credit card needed.",
@@ -299,7 +297,6 @@
     "s_addFriends_desc": "Connect with people you trust.",
     "s_startLending_title": "Start lending",
     "s_startLending_desc": "Offer books, track loans, mark as returned.",
-
     "installHeading": "Use it like a native app",
     "installSubheading": "No App Store needed. Install BookShelf directly from your browser in seconds.",
     "installIphone": "iPhone & iPad",
@@ -315,7 +312,6 @@
     "installAndroid4": "Tap \"Add\" to confirm",
     "installAndroidNote": "Works in Chrome, Edge, and most Android browsers",
     "installNote": "Once installed, BookShelf works just like a native app — full screen, fast, and always available from your home screen.",
-
     "pricingHeading": "Simple pricing",
     "pricingSubheading": "Start free. Upgrade when you're ready.",
     "pricingFreeTrial": "Free trial",
@@ -334,7 +330,6 @@
     "pricingPwa": "PWA mobile app",
     "pricingStartFreeTrial": "Start free trial",
     "pricingStripeNote": "Payments processed securely by Stripe. Cancel any time.",
-
     "footerLogIn": "Log in",
     "footerSignUp": "Sign up"
   }

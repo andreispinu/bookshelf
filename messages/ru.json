@@ -127,7 +127,9 @@
     "memberSince": "Участник с {date}",
     "noBooksYet": "Нет книг.",
     "friendNoBooksAdded": "{name} не добавил книг.",
-    "bookCount": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}}"
+    "bookCount": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}}",
+    "peopleYouMayKnow": "Люди, которых вы можете знать",
+    "mutualFriends": "{count, plural, one {# общий друг} few {# общих друга} many {# общих друзей} other {# общих друга}}"
   },
   "messages": {
     "title": "Сообщения",
@@ -255,16 +257,13 @@
     "navLogIn": "Войти",
     "navStartFreeTrial": "Попробовать бесплатно",
     "navGoToShelf": "Перейти к полке",
-
     "heroHeadline": "Ваша личная библиотека, открытая для друзей",
     "heroSubheadline": "Добавляйте книги, общайтесь с друзьями и делитесь любимыми — всё в одном месте.",
     "heroStartFreeTrial": "Попробовать бесплатно",
     "heroSeeHowItWorks": "Как это работает",
     "heroTrialNote": "Бесплатно 14 дней. Карта не нужна.",
-
     "featuresHeading": "Всё необходимое для личной библиотеки",
     "featuresSubheading": "Создано для книголюбов, которые делятся.",
-
     "f_addLibrary_title": "Добавьте библиотеку",
     "f_addLibrary_desc": "Каталогизируйте каждую книгу. Ищите по названию или автору и стройте личную полку.",
     "f_aiScan_title": "ИИ-сканирование книг",
@@ -289,7 +288,6 @@
     "f_notifications_desc": "Получайте уведомления о заявках в друзья, принятых заявках и новых книгах.",
     "f_plans_title": "Планы подписки",
     "f_plans_desc": "14 дней бесплатно. Затем 1$/месяц или 10$/год. Отмена в любое время.",
-
     "howItWorksHeading": "Как это работает",
     "s_createAccount_title": "Создайте аккаунт",
     "s_createAccount_desc": "14 дней бесплатно. Карта не нужна.",
@@ -299,7 +297,6 @@
     "s_addFriends_desc": "Общайтесь с людьми, которым доверяете.",
     "s_startLending_title": "Начните делиться",
     "s_startLending_desc": "Предлагайте книги, ведите учёт займов, отмечайте возвраты.",
-
     "installHeading": "Используйте как нативное приложение",
     "installSubheading": "App Store не нужен. Установите BookShelf прямо из браузера за несколько секунд.",
     "installIphone": "iPhone и iPad",
@@ -315,7 +312,6 @@
     "installAndroid4": "Нажмите «Добавить» для подтверждения",
     "installAndroidNote": "Работает в Chrome, Edge и большинстве браузеров Android",
     "installNote": "После установки BookShelf работает как нативное приложение — полный экран, быстро и всегда доступно с главного экрана.",
-
     "pricingHeading": "Простые цены",
     "pricingSubheading": "Начните бесплатно. Подписывайтесь, когда будете готовы.",
     "pricingFreeTrial": "Пробный период",
@@ -334,7 +330,6 @@
     "pricingPwa": "PWA мобильное приложение",
     "pricingStartFreeTrial": "Попробовать бесплатно",
     "pricingStripeNote": "Платежи безопасно обрабатываются через Stripe. Отмена в любое время.",
-
     "footerLogIn": "Войти",
     "footerSignUp": "Зарегистрироваться"
   }

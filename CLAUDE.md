@@ -408,6 +408,28 @@ Route: `/friends/shelf` — combined view of every book owned by all accepted fr
 - `app/(dashboard)/friends/shelf/shelf-client.tsx` — client component (search, sort, render)
 - `app/(dashboard)/friends/page.tsx` — updated to include FriendsTabs
 
+### People you may know (friend suggestions)
+A "People you may know" section appears at the bottom of `/friends` (below the friends list) when there is at least 1 suggestion. Hidden entirely when empty.
+
+**Algorithm (`getFriendSuggestions` in `lib/db/friends.ts`):**
+1. Fetch all my friendships (any status) → build exclusion set (myself + anyone I've ever connected with) + accepted friend list
+2. Fetch all accepted friendships of my accepted friends via `supabaseAdmin` (bypasses RLS which only allows users to see their own friendships)
+3. For each friendship row, if one side is my friend and the other is not excluded → increment mutual count for the other person
+4. Sort by mutual count desc, take top 10, join with profiles
+
+**Display (`suggestions-client.tsx`):**
+- Responsive grid: `grid-cols-2 sm:grid-cols-3`
+- Each card: avatar, name, country flag+name, "N mutual friend(s)", "Add friend" button
+- After clicking "Add friend": button immediately switches to "Pending" (disabled) — tracked via local `pendingIds` Set
+- Calls existing `sendFriendRequest()` server action
+
+**Files:**
+- `lib/db/friends.ts` → `getFriendSuggestions(userId)` + exported `FriendSuggestion` type
+- `app/(dashboard)/friends/suggestions-client.tsx` — card grid client component
+- `app/(dashboard)/friends/page.tsx` — fetches suggestions in parallel with friends, renders section
+
+**Translation keys added to `friends` namespace:** `peopleYouMayKnow`, `mutualFriends` (ICU plural)
+
 ### In-app notifications
 Users receive notifications for friend activity. A bell icon in the nav shows the unread count and opens a dropdown panel.
 

@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
-import { getFriends } from '@/lib/db/friends'
+import { getFriends, getFriendSuggestions } from '@/lib/db/friends'
 import { Separator } from '@/components/ui/separator'
 import UserSearch from './user-search'
 import FriendList from './friend-list'
 import FriendsTabs from './friends-tabs'
+import SuggestionsClient from './suggestions-client'
 
 export default async function FriendsPage() {
   const supabase = await createClient()
@@ -14,7 +15,10 @@ export default async function FriendsPage() {
 
   const t = await getTranslations('friends')
 
-  const { data: friends, error } = await getFriends(user.id)
+  const [{ data: friends, error }, suggestions] = await Promise.all([
+    getFriends(user.id),
+    getFriendSuggestions(user.id),
+  ])
 
   return (
     <div className="max-w-lg">
@@ -31,6 +35,13 @@ export default async function FriendsPage() {
       {error && <p className="text-sm text-red-600">Failed to load friends: {error}</p>}
 
       {friends && <FriendList friends={friends} />}
+
+      {suggestions.length > 0 && (
+        <>
+          <Separator className="my-8 bg-stone-100" />
+          <SuggestionsClient suggestions={suggestions} />
+        </>
+      )}
     </div>
   )
 }
