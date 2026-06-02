@@ -359,6 +359,7 @@
     "footerSignUp": "Înregistrare",
     "recentlyAddedHeading": "Adăugate recent pe rafturi",
     "recentlyAddedSubheading": "Cărțile pe care comunitatea noastră le citește acum",
+    "filterAll": "Toate ({count})",
     "bookAvailable": "Disponibilă",
     "bookLentOut": "Împrumutată",
     "publicProfileTitle": "Raftul lui {name}",

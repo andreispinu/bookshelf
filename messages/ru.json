@@ -359,6 +359,7 @@
     "footerSignUp": "Зарегистрироваться",
     "recentlyAddedHeading": "Недавно добавлено на полки",
     "recentlyAddedSubheading": "Книги, которые читает наше сообщество прямо сейчас",
+    "filterAll": "Все ({count})",
     "bookAvailable": "Доступна",
     "bookLentOut": "Выдана",
     "publicProfileTitle": "Полка {name}",

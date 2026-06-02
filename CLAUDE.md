@@ -374,7 +374,7 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 **Sections (in order):**
 1. **Nav** — "BookShelf" logo left; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
 2. **Hero** — headline, subheadline, two CTAs ("Start free trial" dark primary, "See how it works" ghost scrolls to `#how-it-works`), note "Free for 14 days. No credit card required."
-3. **Recently Added Books** — only shown if ≥ 3 books exist. Fetches 10 latest books from users with `profile_visibility = 'public_full'` via `supabaseAdmin`. Responsive grid: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`. Each card: cover image (or title initials), title (2-line clamp), category pill, availability badge.
+3. **Recently Added Books** — only shown if ≥ 3 books with a cover exist. Fetches up to 1000 most recent books from **all** users regardless of `profile_visibility` via `supabaseAdmin` (bypasses RLS). Shows only cover image, title, category pill, and availability badge — **no author, no owner name, no link to owner** (privacy preserved). Client component (`app/recently-added-client.tsx`) handles category filtering: pills for categories with ≥ 5 books, sorted by count descending, horizontally scrollable on mobile. "All (N)" pill shows total count. Selecting a category shows up to 10 most recent books in it; if a category has < 10 books (but ≥ 5), all are shown. No pills shown if no category has ≥ 5 books.
 4. **Features** — 3-column grid (stacked mobile): Add your library (AI scan), Lend to friends (track loans), Always with you (PWA).
 4. **How it works** (`id="how-it-works"`) — 4 numbered steps: Create account → Add books → Add friends → Start lending.
 5. **Pricing** — 3 cards: Free trial ($0/14 days), Monthly ($1/mo), Annual ($10/yr with "Best value" badge). All CTAs link to `/signup`.
@@ -382,6 +382,7 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 
 **Files:**
 - `app/page.tsx` — server component, checks Supabase session to conditionally show "Go to my shelf" vs sign-up buttons. Features grid (12 cards) and steps array built dynamically from translation keys. Should be kept in sync when new features are added.
+- `app/recently-added-client.tsx` — client component for Recently Added Books section; handles category filter pills and book display
 - `app/landing-nav.tsx` — `'use client'` component. Includes EN/RO/RU language switcher (pill buttons). Accepts `currentLocale` prop from `page.tsx` (via `getLocale()`). Calls `setLocale()` server action on language change.
 - `app/landing-actions.ts` — `setLocale(lang)` server action: sets `NEXT_LOCALE` cookie, also saves `ui_language` to DB if user is logged in. Works without authentication (cookie-only fallback).
 

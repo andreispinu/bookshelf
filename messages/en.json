@@ -359,6 +359,7 @@
     "footerSignUp": "Sign up",
     "recentlyAddedHeading": "Recently added to shelves",
     "recentlyAddedSubheading": "Books our community is reading right now",
+    "filterAll": "All ({count})",
     "bookAvailable": "Available",
     "bookLentOut": "Lent out",
     "publicProfileTitle": "{name}'s BookShelf",
