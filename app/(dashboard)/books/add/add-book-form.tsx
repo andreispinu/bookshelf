@@ -63,27 +63,8 @@ export default function AddBookForm() {
     setFields(prev => ({ ...prev, [key]: value }))
   }
 
-  function handleCoverError(e: React.SyntheticEvent<HTMLImageElement>) {
-    const img = e.currentTarget
-    if (!img.dataset.titleFallbackTried && fields.title) {
-      img.dataset.titleFallbackTried = '1'
-      img.src = `https://covers.openlibrary.org/b/title/${encodeURIComponent(fields.title)}-L.jpg`
-    } else {
-      setCoverFailed(true)
-    }
-  }
-
-  function handleCoverLoad(e: React.SyntheticEvent<HTMLImageElement>) {
-    const img = e.currentTarget
-    // OpenLibrary returns a 1×1 placeholder GIF for missing covers (HTTP 200, not 404)
-    if (img.naturalWidth <= 1) {
-      if (!img.dataset.titleFallbackTried && fields.title) {
-        img.dataset.titleFallbackTried = '1'
-        img.src = `https://covers.openlibrary.org/b/title/${encodeURIComponent(fields.title)}-L.jpg`
-      } else {
-        setCoverFailed(true)
-      }
-    }
+  function handleCoverError() {
+    setCoverFailed(true)
   }
 
   async function handleFillWithAI() {
@@ -191,7 +172,6 @@ export default function AddBookForm() {
                   src={fields.cover_url}
                   alt={t('coverImage')}
                   className="h-40 w-auto rounded shadow-sm object-cover"
-                  onLoad={handleCoverLoad}
                   onError={handleCoverError}
                 />
               </div>
