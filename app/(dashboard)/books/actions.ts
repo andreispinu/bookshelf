@@ -114,7 +114,10 @@ export async function deleteBook(bookId: string) {
     .eq('id', bookId)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('[deleteBook] error:', error.message, error)
+    return { error: error.message }
+  }
 
   revalidatePath('/books')
   return { error: null }
