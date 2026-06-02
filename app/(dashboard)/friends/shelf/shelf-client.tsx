@@ -161,6 +161,14 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
     [groups]
   )
 
+  const categoryCounts = useMemo(() =>
+    groups.reduce<Record<string, number>>((acc, g) => {
+      if (g.category) acc[g.category] = (acc[g.category] ?? 0) + 1
+      return acc
+    }, {}),
+    [groups]
+  )
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
     let result = groups
@@ -206,7 +214,7 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
               !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            All
+            All <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({groups.length})</span>
           </button>
           {uniqueCategories.map(cat => (
             <button
@@ -216,7 +224,7 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {cat}
+              {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
             </button>
           ))}
         </div>
