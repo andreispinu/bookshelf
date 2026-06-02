@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendEmail } from '@/lib/email'
+import { borrowRequestEmail } from '@/lib/email-templates'
 
 export async function GET() {
   const supabase = await createClient()
@@ -91,6 +93,19 @@ export async function POST(request: NextRequest) {
     actor_id: user.id,
     book_id: bookId,
   })
+
+  // Fire-and-forget email to the book owner
+  ;(async () => {
+    const [requesterProfile, ownerAuth] = await Promise.all([
+      supabaseAdmin.from('profiles').select('name').eq('id', user.id).single(),
+      supabaseAdmin.auth.admin.getUserById(ownerId),
+    ])
+    const requesterName = requesterProfile.data?.name
+    const ownerEmail = ownerAuth.data?.user?.email
+    if (!requesterName || !ownerEmail) return
+    const { subject, html } = borrowRequestEmail(requesterName, book?.title ?? '', message?.trim() || null)
+    await sendEmail({ to: ownerEmail, subject, html })
+  })().catch(console.error)
 
   return NextResponse.json({ request: req })
 }

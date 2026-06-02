@@ -665,6 +665,28 @@ RLS: participant read, requester insert, owner update.
 - `app/(dashboard)/loans/loan-list.tsx` — updated with Requests tab + `sentRequests` prop
 - `app/(dashboard)/loans/page.tsx` — fetches sent requests, passes `defaultTab` from searchParams
 
+### Email notifications
+Transactional emails are sent via **Resend** (domain: bookshelf.name, from: noreply@bookshelf.name). All sends are fire-and-forget — never awaited in the request handler, always `.catch(console.error)` so failures never break the main flow.
+
+**Files:**
+- `lib/email.ts` — `sendEmail({ to, subject, html })` wrapper around the Resend SDK
+- `lib/email-templates.ts` — three template functions returning `{ subject, html }`:
+  - `friendRequestEmail(senderName)`
+  - `newMessageEmail(senderName, preview)`
+  - `borrowRequestEmail(requesterName, bookTitle, message?)`
+- Templates use inline HTML/CSS with the BookShelf stone brand (Georgia serif, stone-800 background CTA button, warm grey palette)
+- Recipient email fetched via `supabaseAdmin.auth.admin.getUserById(userId)` (only auth.users has email)
+
+**Three triggers:**
+
+| Event | File | Recipient | Debounce |
+|-------|------|-----------|----------|
+| Friend request sent | `app/(dashboard)/friends/actions.ts` → `sendFriendRequest()` | Addressee | None |
+| Message sent | `app/api/messages/route.ts` → POST | Receiver | Skip if unread `new_message` notification from same sender already exists |
+| Borrow request created | `app/api/borrow-requests/route.ts` → POST | Book owner | None |
+
+**Message email debounce:** Before sending, checks if a `new_message` notification already exists (`read = false`, same `actor_id`) — if so, user is likely actively chatting and email is skipped. Also skips JSON borrow card messages (content starts with `{`).
+
 ## Build order (phases)
 
 - [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes
@@ -694,6 +716,9 @@ STRIPE_ANNUAL_PRICE_ID=<price_...>
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<pk_live_...>
 NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID=<price_...>
 NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID=<price_...>
+
+# Resend (transactional email)
+RESEND_API_KEY=<secret — from resend.com dashboard>
 ```
 
 Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `getStripe()` from `lib/stripe.ts` (lazy singleton) to avoid Next.js build crashes when the var is absent.

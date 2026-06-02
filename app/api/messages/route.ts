@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendEmail } from '@/lib/email'
+import { newMessageEmail } from '@/lib/email-templates'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -44,6 +46,35 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Fire-and-forget email — skip JSON borrow cards
+  const trimmed = content.trim()
+  if (!trimmed.startsWith('{')) {
+    ;(async () => {
+      // Debounce: skip if there's already an unread new_message notification from this sender
+      const { data: existing } = await supabaseAdmin
+        .from('notifications')
+        .select('id')
+        .eq('user_id', receiverId)
+        .eq('type', 'new_message')
+        .eq('actor_id', user.id)
+        .eq('read', false)
+        .maybeSingle()
+      if (existing) return
+
+      const [senderProfile, recipientAuth] = await Promise.all([
+        supabaseAdmin.from('profiles').select('name').eq('id', user.id).single(),
+        supabaseAdmin.auth.admin.getUserById(receiverId),
+      ])
+      const senderName = senderProfile.data?.name
+      const recipientEmail = recipientAuth.data?.user?.email
+      if (!senderName || !recipientEmail) return
+      const preview = trimmed.slice(0, 100) + (trimmed.length > 100 ? '…' : '')
+      const { subject, html } = newMessageEmail(senderName, preview)
+      await sendEmail({ to: recipientEmail, subject, html })
+    })().catch(console.error)
+  }
+
   return NextResponse.json({ message: data })
 }
 
