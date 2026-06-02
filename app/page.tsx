@@ -56,6 +56,7 @@ export default async function LandingPage() {
         .from('books')
         .select('id, title, cover_url, category, status')
         .in('user_id', publicIds)
+        .not('cover_url', 'is', null)
         .order('created_at', { ascending: false })
         .limit(10)
       ).data ?? [])
