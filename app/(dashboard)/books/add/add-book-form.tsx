@@ -21,10 +21,12 @@ import {
 import { addBook, addBookForce } from '../actions'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
+import { translateCategory } from '@/lib/translate-category'
 
 export default function AddBookForm() {
   const t = useTranslations('books')
   const tc = useTranslations('common')
+  const tCat = useTranslations('categories')
   const searchParams = useSearchParams()
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
@@ -253,7 +255,7 @@ export default function AddBookForm() {
                 className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
               >
                 <option value="">{t('noCategory')}</option>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map(c => <option key={c} value={c}>{translateCategory(c, tCat)}</option>)}
               </select>
             </div>
             <div className="space-y-1.5">

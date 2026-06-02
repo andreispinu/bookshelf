@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { translateCategory } from '@/lib/translate-category'
 
 type Book = {
   id: string
@@ -18,6 +19,7 @@ type Props = {
 
 export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
   const t = useTranslations('landing')
+  const tCat = useTranslations('categories')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const hasCategories = Object.keys(categoryCounts).length > 0
@@ -61,7 +63,7 @@ export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                 }`}
               >
-                {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({count})</span>
+                {translateCategory(cat, tCat)} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({count})</span>
               </button>
             ))}
           </div>
@@ -82,7 +84,7 @@ export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
               <p className="text-sm font-medium text-stone-800 leading-snug line-clamp-2">{book.title}</p>
               {book.category && (
                 <span className="inline-block text-[10px] font-medium text-stone-500 bg-stone-100 rounded-full px-2 py-0.5 self-start">
-                  {book.category}
+                  {translateCategory(book.category, tCat)}
                 </span>
               )}
               <span className={`inline-block text-[10px] font-medium rounded-full px-2 py-0.5 self-start border ${

@@ -424,5 +424,29 @@
     "couldntFindBook": "Nu s-a putut găsi cartea — completează manual",
     "addMoreDetails": "Adaugă mai multe detalii la titlu pentru rezultate mai bune",
     "editItem": "Editează cartea"
+  },
+  "categories": {
+    "Fiction": "Ficțiune",
+    "Non-Fiction": "Non-ficțiune",
+    "Science Fiction": "Science Fiction",
+    "Fantasy": "Fantasy",
+    "Mystery & Thriller": "Mister & Thriller",
+    "Biography & Memoir": "Biografie & Memorii",
+    "History": "Istorie",
+    "Science & Technology": "Știință & Tehnologie",
+    "Self-Help & Personal Development": "Dezvoltare personală",
+    "Business & Economics": "Afaceri & Economie",
+    "Philosophy": "Filosofie",
+    "Psychology": "Psihologie",
+    "Romance": "Roman de dragoste",
+    "Children & Young Adult": "Copii & Tineret",
+    "Travel": "Călătorii",
+    "Art & Design": "Artă & Design",
+    "Poetry": "Poezie",
+    "Religion & Spirituality": "Religie & Spiritualitate",
+    "Health & Wellness": "Sănătate & Wellness",
+    "Cooking": "Gătit",
+    "Governance & Politics": "Guvernanță & Politică",
+    "School Books": "Manuale școlare"
   }
 }

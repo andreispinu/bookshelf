@@ -23,6 +23,7 @@ import {
 } from './actions'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
+import { translateCategory } from '@/lib/translate-category'
 import type { WishlistItem, FriendMatch } from '@/types'
 
 function initials(name: string) {
@@ -111,6 +112,7 @@ function WishlistMenu({
 export default function BookstoreClient({ items: initial }: { items: WishlistItem[] }) {
   const t = useTranslations('bookstore')
   const tc = useTranslations('common')
+  const tCat = useTranslations('categories')
 
   const [items, setItems] = useState(initial)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -242,7 +244,7 @@ export default function BookstoreClient({ items: initial }: { items: WishlistIte
               <p className="font-medium text-stone-800 truncate">{item.title}</p>
               <p className="text-sm text-stone-500 truncate">{item.author}</p>
               <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                {item.category && <p className="text-xs text-stone-400">{item.category}</p>}
+                {item.category && <p className="text-xs text-stone-400">{translateCategory(item.category, tCat)}</p>}
                 {item.has_friend_copy && (
                   <button
                     onClick={() => handleCheckFriends(item)}
@@ -302,7 +304,7 @@ export default function BookstoreClient({ items: initial }: { items: WishlistIte
                     <select value={editFields.category} onChange={e => setEditFields(p => ({ ...p, category: e.target.value }))}
                       className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400">
                       <option value="">{t('noCategory')}</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {CATEGORIES.map(c => <option key={c} value={c}>{translateCategory(c, tCat)}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">

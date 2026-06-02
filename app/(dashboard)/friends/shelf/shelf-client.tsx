@@ -2,8 +2,10 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { translateCategory } from '@/lib/translate-category'
 
 export type FriendInfo = {
   id: string
@@ -61,6 +63,7 @@ function StatusBadge({ status }: { status: 'available' | 'lent_out' }) {
 }
 
 function BookGroupRow({ group }: { group: BookGroup }) {
+  const tCat = useTranslations('categories')
   const [expanded, setExpanded] = useState(false)
   const isMulti = group.copies.length > 1
 
@@ -80,7 +83,7 @@ function BookGroupRow({ group }: { group: BookGroup }) {
       <div className="flex-1 min-w-0">
         <p className="font-medium text-stone-800 truncate">{group.title}</p>
         <p className="text-sm text-stone-500 truncate">{group.author}</p>
-        {group.category && <p className="text-xs text-stone-400 mt-0.5">{group.category}</p>}
+        {group.category && <p className="text-xs text-stone-400 mt-0.5">{translateCategory(group.category, tCat)}</p>}
 
         <div className="mt-1.5">
           {!isMulti ? (
@@ -152,6 +155,7 @@ function BookGroupRow({ group }: { group: BookGroup }) {
 }
 
 export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
+  const tCat = useTranslations('categories')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'recent' | 'title' | 'popular'>('recent')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -224,7 +228,7 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
+              {translateCategory(cat, tCat)} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
             </button>
           ))}
         </div>

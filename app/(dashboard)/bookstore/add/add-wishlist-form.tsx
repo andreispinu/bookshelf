@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { addToWishlistAndCheck } from '../actions'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
+import { translateCategory } from '@/lib/translate-category'
 import type { FriendMatch } from '@/types'
 
 function initials(name: string) {
@@ -30,6 +31,7 @@ function initials(name: string) {
 export default function AddWishlistForm() {
   const t = useTranslations('bookstore')
   const tc = useTranslations('common')
+  const tCat = useTranslations('categories')
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -211,7 +213,7 @@ export default function AddWishlistForm() {
                   className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
                 >
                   <option value="">{t('noCategory')}</option>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {CATEGORIES.map(c => <option key={c} value={c}>{translateCategory(c, tCat)}</option>)}
                 </select>
               </div>
               <div className="space-y-1.5">

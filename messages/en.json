@@ -424,5 +424,29 @@
     "couldntFindBook": "Couldn't find this book — please fill in manually",
     "addMoreDetails": "Add more details to the title for better results",
     "editItem": "Edit book"
+  },
+  "categories": {
+    "Fiction": "Fiction",
+    "Non-Fiction": "Non-Fiction",
+    "Science Fiction": "Science Fiction",
+    "Fantasy": "Fantasy",
+    "Mystery & Thriller": "Mystery & Thriller",
+    "Biography & Memoir": "Biography & Memoir",
+    "History": "History",
+    "Science & Technology": "Science & Technology",
+    "Self-Help & Personal Development": "Self-Help & Personal Development",
+    "Business & Economics": "Business & Economics",
+    "Philosophy": "Philosophy",
+    "Psychology": "Psychology",
+    "Romance": "Romance",
+    "Children & Young Adult": "Children & Young Adult",
+    "Travel": "Travel",
+    "Art & Design": "Art & Design",
+    "Poetry": "Poetry",
+    "Religion & Spirituality": "Religion & Spirituality",
+    "Health & Wellness": "Health & Wellness",
+    "Cooking": "Cooking",
+    "Governance & Politics": "Governance & Politics",
+    "School Books": "School Books"
   }
 }

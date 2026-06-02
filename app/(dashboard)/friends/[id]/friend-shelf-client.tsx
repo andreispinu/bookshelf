@@ -2,8 +2,10 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import BorrowButton from './borrow-button'
+import { translateCategory } from '@/lib/translate-category'
 import type { Book } from '@/types'
 
 export default function FriendShelfClient({
@@ -19,6 +21,7 @@ export default function FriendShelfClient({
   availableLabel: string
   lentOutLabel: string
 }) {
+  const tCat = useTranslations('categories')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const categories = useMemo(() =>
@@ -56,7 +59,7 @@ export default function FriendShelfClient({
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
+              {translateCategory(cat, tCat)} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
             </button>
           ))}
         </div>
@@ -80,7 +83,7 @@ export default function FriendShelfClient({
               <p className="font-medium text-stone-800 truncate text-sm sm:text-base">{book.title}</p>
               <p className="text-xs sm:text-sm text-stone-500 truncate">{book.author}</p>
               {book.category && (
-                <p className="text-xs text-stone-400 mt-0.5 truncate">{book.category}</p>
+                <p className="text-xs text-stone-400 mt-0.5 truncate">{translateCategory(book.category, tCat)}</p>
               )}
               <Badge
                 variant="outline"

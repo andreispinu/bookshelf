@@ -573,6 +573,8 @@ Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & 
 
 **Database** (run `supabase/add-category.sql`): `ALTER TABLE books ADD COLUMN IF NOT EXISTS category text`
 
+**Category translation:** Category values are **always stored in English** in the database (e.g. `"Fiction"`). Only the display label is translated. Use the `translateCategory(category, t)` helper from `lib/translate-category.ts`, passing a `t` function from `useTranslations('categories')` (client) or `await getTranslations('categories')` (server). Translation keys live in `messages/*/categories` namespace with the English name as the key. This ensures AI auto-assignment and filtering logic work regardless of UI language.
+
 **AI auto-assignment:** The Claude prompt in `app/api/extract-book/route.ts` instructs Claude to pick exactly one category from the list. The category is returned in the JSON response alongside title/author/etc., passed via URL param `?category=...` to the add form, and pre-selected in the dropdown (user can change it).
 
 **Forms:**

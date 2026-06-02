@@ -424,5 +424,29 @@
     "couldntFindBook": "Не удалось найти книгу — заполните вручную",
     "addMoreDetails": "Добавьте больше деталей к названию для лучших результатов",
     "editItem": "Редактировать книгу"
+  },
+  "categories": {
+    "Fiction": "Художественная литература",
+    "Non-Fiction": "Нон-фикшн",
+    "Science Fiction": "Научная фантастика",
+    "Fantasy": "Фэнтези",
+    "Mystery & Thriller": "Детектив & Триллер",
+    "Biography & Memoir": "Биография & Мемуары",
+    "History": "История",
+    "Science & Technology": "Наука & Технологии",
+    "Self-Help & Personal Development": "Саморазвитие",
+    "Business & Economics": "Бизнес & Экономика",
+    "Philosophy": "Философия",
+    "Psychology": "Психология",
+    "Romance": "Романтика",
+    "Children & Young Adult": "Детская литература",
+    "Travel": "Путешествия",
+    "Art & Design": "Искусство & Дизайн",
+    "Poetry": "Поэзия",
+    "Religion & Spirituality": "Религия & Духовность",
+    "Health & Wellness": "Здоровье & Wellness",
+    "Cooking": "Кулинария",
+    "Governance & Politics": "Управление & Политика",
+    "School Books": "Учебники"
   }
 }

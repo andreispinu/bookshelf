@@ -22,6 +22,7 @@ import { lendBook } from '../loans/actions'
 import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
+import { translateCategory } from '@/lib/translate-category'
 
 type FillSuggestion = {
   field: keyof Pick<Book, 'isbn' | 'publisher' | 'year' | 'category' | 'language' | 'description' | 'cover_url'>
@@ -107,6 +108,7 @@ function initials(name: string) {
 export default function BookList({ books: initial, friends }: { books: Book[], friends: Friend[] }) {
   const t = useTranslations('books')
   const tc = useTranslations('common')
+  const tCat = useTranslations('categories')
   const router = useRouter()
   const [books, setBooks] = useState(initial)
   const [editing, setEditing] = useState<Book | null>(null)
@@ -335,7 +337,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
+              {translateCategory(cat, tCat)} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
             </button>
           ))}
         </div>
@@ -357,7 +359,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-stone-800 truncate">{book.title}</p>
                 <p className="text-sm text-stone-500 truncate">{book.author}</p>
-                {book.category && <p className="text-xs text-stone-400 mt-0.5">{book.category}</p>}
+                {book.category && <p className="text-xs text-stone-400 mt-0.5">{translateCategory(book.category, tCat)}</p>}
                 {book.isbn && <p className="text-xs text-stone-400 mt-0.5">ISBN {book.isbn}</p>}
               </div>
 
@@ -487,7 +489,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                     <select id="edit-category" name="category" defaultValue={editing.category ?? ''}
                       className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400">
                       <option value="">{t('noCategory')}</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      {CATEGORIES.map(c => <option key={c} value={c}>{translateCategory(c, tCat)}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1.5">

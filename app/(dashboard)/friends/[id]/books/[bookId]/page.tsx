@@ -1,9 +1,11 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { Badge } from '@/components/ui/badge'
 import BorrowButton from '../../borrow-button'
+import { translateCategory } from '@/lib/translate-category'
 import type { Book } from '@/types'
 
 export default async function FriendBookDetailPage({
@@ -37,6 +39,7 @@ export default async function FriendBookDetailPage({
 
   if (!profile || !book) notFound()
 
+  const tCat = await getTranslations('categories')
   const b = book as Book
 
   return (
@@ -121,7 +124,7 @@ export default async function FriendBookDetailPage({
           {b.category && (
             <>
               <dt className="text-stone-400">Category</dt>
-              <dd className="text-stone-700">{b.category}</dd>
+              <dd className="text-stone-700">{translateCategory(b.category, tCat)}</dd>
             </>
           )}
         </dl>
