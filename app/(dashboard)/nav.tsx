@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
+import { RefreshCw } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -18,6 +19,7 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
   const supabase = createClient()
   const [menuOpen, setMenuOpen] = useState(false)
   const [counts, setCounts] = useState<NavCounts>({ unreadMessages: 0, pendingRequests: 0 })
+  const [refreshing, setRefreshing] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const NAV_LINKS = [
@@ -51,6 +53,18 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [menuOpen])
+
+  async function handleRefresh() {
+    if (refreshing) return
+    setRefreshing(true)
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (reg?.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+      }
+    }
+    setTimeout(() => window.location.reload(), 1000)
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -97,9 +111,16 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
           </nav>
         </div>
 
-        {/* Right: bell + avatar (both mobile and desktop) */}
+        {/* Right: bell + refresh (mobile) + avatar */}
         <div className="flex items-center gap-1.5">
           <NotificationsBell />
+          <button
+            onClick={handleRefresh}
+            aria-label="Refresh app"
+            className="sm:hidden p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+          >
+            <RefreshCw className={`h-[18px] w-[18px] ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
           <div ref={menuRef} className="relative flex items-center gap-2">
             <span className="text-sm text-stone-500 hidden sm:block">{userName}</span>
             <button

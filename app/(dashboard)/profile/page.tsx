@@ -55,6 +55,11 @@ export default async function ProfilePage() {
           />
         </div>
         <LanguageSection currentLanguage={profile.ui_language ?? 'en'} />
+        {process.env.NEXT_PUBLIC_BUILD_ID && (
+          <p className="text-xs text-stone-300 text-center pt-2">
+            Version: {process.env.NEXT_PUBLIC_BUILD_ID}
+          </p>
+        )}
       </div>
     </div>
   )

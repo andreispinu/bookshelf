@@ -820,6 +820,23 @@ Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `g
 - Manifest: `public/manifest.json` — theme color `#292524` (stone-800), start URL `/books`
 - `viewport-fit=cover` is set in `app/layout.tsx` (`viewportFit: "cover"` in the `Viewport` export) — required for `env(safe-area-inset-bottom)` to work on both iPhone and Android PWAs
 
+### PWA update & refresh strategy
+
+**Problem:** Service workers cache aggressively. After a Vercel deploy, installed PWAs serve stale cached content until the user manually refreshes.
+
+**Solution (three layers):**
+
+1. **NetworkFirst cache strategy** (`next.config.ts` `workboxOptions.runtimeCaching`): All runtime requests use NetworkFirst — the SW always tries the network first and falls back to cache only when offline. This prevents stale pages on subsequent visits.
+
+2. **Automatic update detection** (`app/pwa-updater.tsx`): A client component mounted in `app/layout.tsx` listens for SW `updatefound` events. When a new SW installs and waits (`registration.waiting`), a persistent Sonner toast appears: "A new version of BookShelf is available" with an "Update now" button. Clicking it sends `SKIP_WAITING` to the waiting SW; the `controllerchange` event then triggers `window.location.reload()`.
+
+3. **Manual refresh button** (`app/(dashboard)/nav.tsx`): A `RefreshCw` icon button (mobile-only, `sm:hidden`) sits between the bell and avatar in the top bar. Tapping it:
+   - Spins the icon for 1 second (`animate-spin`)
+   - Sends `SKIP_WAITING` if a SW update is queued
+   - Calls `window.location.reload()` after 1s
+
+**Version indicator:** `process.env.NEXT_PUBLIC_BUILD_ID` is set in `next.config.ts` to the build date (`YYYY-MM-DD`). Shown at the bottom of `/profile` so users can confirm they have the latest version.
+
 ## Mobile navigation
 
 Mobile (below 640px breakpoint) uses a **bottom navigation bar** instead of the top nav links. This matches the native app convention for PWAs installed from Safari (iPhone) and Chrome (Android).

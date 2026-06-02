@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner";
+import PwaUpdater from "./pwa-updater";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,6 +56,7 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
           <Toaster position="bottom-center" />
+          <PwaUpdater />
         </NextIntlClientProvider>
       </body>
     </html>
