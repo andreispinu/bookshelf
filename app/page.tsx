@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getTranslations, getLocale } from 'next-intl/server'
 import LandingNav from './landing-nav'
 import {
@@ -43,6 +44,23 @@ export default async function LandingPage() {
   const iosSteps = [t('installIos1'), t('installIos2'), t('installIos3'), t('installIos4')]
   const androidSteps = [t('installAndroid1'), t('installAndroid2'), t('installAndroid3'), t('installAndroid4')]
 
+  const { data: publicProfiles } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('profile_visibility', 'public_full')
+
+  const publicIds = (publicProfiles ?? []).map((p: { id: string }) => p.id)
+
+  const recentBooks = publicIds.length > 0
+    ? ((await supabaseAdmin
+        .from('books')
+        .select('id, title, cover_url, category, status')
+        .in('user_id', publicIds)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      ).data ?? [])
+    : []
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800">
 
@@ -74,6 +92,48 @@ export default async function LandingPage() {
           <p className="mt-4 text-sm text-stone-400">{t('heroTrialNote')}</p>
         </div>
       </section>
+
+      {/* Recently Added Books */}
+      {recentBooks.length >= 3 && (
+        <section className="py-16 px-4 bg-white border-b border-stone-200">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">
+              Recently added to shelves
+            </h2>
+            <p className="text-center text-stone-500 text-sm mb-8">
+              Books our community is reading right now
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {recentBooks.map((book: { id: string; title: string; cover_url: string | null; category: string | null; status: string }) => (
+                <div key={book.id} className="bg-white rounded-xl border border-stone-200 p-3 flex flex-col gap-2">
+                  <div
+                    className="w-full rounded-lg overflow-hidden bg-stone-100 flex items-center justify-center"
+                    style={{ aspectRatio: '2/3' }}
+                  >
+                    {book.cover_url
+                      ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+                      : <span className="text-stone-500 font-semibold text-lg">{book.title.slice(0, 2).toUpperCase()}</span>
+                    }
+                  </div>
+                  <p className="text-sm font-medium text-stone-800 leading-snug line-clamp-2">{book.title}</p>
+                  {book.category && (
+                    <span className="inline-block text-[10px] font-medium text-stone-500 bg-stone-100 rounded-full px-2 py-0.5 self-start">
+                      {book.category}
+                    </span>
+                  )}
+                  <span className={`inline-block text-[10px] font-medium rounded-full px-2 py-0.5 self-start border ${
+                    book.status === 'available'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {book.status === 'available' ? 'Available' : 'Lent out'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features */}
       <section id="features" className="py-16 px-4 bg-stone-100 border-y border-stone-200">

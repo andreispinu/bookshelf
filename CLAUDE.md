@@ -364,7 +364,8 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 **Sections (in order):**
 1. **Nav** — "BookShelf" logo left; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
 2. **Hero** — headline, subheadline, two CTAs ("Start free trial" dark primary, "See how it works" ghost scrolls to `#how-it-works`), note "Free for 14 days. No credit card required."
-3. **Features** — 3-column grid (stacked mobile): Add your library (AI scan), Lend to friends (track loans), Always with you (PWA).
+3. **Recently Added Books** — only shown if ≥ 3 books exist. Fetches 10 latest books from users with `profile_visibility = 'public_full'` via `supabaseAdmin`. Responsive grid: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`. Each card: cover image (or title initials), title (2-line clamp), category pill, availability badge.
+4. **Features** — 3-column grid (stacked mobile): Add your library (AI scan), Lend to friends (track loans), Always with you (PWA).
 4. **How it works** (`id="how-it-works"`) — 4 numbered steps: Create account → Add books → Add friends → Start lending.
 5. **Pricing** — 3 cards: Free trial ($0/14 days), Monthly ($1/mo), Annual ($10/yr with "Best value" badge). All CTAs link to `/signup`.
 6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
