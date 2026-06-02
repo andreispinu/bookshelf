@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { getBooks } from '@/lib/db/books'
@@ -111,12 +112,18 @@ export default async function FriendShelfPage({ params }: { params: Promise<{ id
                   </Badge>
                 </div>
 
-                {/* Borrow button — desktop only shows inline, mobile shows below */}
-                {book.status === 'available' && (
-                  <div className="sm:shrink-0">
+                {/* Actions */}
+                <div className="sm:shrink-0 flex gap-2 flex-wrap">
+                  <Link
+                    href={`/friends/${friendId}/books/${book.id}`}
+                    className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-stone-200 text-xs font-medium text-stone-600 hover:bg-stone-50 transition-colors"
+                  >
+                    View
+                  </Link>
+                  {book.status === 'available' && (
                     <BorrowButton bookId={book.id} bookTitle={book.title} ownerId={profile.id} />
-                  </div>
-                )}
+                  )}
+                </div>
               </li>
             ))}
           </ul>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 
@@ -63,6 +64,8 @@ function BookGroupRow({ group }: { group: BookGroup }) {
   const [expanded, setExpanded] = useState(false)
   const isMulti = group.copies.length > 1
 
+  const firstCopy = group.copies[0]
+
   return (
     <li className="flex items-start gap-4 py-4">
       {/* Cover */}
@@ -114,10 +117,16 @@ function BookGroupRow({ group }: { group: BookGroup }) {
               {expanded && (
                 <ul className="mt-2 space-y-1.5 pl-1">
                   {group.copies.map(copy => (
-                    <li key={copy.bookId} className="flex items-center gap-2">
+                    <li key={copy.bookId} className="flex items-center gap-2 flex-wrap">
                       <FriendAvatar friend={copy.friend} />
                       <span className="text-xs text-stone-600">{copy.friend.name}</span>
                       <StatusBadge status={copy.status} />
+                      <Link
+                        href={`/friends/${copy.friend.id}/books/${copy.bookId}`}
+                        className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
+                      >
+                        View →
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -126,6 +135,18 @@ function BookGroupRow({ group }: { group: BookGroup }) {
           )}
         </div>
       </div>
+
+      {/* View button — for single-copy show inline; multi-copy view links are in expanded list */}
+      {!isMulti && (
+        <div className="shrink-0 self-center">
+          <Link
+            href={`/friends/${firstCopy.friend.id}/books/${firstCopy.bookId}`}
+            className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-stone-200 text-xs font-medium text-stone-600 hover:bg-stone-50 transition-colors"
+          >
+            View
+          </Link>
+        </div>
+      )}
     </li>
   )
 }

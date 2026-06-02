@@ -330,6 +330,13 @@ Users can set a username and choose a visibility level to share their profile pu
 - `app/api/username/check/route.ts` — availability check endpoint
 - `app/[username]/page.tsx` — public profile page
 
+### Friend's book detail
+Route: `/friends/[id]/books/[bookId]` — full detail view of a single book from a friend's shelf.
+
+Verifies accepted friendship first (same check as `/friends/[id]`). Fetches profile + book via `supabaseAdmin` in parallel. Shows: large cover, title/author, status badge, "Currently lent out" note if lent, "Request to borrow" BorrowButton if available, metadata grid (publisher, year, ISBN, language, category), description. Back link: "← Back to {name}'s shelf".
+
+**File:** `app/(dashboard)/friends/[id]/books/[bookId]/page.tsx`
+
 ### Friend's bookshelf
 Route: `/friends/[id]` — read-only view of an accepted friend's book collection.
 
