@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -9,7 +10,8 @@ export async function GET(request: NextRequest) {
   const withUserId = request.nextUrl.searchParams.get('with')
   if (!withUserId) return NextResponse.json({ error: 'Missing with param' }, { status: 400 })
 
-  const { data, error } = await supabase
+  // Use admin client to avoid RLS/JWT issues in API routes
+  const { data, error } = await supabaseAdmin
     .from('messages')
     .select('id, sender_id, receiver_id, content, read, created_at')
     .or(
@@ -17,7 +19,10 @@ export async function GET(request: NextRequest) {
     )
     .order('created_at', { ascending: true })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('[messages GET] error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ messages: data ?? [] })
 }
 
@@ -32,7 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('messages')
     .insert({ sender_id: user.id, receiver_id: receiverId, content: content.trim() })
     .select('id, sender_id, receiver_id, content, read, created_at')
@@ -51,7 +56,7 @@ export async function PATCH(request: NextRequest) {
   const { senderId } = body
   if (!senderId) return NextResponse.json({ error: 'Missing senderId' }, { status: 400 })
 
-  await supabase
+  await supabaseAdmin
     .from('messages')
     .update({ read: true })
     .eq('sender_id', senderId)
