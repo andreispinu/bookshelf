@@ -59,6 +59,15 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // If the requester included a message, save it to the messages table
+  if (message?.trim()) {
+    await supabase.from('messages').insert({
+      sender_id: user.id,
+      receiver_id: ownerId,
+      content: message.trim(),
+    })
+  }
+
   // Notify the book owner
   await supabase.from('notifications').insert({
     user_id: ownerId,
@@ -116,6 +125,15 @@ export async function PATCH(request: NextRequest) {
       .update({ status: 'lent_out' })
       .eq('id', req.book_id)
       .eq('user_id', user.id)
+  }
+
+  // If the owner included a message, save it to the messages table
+  if (message?.trim()) {
+    await supabase.from('messages').insert({
+      sender_id: user.id,
+      receiver_id: req.requester_id,
+      content: message.trim(),
+    })
   }
 
   // Notify the requester
