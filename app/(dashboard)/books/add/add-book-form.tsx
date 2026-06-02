@@ -34,6 +34,8 @@ export default function AddBookForm() {
   const [showDuplicate, setShowDuplicate] = useState(false)
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
 
+  const [coverFailed, setCoverFailed] = useState(false)
+
   const [fields, setFields] = useState({
     title:       searchParams.get('title')       ?? '',
     author:      searchParams.get('author')      ?? '',
@@ -54,8 +56,34 @@ export default function AddBookForm() {
     }
   }, [searchParams])
 
+  // Reset cover error state whenever cover_url changes
+  useEffect(() => { setCoverFailed(false) }, [fields.cover_url])
+
   function set(key: keyof typeof fields, value: string) {
     setFields(prev => ({ ...prev, [key]: value }))
+  }
+
+  function handleCoverError(e: React.SyntheticEvent<HTMLImageElement>) {
+    const img = e.currentTarget
+    if (!img.dataset.titleFallbackTried && fields.title) {
+      img.dataset.titleFallbackTried = '1'
+      img.src = `https://covers.openlibrary.org/b/title/${encodeURIComponent(fields.title)}-L.jpg`
+    } else {
+      setCoverFailed(true)
+    }
+  }
+
+  function handleCoverLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const img = e.currentTarget
+    // OpenLibrary returns a 1×1 placeholder GIF for missing covers (HTTP 200, not 404)
+    if (img.naturalWidth <= 1) {
+      if (!img.dataset.titleFallbackTried && fields.title) {
+        img.dataset.titleFallbackTried = '1'
+        img.src = `https://covers.openlibrary.org/b/title/${encodeURIComponent(fields.title)}-L.jpg`
+      } else {
+        setCoverFailed(true)
+      }
+    }
   }
 
   async function handleFillWithAI() {
@@ -84,6 +112,7 @@ export default function AddBookForm() {
       }
 
       const s = data.suggested as Record<string, string | null>
+      console.log('[Fill with AI] suggested:', s)
       // Only fill empty fields
       setFields(prev => ({
         title:       prev.title,
@@ -155,13 +184,15 @@ export default function AddBookForm() {
           <CardContent className="space-y-4">
 
             {/* Cover preview */}
-            {fields.cover_url && (
+            {fields.cover_url && !coverFailed && (
               <div className="flex justify-center">
                 <img
+                  key={fields.cover_url}
                   src={fields.cover_url}
                   alt={t('coverImage')}
                   className="h-40 w-auto rounded shadow-sm object-cover"
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  onLoad={handleCoverLoad}
+                  onError={handleCoverError}
                 />
               </div>
             )}
