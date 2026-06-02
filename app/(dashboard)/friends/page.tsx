@@ -1,12 +1,15 @@
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getFriends, getFriendSuggestions } from '@/lib/db/friends'
 import { Separator } from '@/components/ui/separator'
 import UserSearch from './user-search'
 import FriendList from './friend-list'
 import FriendsTabs from './friends-tabs'
 import SuggestionsClient from './suggestions-client'
+import InviteSection from './invite-section'
+import type { Invitation } from './invite-section'
 
 export default async function FriendsPage() {
   const supabase = await createClient()
@@ -15,9 +18,14 @@ export default async function FriendsPage() {
 
   const t = await getTranslations('friends')
 
-  const [{ data: friends, error }, suggestions] = await Promise.all([
+  const [{ data: friends, error }, suggestions, { data: invitations }] = await Promise.all([
     getFriends(user.id),
     getFriendSuggestions(user.id),
+    supabaseAdmin
+      .from('invitations')
+      .select('id, email, status, updated_at, created_at, accepted_user:accepted_user_id(id, name, avatar_url)')
+      .eq('inviter_id', user.id)
+      .order('created_at', { ascending: false }),
   ])
 
   return (
@@ -42,6 +50,9 @@ export default async function FriendsPage() {
           <SuggestionsClient suggestions={suggestions} />
         </>
       )}
+
+      <Separator className="my-8 bg-stone-100" />
+      <InviteSection initialInvitations={(invitations ?? []) as unknown as Invitation[]} />
     </div>
   )
 }

@@ -133,7 +133,20 @@
     "friendNoBooksAdded": "{name} не добавил книг.",
     "bookCount": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}}",
     "peopleYouMayKnow": "Люди, которых вы можете знать",
-    "mutualFriends": "{count, plural, one {# общий друг} few {# общих друга} many {# общих друзей} other {# общих друга}}"
+    "mutualFriends": "{count, plural, one {# общий друг} few {# общих друга} many {# общих друзей} other {# общих друга}}",
+    "inviteAFriend": "Пригласить друга",
+    "inviteByEmail": "Знаете кого-то, кто любит книги? Пригласите их в BookShelf.",
+    "emailAddress": "Email адрес",
+    "sendInvite": "Отправить приглашение",
+    "sending": "Отправка…",
+    "inviteSent": "Приглашение отправлено!",
+    "alreadyInvited": "Вы уже приглашали этого пользователя.",
+    "alreadyOnBookshelf": "Уже на BookShelf — добавить в друзья?",
+    "sentInvitations": "Отправленные приглашения",
+    "invited": "Приглашён",
+    "accepted": "Принято",
+    "resend": "Отправить повторно",
+    "resent": "Повторно отправлено"
   },
   "messages": {
     "title": "Сообщения",

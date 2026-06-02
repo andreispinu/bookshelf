@@ -51,5 +51,5 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/books')
+  return { error: null }
 }

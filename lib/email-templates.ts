@@ -79,6 +79,26 @@ export function newMessageEmail(senderName: string, preview: string): { subject:
   return { subject, html }
 }
 
+export function invitationEmail(inviterName: string, token: string): { subject: string; html: string } {
+  const subject = `${inviterName} invited you to join BookShelf`
+  const safeInviter = inviterName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">${safeInviter} invited you to join BookShelf</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeInviter} invited you to join BookShelf — a personal library app where you can catalogue your books, connect with friends, and lend books to each other.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeInviter} wants to connect with you and share their bookshelf.
+        </p>
+        ${ctaButton('Accept invitation &amp; join BookShelf', `${BASE_URL}/signup?invite=${token}`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
 export function borrowRequestEmail(
   requesterName: string,
   bookTitle: string,

@@ -757,3 +757,50 @@ Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `g
 - **`status` field on books** — simple text enum instead of a join; fast to query, easy to understand
 - **`proxy.ts` for session refresh** — Supabase requires the session to be refreshed on every request; the proxy intercepts all non-static requests to do this
 - **User search via API route** — `/api/users/search` rather than a server action, because search is a GET with a query param called from a client component
+
+### Invite friends by email
+Users can invite friends who aren't yet on BookShelf via email.
+
+**Database table: `invitations`** (run `supabase/add-invitations.sql`):
+```sql
+id               uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+inviter_id       uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+email            text        NOT NULL
+status           text        NOT NULL DEFAULT 'pending'  -- 'pending' | 'accepted'
+token            text        NOT NULL UNIQUE DEFAULT gen_random_uuid()::text
+accepted_user_id uuid        REFERENCES profiles(id)
+created_at       timestamptz DEFAULT now()
+updated_at       timestamptz DEFAULT now()
+UNIQUE(inviter_id, email)
+```
+RLS: inviter can read/insert/update their own invitations.
+
+**Invite flow:**
+1. Friends page → "Invite a friend" section: email input + "Send invite" button
+2. `POST /api/invitations` checks if email already exists in `auth.users` (via `supabaseAdmin.schema('auth').from('users')`):
+   - **Already registered**: returns `{ exists: true, profile }` — UI shows "Already on BookShelf, add as friend?" with Add Friend button
+   - **Already invited**: returns `{ alreadyInvited: true }` — UI shows note
+   - **New user**: inserts invitation row, sends email via Resend, returns `{ sent: true }`
+3. Email: "[Name] invited you to join BookShelf" with CTA → `https://bookshelf.name/signup?invite={token}`
+4. New user signs up at `/signup?invite={token}` → after signup, client calls `POST /api/invitations/accept` → marks invitation accepted, auto-creates pending friend request from inviter to new user → redirects to `/friends`
+5. Sent invitations list on friends page: email, status badge (Invited/Accepted), date, Resend button (disabled for 24h after last send based on `updated_at`)
+
+**API routes:**
+- `POST /api/invitations` — check email, create invitation, send email
+- `POST /api/invitations/accept` — accept by token, auto friend request from inviter
+- `POST /api/invitations/resend` — resend email, update `updated_at`, 24h cooldown enforced
+
+**Signup with invite token:**
+- Signup action no longer calls `redirect()` — returns `{ error: null }` on success
+- Signup page reads `?invite=` from `window.location.search` in the submit handler
+- After successful signup: calls `/api/invitations/accept`, then `router.push('/friends')`
+- Without invite: `router.push('/books')`
+
+**Files:**
+- `supabase/add-invitations.sql` — table + RLS
+- `app/api/invitations/route.ts` — POST create/check
+- `app/api/invitations/accept/route.ts` — POST accept by token
+- `app/api/invitations/resend/route.ts` — POST resend with cooldown
+- `app/(dashboard)/friends/invite-section.tsx` — client component (form + list)
+- `app/(dashboard)/friends/page.tsx` — fetches invitations, renders InviteSection
+- `lib/email-templates.ts` — `invitationEmail(inviterName, token)`

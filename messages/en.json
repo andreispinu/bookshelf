@@ -133,7 +133,20 @@
     "friendNoBooksAdded": "{name} hasn't added any books.",
     "bookCount": "{count, plural, one {# book} other {# books}}",
     "peopleYouMayKnow": "People you may know",
-    "mutualFriends": "{count, plural, one {# mutual friend} other {# mutual friends}}"
+    "mutualFriends": "{count, plural, one {# mutual friend} other {# mutual friends}}",
+    "inviteAFriend": "Invite a friend",
+    "inviteByEmail": "Know someone who loves books? Invite them to BookShelf.",
+    "emailAddress": "Email address",
+    "sendInvite": "Send invite",
+    "sending": "Sending…",
+    "inviteSent": "Invitation sent!",
+    "alreadyInvited": "You've already invited this person.",
+    "alreadyOnBookshelf": "Already on BookShelf — add as a friend?",
+    "sentInvitations": "Sent invitations",
+    "invited": "Invited",
+    "accepted": "Accepted",
+    "resend": "Resend",
+    "resent": "Resent"
   },
   "messages": {
     "title": "Messages",

@@ -133,7 +133,20 @@
     "friendNoBooksAdded": "{name} nu a adăugat nicio carte.",
     "bookCount": "{count, plural, one {# carte} other {# cărți}}",
     "peopleYouMayKnow": "Persoane pe care le-ai putea cunoaște",
-    "mutualFriends": "{count, plural, one {# prieten comun} other {# prieteni comuni}}"
+    "mutualFriends": "{count, plural, one {# prieten comun} other {# prieteni comuni}}",
+    "inviteAFriend": "Invită un prieten",
+    "inviteByEmail": "Cunoști pe cineva care iubește cărțile? Invită-l pe BookShelf.",
+    "emailAddress": "Adresă de email",
+    "sendInvite": "Trimite invitație",
+    "sending": "Se trimite…",
+    "inviteSent": "Invitație trimisă!",
+    "alreadyInvited": "Ai invitat deja această persoană.",
+    "alreadyOnBookshelf": "Deja pe BookShelf — adaugă ca prieten?",
+    "sentInvitations": "Invitații trimise",
+    "invited": "Invitat",
+    "accepted": "Acceptat",
+    "resend": "Retrimite",
+    "resent": "Retrimis"
   },
   "messages": {
     "title": "Mesaje",

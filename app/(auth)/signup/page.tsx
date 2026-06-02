@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,6 +12,7 @@ import { signup } from '../actions'
 
 export default function SignupPage() {
   const t = useTranslations('auth')
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -25,7 +27,22 @@ export default function SignupPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+      return
     }
+
+    // Handle invite token if present
+    const inviteToken = new URLSearchParams(window.location.search).get('invite')
+    if (inviteToken) {
+      await fetch('/api/invitations/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: inviteToken }),
+      })
+      router.push('/friends')
+    } else {
+      router.push('/books')
+    }
+    router.refresh()
   }
 
   return (
