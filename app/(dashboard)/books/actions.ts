@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 type BookFields = {
   isbn?: string | null
@@ -108,7 +109,24 @@ export async function deleteBook(bookId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase
+  // Verify ownership before deleting
+  const { data: book } = await supabaseAdmin
+    .from('books')
+    .select('id')
+    .eq('id', bookId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!book) return { error: 'Book not found' }
+
+  // Clear notifications.book_id FK reference to avoid constraint violation
+  // (notifications.book_id has no ON DELETE clause in older DB deployments)
+  await supabaseAdmin
+    .from('notifications')
+    .update({ book_id: null })
+    .eq('book_id', bookId)
+
+  const { error } = await supabaseAdmin
     .from('books')
     .delete()
     .eq('id', bookId)

@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { updateBook, deleteBook } from '../actions'
 import type { Book } from '@/types'
 
@@ -41,8 +42,12 @@ export default function BookDetailActions({ book }: { book: Book }) {
 
   function handleDelete() {
     startDeleteTransition(async () => {
-      await deleteBook(book.id)
-      router.push('/books')
+      const result = await deleteBook(book.id)
+      if (result?.error) {
+        toast.error(result.error)
+      } else {
+        router.push('/books')
+      }
     })
   }
 

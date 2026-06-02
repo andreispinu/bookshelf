@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef, useEffect } from 'react'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
@@ -205,7 +206,9 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   async function handleDelete(bookId: string) {
     setDeletingId(bookId)
     const result = await deleteBook(bookId)
-    if (!result?.error) {
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
       setBooks(prev => prev.filter(b => b.id !== bookId))
     }
     setDeletingId(null)
