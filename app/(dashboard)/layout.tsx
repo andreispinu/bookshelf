@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import Nav from './nav'
+import MobileBottomNav from './mobile-bottom-nav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -44,9 +45,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
         </div>
       )}
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 pt-8 pb-24 sm:pb-8">
         {children}
       </main>
+      <MobileBottomNav />
     </div>
   )
 }

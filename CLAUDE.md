@@ -760,6 +760,35 @@ Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `g
 - PWA is disabled in development (`disable: process.env.NODE_ENV === 'development'`)
 - Icons live in `public/icons/` — generated from `icon.svg` via sharp at 192px, 512px, and 180px (Apple touch icon)
 - Manifest: `public/manifest.json` — theme color `#292524` (stone-800), start URL `/books`
+- `viewport-fit=cover` is set in `app/layout.tsx` (`viewportFit: "cover"` in the `Viewport` export) — required for `env(safe-area-inset-bottom)` to work on both iPhone and Android PWAs
+
+## Mobile navigation
+
+Mobile (below 640px breakpoint) uses a **bottom navigation bar** instead of the top nav links. This matches the native app convention for PWAs installed from Safari (iPhone) and Chrome (Android).
+
+**Top bar on mobile:**
+- Keeps: BookShelf wordmark (left), bell icon with badge, avatar dropdown (right)
+- Hides: all navigation links (Books, Friends, Messages, Loans)
+- Height: 52px; background: stone-50
+- Bell and avatar behavior identical to desktop
+
+**Bottom nav bar ():**
+- Fixed to bottom of screen, `sm:hidden` (invisible on desktop)
+- 4 tabs: Books (BookOpen), Friends (Users), Messages (MessageSquare), Loans (ArrowLeftRight) — from lucide-react
+- Active tab: stone-900 (#1c1917) + strokeWidth 2; inactive: stone-400 (#a8a29e) + strokeWidth 1.5
+- Red dot badge (8px, no count) on Messages when `unreadMessages > 0`, on Loans when `pendingRequests > 0`
+- Polls `/api/nav-counts` every 30 seconds (same endpoint as top nav)
+- Added in `app/(dashboard)/layout.tsx` so it appears on every dashboard page
+
+**Safe area handling (PWA on iPhone and Android):**
+- `padding-bottom: max(14px, env(safe-area-inset-bottom))` applied to the bottom nav
+- iPhone home indicator: `env(safe-area-inset-bottom)` ≈ 34px → nav extends below tabs
+- Android gesture navigation: `env(safe-area-inset-bottom)` ≈ 24px → same handling
+- Requires `viewport-fit=cover` (set above) for the env() variable to work
+
+**Content area bottom padding:**
+- `pb-24 sm:pb-8` on the dashboard `<main>` element gives 96px bottom clearance on mobile, 32px on desktop
+- Prevents page content from being obscured by the bottom nav
 
 ## Key decisions and why
 

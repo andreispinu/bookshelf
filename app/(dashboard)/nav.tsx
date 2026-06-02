@@ -65,11 +65,13 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
     .toUpperCase()
 
   return (
-    <header className="border-b border-stone-200 bg-white">
-      <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+    <header className="border-b border-stone-200 bg-stone-50 sm:bg-white">
+      <div className="max-w-4xl mx-auto px-4 h-[52px] sm:h-14 flex items-center justify-between">
+
+        {/* Left: wordmark + desktop nav links */}
         <div className="flex items-center gap-6">
           <span className="font-semibold text-stone-800 tracking-tight">BookShelf</span>
-          <nav className="flex items-center gap-1">
+          <nav className="hidden sm:flex items-center gap-1">
             {NAV_LINKS.map(({ href, label, badge }) => {
               const count = badge ? counts[badge] : 0
               return (
@@ -93,42 +95,45 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
             })}
           </nav>
         </div>
-        <div className="flex items-center gap-1">
+
+        {/* Right: bell + avatar (both mobile and desktop) */}
+        <div className="flex items-center gap-1.5">
           <NotificationsBell />
+          <div ref={menuRef} className="relative flex items-center gap-2">
+            <span className="text-sm text-stone-500 hidden sm:block">{userName}</span>
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+              aria-label="Account menu"
+            >
+              <Avatar className="h-8 w-8">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
+                <AvatarFallback className="bg-stone-200 text-stone-700 text-xs cursor-pointer hover:bg-stone-300 transition-colors">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-stone-200 bg-white shadow-lg py-1.5 z-10">
+                <Link
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+                >
+                  {t('profile')}
+                </Link>
+                <div className="my-1 border-t border-stone-100" />
+                <button
+                  onClick={() => { setMenuOpen(false); handleSignOut() }}
+                  className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+                >
+                  {t('signOut')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        <div ref={menuRef} className="relative flex items-center gap-2">
-          <span className="text-sm text-stone-500 hidden sm:block">{userName}</span>
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
-            aria-label="Account menu"
-          >
-            <Avatar className="h-8 w-8">
-              {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} />}
-              <AvatarFallback className="bg-stone-200 text-stone-700 text-xs cursor-pointer hover:bg-stone-300 transition-colors">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-stone-200 bg-white shadow-lg py-1.5 z-10">
-              <Link
-                href="/profile"
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
-              >
-                {t('profile')}
-              </Link>
-              <div className="my-1 border-t border-stone-100" />
-              <button
-                onClick={() => { setMenuOpen(false); handleSignOut() }}
-                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
-              >
-                {t('signOut')}
-              </button>
-            </div>
-          )}
-        </div>
+
       </div>
     </header>
   )
