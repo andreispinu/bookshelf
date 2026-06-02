@@ -22,6 +22,14 @@ export default async function ProfilePage() {
 
   if (!profile) redirect('/login')
 
+  const missingFields = [
+    !profile.first_name && 'firstName',
+    !profile.last_name && 'lastName',
+    !profile.username && 'username',
+    !profile.country && 'country',
+    !profile.city && 'city',
+  ].filter(Boolean) as string[]
+
   return (
     <div>
       <div className="mb-6">
@@ -32,15 +40,20 @@ export default async function ProfilePage() {
         <ProfileClient
           profile={profile as unknown as Profile}
           email={user.email ?? ''}
+          missingFields={missingFields}
         />
-        <UsernameSection
-          initialUsername={profile.username ?? null}
-          initialVisibility={(profile.profile_visibility as Profile['profile_visibility']) ?? 'private'}
-        />
-        <LocationSection
-          initialCountry={profile.country ?? null}
-          initialCity={profile.city ?? null}
-        />
+        <div id="profile-username">
+          <UsernameSection
+            initialUsername={profile.username ?? null}
+            initialVisibility={(profile.profile_visibility as Profile['profile_visibility']) ?? 'private'}
+          />
+        </div>
+        <div id="profile-location">
+          <LocationSection
+            initialCountry={profile.country ?? null}
+            initialCity={profile.city ?? null}
+          />
+        </div>
         <LanguageSection currentLanguage={profile.ui_language ?? 'en'} />
       </div>
     </div>

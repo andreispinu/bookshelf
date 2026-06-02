@@ -261,7 +261,11 @@
     "featureAI": "Сканирование AI",
     "featurePWA": "Мобильное PWA-приложение",
     "firstName": "Имя",
-    "lastName": "Фамилия"
+    "lastName": "Фамилия",
+    "completionTitle": "Заполните профиль",
+    "completionProgress": "{done} из {total} полей заполнено",
+    "completionComplete": "Профиль заполнен",
+    "completionDismiss": "Закрыть"
   },
   "notifications": {
     "title": "Уведомления",

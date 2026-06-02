@@ -261,7 +261,11 @@
     "featureAI": "Scanare AI",
     "featurePWA": "Aplicație mobilă PWA",
     "firstName": "Prenume",
-    "lastName": "Nume de familie"
+    "lastName": "Nume de familie",
+    "completionTitle": "Completează-ți profilul",
+    "completionProgress": "{done} din {total} câmpuri completate",
+    "completionComplete": "Profil complet",
+    "completionDismiss": "Închide"
   },
   "notifications": {
     "title": "Notificări",

@@ -11,7 +11,7 @@ import NotificationsBell from './notifications-bell'
 
 type NavCounts = { unreadMessages: number; pendingRequests: number }
 
-export default function Nav({ userName, avatarUrl }: { userName: string; avatarUrl?: string | null }) {
+export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userName: string; avatarUrl?: string | null; missingCount?: number }) {
   const t = useTranslations('nav')
   const pathname = usePathname()
   const router = useRouter()
@@ -119,9 +119,12 @@ export default function Nav({ userName, avatarUrl }: { userName: string; avatarU
                 <Link
                   href="/profile"
                   onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+                  className="flex items-center justify-between px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
                 >
                   {t('profile')}
+                  {missingCount > 0 && (
+                    <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
+                  )}
                 </Link>
                 <div className="my-1 border-t border-stone-100" />
                 <button

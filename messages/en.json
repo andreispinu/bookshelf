@@ -261,7 +261,11 @@
     "featureAI": "AI book scanning",
     "featurePWA": "PWA mobile app",
     "firstName": "First name",
-    "lastName": "Last name"
+    "lastName": "Last name",
+    "completionTitle": "Complete your profile",
+    "completionProgress": "{done} of {total} fields complete",
+    "completionComplete": "Profile complete",
+    "completionDismiss": "Dismiss"
   },
   "notifications": {
     "title": "Notifications",

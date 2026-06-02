@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Camera } from 'lucide-react'
@@ -22,6 +22,15 @@ import type { Profile } from '@/types'
 type Props = {
   profile: Profile
   email: string
+  missingFields: string[]
+}
+
+const FIELD_SECTIONS: Record<string, string> = {
+  firstName: '#profile-account',
+  lastName: '#profile-account',
+  username: '#profile-username',
+  country: '#profile-location',
+  city: '#profile-location',
 }
 
 function initials(firstName: string, lastName: string | null) {
@@ -32,12 +41,22 @@ function scrollToPlans() {
   document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })
 }
 
-export default function ProfileClient({ profile, email }: Props) {
+export default function ProfileClient({ profile, email, missingFields }: Props) {
   const t = useTranslations('profile')
   const tc = useTranslations('common')
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+
+  useEffect(() => {
+    setBannerDismissed(localStorage.getItem('bookshelf_profile_banner_dismissed') === 'true')
+  }, [])
+
+  function handleDismissBanner() {
+    setBannerDismissed(true)
+    localStorage.setItem('bookshelf_profile_banner_dismissed', 'true')
+  }
   const [avatarUploading, setAvatarUploading] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
@@ -148,11 +167,67 @@ export default function ProfileClient({ profile, email }: Props) {
     t('featurePWA'),
   ]
 
+  const totalFields = 5
+  const doneCount = totalFields - missingFields.length
+  const progressPct = (doneCount / totalFields) * 100
+
+  const fieldLabels: Record<string, string> = {
+    firstName: t('firstName'),
+    lastName: t('lastName'),
+    username: t('username'),
+    country: t('country'),
+    city: t('city'),
+  }
+
   return (
     <>
 
+      {/* Profile completion */}
+      {missingFields.length === 0 ? (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+          <span className="text-sm text-emerald-800 font-medium">{t('completionComplete')}</span>
+        </div>
+      ) : !bannerDismissed ? (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 space-y-2.5">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm font-medium text-amber-900">{t('completionTitle')}</span>
+            <button
+              onClick={handleDismissBanner}
+              className="text-amber-500 hover:text-amber-700 text-xs shrink-0"
+              aria-label={t('completionDismiss')}
+            >
+              {t('completionDismiss')}
+            </button>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs text-amber-700">
+              <span>{t('completionProgress', { done: doneCount, total: totalFields })}</span>
+              <span>{Math.round(progressPct)}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-amber-100 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-amber-400 transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {missingFields.map(field => (
+              <a
+                key={field}
+                href={FIELD_SECTIONS[field]}
+                className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-xs hover:bg-amber-200 transition-colors"
+              >
+                + {fieldLabels[field]}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* User Info */}
-      <section>
+      <section id="profile-account">
         <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('account')}</h2>
         <div className="bg-white rounded-xl border border-stone-200 p-6 flex items-center gap-5">
           <button
