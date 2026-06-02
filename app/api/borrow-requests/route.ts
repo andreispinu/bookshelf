@@ -147,7 +147,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   // Always insert a borrow_response JSON message card into the thread
-  const bookTitle = (req.book as { title: string } | null)?.title ?? ''
+  const bookTitle = (req.book as unknown as { title: string } | null)?.title ?? ''
   const responseCardContent = JSON.stringify({
     type: 'borrow_response',
     borrow_request_id: req.id,
