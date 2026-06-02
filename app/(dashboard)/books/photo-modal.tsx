@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { Camera, Plus, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -20,19 +21,64 @@ type Props = {
 export default function PhotoModal({ open, onClose }: Props) {
   const t = useTranslations('books')
   const router = useRouter()
-  const cameraInputRef = useRef<HTMLInputElement>(null)
-  const uploadInputRef = useRef<HTMLInputElement>(null)
+  const coverCameraRef = useRef<HTMLInputElement>(null)
+  const coverUploadRef = useRef<HTMLInputElement>(null)
+  const versoCameraRef = useRef<HTMLInputElement>(null)
+  const versoUploadRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [versoFile, setVersoFile] = useState<File | null>(null)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [versoPreview, setVersoPreview] = useState<string | null>(null)
 
-  async function handleFile(file: File) {
+  function resetState() {
+    setCoverFile(null)
+    setVersoFile(null)
+    setCoverPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    setVersoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+  }
+
+  function handleClose() {
+    if (loading) return
+    resetState()
+    onClose()
+  }
+
+  function onCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCoverFile(file)
+    setCoverPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file) })
+    e.target.value = ''
+  }
+
+  function onVersoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setVersoFile(file)
+    setVersoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file) })
+    e.target.value = ''
+  }
+
+  function removeVerso() {
+    setVersoFile(null)
+    setVersoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+  }
+
+  async function handleScan() {
+    if (!coverFile) return
     setLoading(true)
 
-    const resized = await resizeImage(file, 1024)
-
-    const formData = new FormData()
-    formData.append('image', resized)
-
     try {
+      const resizedCover = await resizeImage(coverFile, 1024)
+      const formData = new FormData()
+      formData.append('coverImage', resizedCover)
+
+      if (versoFile) {
+        const resizedVerso = await resizeImage(versoFile, 1024)
+        formData.append('versoImage', resizedVerso)
+      }
+
       const res = await fetch('/api/extract-book', { method: 'POST', body: formData })
       const data = await res.json()
 
@@ -49,9 +95,11 @@ export default function PhotoModal({ open, onClose }: Props) {
       if (data.category)    params.set('category',    data.category)
       if (data.language)    params.set('language',    data.language)
 
+      resetState()
       onClose()
       router.push(`/books/add?${params.toString()}`)
     } catch {
+      resetState()
       onClose()
       toast.error("Couldn't read the cover, please fill in manually")
       router.push('/books/add')
@@ -60,14 +108,9 @@ export default function PhotoModal({ open, onClose }: Props) {
     }
   }
 
-  function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (file) handleFile(file)
-  }
-
   return (
-    <Dialog open={open} onOpenChange={open => !open && !loading && onClose()}>
-      <DialogContent className="sm:max-w-xs">
+    <Dialog open={open} onOpenChange={isOpen => !isOpen && handleClose()}>
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-stone-800">{t('addByPhoto')}</DialogTitle>
         </DialogHeader>
@@ -75,41 +118,102 @@ export default function PhotoModal({ open, onClose }: Props) {
         {loading ? (
           <div className="py-8 flex flex-col items-center gap-3 text-stone-500">
             <div className="h-8 w-8 rounded-full border-2 border-stone-300 border-t-stone-700 animate-spin" />
-            <p className="text-sm">{t('readingCover')}</p>
+            <p className="text-sm">{versoFile ? t('readingBothCovers') : t('readingCover')}</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 py-2">
+          <div className="flex flex-col gap-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+
+              {/* Front cover slot */}
+              <div className="flex flex-col gap-1.5">
+                <div
+                  className="aspect-[2/3] border-2 border-stone-300 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50 cursor-pointer"
+                  onClick={() => !coverPreview && coverUploadRef.current?.click()}
+                >
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="Front cover" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera className="h-7 w-7 text-stone-400" />
+                  )}
+                </div>
+                <p className="text-xs text-center text-stone-600 font-medium">{t('frontCover')}</p>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    className="flex-1 h-7 text-xs bg-stone-800 hover:bg-stone-700 text-white px-1.5"
+                    onClick={() => coverCameraRef.current?.click()}
+                  >
+                    {t('takePhoto')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 h-7 text-xs border-stone-200 text-stone-700 px-1.5"
+                    onClick={() => coverUploadRef.current?.click()}
+                  >
+                    {t('uploadPhoto')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Back cover slot */}
+              <div className="flex flex-col gap-1.5">
+                <div
+                  className="aspect-[2/3] border-2 border-dashed border-stone-200 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50 cursor-pointer"
+                  onClick={() => !versoPreview && versoUploadRef.current?.click()}
+                >
+                  {versoPreview ? (
+                    <>
+                      <img src={versoPreview} alt="Back cover" className="w-full h-full object-cover" />
+                      <button
+                        className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center"
+                        onClick={e => { e.stopPropagation(); removeVerso() }}
+                        aria-label="Remove back cover"
+                      >
+                        <X className="h-3 w-3 text-white" />
+                      </button>
+                    </>
+                  ) : (
+                    <Plus className="h-7 w-7 text-stone-300" />
+                  )}
+                </div>
+                <p className="text-xs text-center text-stone-400">{t('backCoverOptional')}</p>
+                {!versoPreview && (
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      className="flex-1 h-7 text-xs bg-stone-800 hover:bg-stone-700 text-white px-1.5"
+                      onClick={() => versoCameraRef.current?.click()}
+                    >
+                      {t('takePhotoBack')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-7 text-xs border-stone-200 text-stone-700 px-1.5"
+                      onClick={() => versoUploadRef.current?.click()}
+                    >
+                      {t('uploadBack')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <Button
               className="w-full bg-stone-800 hover:bg-stone-700 text-white"
-              onClick={() => cameraInputRef.current?.click()}
+              disabled={!coverFile}
+              onClick={handleScan}
             >
-              {t('takePhoto')}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full border-stone-200 text-stone-700"
-              onClick={() => uploadInputRef.current?.click()}
-            >
-              {t('uploadPhoto')}
+              {t('scanBook')}
             </Button>
           </div>
         )}
 
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={onInputChange}
-        />
-        <input
-          ref={uploadInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={onInputChange}
-        />
+        <input ref={coverCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onCoverChange} />
+        <input ref={coverUploadRef} type="file" accept="image/*" className="hidden" onChange={onCoverChange} />
+        <input ref={versoCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onVersoChange} />
+        <input ref={versoUploadRef} type="file" accept="image/*" className="hidden" onChange={onVersoChange} />
       </DialogContent>
     </Dialog>
   )

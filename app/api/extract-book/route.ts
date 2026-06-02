@@ -14,27 +14,53 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   const formData = await request.formData()
-  const image = formData.get('image') as File | null
-  if (!image) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
+  const coverImage = formData.get('coverImage') as File | null
+  if (!coverImage) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
 
-  const buffer = Buffer.from(await image.arrayBuffer())
-  const mediaType = (image.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+  const versoImage = formData.get('versoImage') as File | null
 
-  // Run Claude extraction and cover thumbnail generation in parallel
-  const [messageResult, thumbnailResult] = await Promise.allSettled([
-    anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 512,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: { type: 'base64', media_type: mediaType, data: buffer.toString('base64') },
-          },
-          {
-            type: 'text',
-            text: `This is a book cover image. Extract information and return a JSON object with exactly these fields:
+  const coverBuffer = Buffer.from(await coverImage.arrayBuffer())
+  const coverMediaType = (coverImage.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+
+  const claudeContent: Array<Anthropic.ImageBlockParam | Anthropic.TextBlockParam> = []
+
+  if (versoImage) {
+    const versoBuffer = Buffer.from(await versoImage.arrayBuffer())
+    const versoMediaType = (versoImage.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+    claudeContent.push(
+      { type: 'image', source: { type: 'base64', media_type: coverMediaType, data: coverBuffer.toString('base64') } },
+      { type: 'image', source: { type: 'base64', media_type: versoMediaType, data: versoBuffer.toString('base64') } },
+      {
+        type: 'text',
+        text: `You are analyzing a book. The first image is the front cover, the second image is the back cover (verso).
+
+Extract all available information from BOTH images:
+- From front cover: title, author, publisher logo/name, edition
+- From back cover: ISBN (usually on back as barcode), publisher, year, description/blurb (the marketing text on the back), category, language, price (ignore), any series information
+
+The back cover blurb is extremely valuable — use it as the basis for the description field (summarize or use directly, max 100 words, written in the book's language).
+ISBN from the barcode on the back cover is more reliable than anything on the front — prioritize it.
+
+Return a JSON object with exactly these fields:
+- title: the book title (string or null)
+- author: the author name(s) (string or null)
+- isbn: ISBN number from the barcode on the back cover, or elsewhere if visible (string or null)
+- publisher: publisher name (string or null)
+- year: publication year (string or null)
+- category: pick exactly one from: ${CATEGORIES.join(', ')}. Return null if none fits.
+- language: the language this book is written in. Pick from: ${LANGUAGES.join(', ')}. Return null if uncertain.
+- description: summarize the back cover blurb in max 100 words in the book's language. If no blurb is visible, use your knowledge of the book. Return null if unavailable.
+
+Do NOT return a cover_url field.
+Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
+      },
+    )
+  } else {
+    claudeContent.push(
+      { type: 'image', source: { type: 'base64', media_type: coverMediaType, data: coverBuffer.toString('base64') } },
+      {
+        type: 'text',
+        text: `This is a book cover image. Extract information and return a JSON object with exactly these fields:
 - title: the book title (string or null)
 - author: the author name(s) (string or null)
 - isbn: ISBN number if visible (string or null)
@@ -47,12 +73,19 @@ export async function POST(request: NextRequest) {
 Do NOT return a cover_url field — the user's photo will be used as the cover.
 
 Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
-          },
-        ],
-      }],
+      },
+    )
+  }
+
+  // Run Claude extraction and cover thumbnail generation in parallel
+  const [messageResult, thumbnailResult] = await Promise.allSettled([
+    anthropic.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 512,
+      messages: [{ role: 'user', content: claudeContent }],
     }),
-    // Resize to 400px wide for thumbnail storage
-    sharp(buffer).resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
+    // Always use front cover for thumbnail
+    sharp(coverBuffer).resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
   ])
 
   // Parse Claude response
@@ -85,7 +118,7 @@ Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
     return NextResponse.json({ error: 'Could not read book details from cover' }, { status: 422 })
   }
 
-  // User's uploaded photo always wins
+  // User's uploaded front cover photo always wins as the cover image
   extracted.cover_url = cover_url
 
   return NextResponse.json({ ...extracted })

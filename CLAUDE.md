@@ -221,35 +221,42 @@ The "Add a book ⌄" button on `/books` opens a dropdown with two options:
 **File:** `app/(dashboard)/books/photo-button.tsx` — exports `AddBookButton`, owns both the dropdown state and the photo modal open/close state. No new dependencies — uses lucide-react icons and an inline click-outside handler.
 
 ### Add book by photo (AI scan)
-Allows users to scan a book cover with their camera or upload a photo. Claude extracts book details automatically.
+Allows users to scan a book cover (and optionally the back cover/verso) to extract book details with Claude.
 
 **Flow:**
 1. User clicks "Add a book" → "Add with AI"
-2. Modal opens with "Take photo" (rear camera) and "Upload photo" (file picker) options
-3. Image is resized client-side to max 1024px (canvas + `toBlob`) before upload
-4. `POST /api/extract-book` sends image to Claude vision → returns `{ title, author, isbn, description }`
-5. On success: navigates to `/books/add?title=...&author=...` with pre-filled form
-6. On failure: toast "Couldn't read the cover, please fill in manually" + opens empty form
+2. Modal shows two slots side by side: **Front cover** (required) and **Back cover (optional)**
+3. Each slot has "Take photo" (rear camera) + "Upload" buttons; back cover shows a ✕ to remove once added
+4. Both images are resized client-side to max 1024px (canvas + `toBlob`) before upload
+5. `POST /api/extract-book` sends `coverImage` (required) + `versoImage` (optional) as multipart
+6. On success: navigates to `/books/add?title=...&author=...` with pre-filled form
+7. On failure: toast "Couldn't read the cover, please fill in manually" + opens empty form
 
 **Files:**
-- `app/api/extract-book/route.ts` — receives multipart image, calls Anthropic, returns JSON
-- `app/(dashboard)/books/photo-modal.tsx` — dialog UI, resizes image, calls API, handles navigation
-- `app/(dashboard)/books/photo-button.tsx` — also owns the photo modal open/close state
+- `app/api/extract-book/route.ts` — receives multipart `coverImage` + optional `versoImage`, calls Anthropic, returns JSON
+- `app/(dashboard)/books/photo-modal.tsx` — two-slot dialog UI, resizes both images, handles navigation
+- `app/(dashboard)/books/photo-button.tsx` — owns the photo modal open/close state
 - `app/(dashboard)/books/add/add-book-form.tsx` — form client component, reads `useSearchParams()` for pre-fill
 
 **AI model:** `claude-opus-4-5` via `@anthropic-ai/sdk`
 
-**Prompt extracts:** title, author, ISBN, publisher, year, and a ≤100-word description from Claude's knowledge of the book.
+**Single cover prompt:** extracts title, author, ISBN, publisher, year, category, language, description from Claude's knowledge.
+
+**Dual cover prompt (front + verso):** extracts same fields but with enhanced context:
+- ISBN from barcode on back cover (more reliable than front)
+- Description from back cover blurb (up to 100 words, in the book's language)
+- Category inferred from the blurb text (more accurate than cover alone)
+- Language detected from both covers
 
 **Error handling:** JSON parse failures and API errors both fall through to an empty form with a sonner toast.
 
 ### Cover photo from scan
-When a book is added via photo scan, the image is also uploaded as the book's cover:
-- Server receives the image (already resized to 1024px by the client)
+When a book is added via photo scan, the front cover image is uploaded as the book's cover:
+- Server receives the front cover (already resized to 1024px by the client)
 - `sharp` resizes it to max 400px wide on the server
 - Uploaded to Supabase Storage bucket `book-covers` under `{userId}/{timestamp}.jpg`
 - Public URL saved to `cover_url` field and pre-filled in the add form
-- The list and detail pages display it automatically via the existing `cover_url` display logic
+- The verso image is never used as the cover — only for data extraction
 - Upload uses `supabaseAdmin` (service role) so no storage write policies are needed
 
 **Storage bucket:** `book-covers` — public bucket. Run `supabase/create-book-covers-bucket.sql` in the SQL editor to create it.
