@@ -577,6 +577,13 @@ RLS: participant read (sender OR receiver), sender insert, receiver update.
 **Files:**
 - `app/(dashboard)/messages/page.tsx` — server wrapper (Suspense for useSearchParams)
 - `app/(dashboard)/messages/messages-client.tsx` — full UI client component
+- `app/(dashboard)/messages/borrow-card.tsx` — `BorrowRequestCard`, `BorrowResponseCard`, `parseBorrowPayload`
+
+**Borrow message cards:** Borrow-related messages are stored as JSON in `messages.content`. `parseBorrowPayload()` detects them (fast-path: `content.startsWith('{')`). Two card types:
+- `type: 'borrow_request'` — shows book cover, title/author, pending badge, Approve/Decline buttons for the owner (hidden if already responded or it's the requester's own view)
+- `type: 'borrow_response'` — shows green (approved) or red (declined) outcome card
+
+Owner can approve/reject directly from the chat by clicking the card buttons, which calls `PATCH /api/borrow-requests`. The `respondedRequestIds` set (computed via `useMemo`) tracks which requests already have a response so the action buttons are hidden.
 
 ### Borrow requests
 Users can request to borrow a specific book from a friend's shelf. Owners can approve or decline.
@@ -612,7 +619,7 @@ RLS: participant read, requester insert, owner update.
 
 **Notification types added:** `borrow_request` (→ `/loans/requests`), `borrow_approved` (→ `/loans?tab=requests`), `borrow_rejected` (→ `/loans?tab=requests`)
 
-**API route:** `app/api/borrow-requests/route.ts` — GET pending incoming, POST create, PATCH approve/reject
+**API route:** `app/api/borrow-requests/route.ts` — GET pending incoming, POST create, PATCH approve/reject. Uses `supabaseAdmin` for all DB operations. POST always inserts a `borrow_request` JSON card into `messages`; PATCH always inserts a `borrow_response` JSON card.
 
 **Files:**
 - `app/(dashboard)/friends/[id]/borrow-button.tsx` — modal with book props (bookId, bookTitle, ownerId)

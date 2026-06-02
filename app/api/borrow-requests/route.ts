@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('borrow_requests')
     .select(`
       id, book_id, requester_id, owner_id, status,
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Check for existing pending request
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('borrow_requests')
     .select('id')
     .eq('book_id', bookId)
@@ -46,7 +47,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You already have a pending request for this book' }, { status: 409 })
   }
 
-  const { data: req, error } = await supabase
+  // Fetch book details for the message card
+  const { data: book } = await supabaseAdmin
+    .from('books')
+    .select('id, title, author, cover_url')
+    .eq('id', bookId)
+    .single()
+
+  const { data: req, error } = await supabaseAdmin
     .from('borrow_requests')
     .insert({
       book_id: bookId,
@@ -59,17 +67,25 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // If the requester included a message, save it to the messages table
-  if (message?.trim()) {
-    await supabase.from('messages').insert({
-      sender_id: user.id,
-      receiver_id: ownerId,
-      content: message.trim(),
-    })
-  }
+  // Always insert a borrow_request JSON message card into the thread
+  const borrowCardContent = JSON.stringify({
+    type: 'borrow_request',
+    borrow_request_id: req.id,
+    book_id: bookId,
+    book_title: book?.title ?? '',
+    book_author: book?.author ?? '',
+    book_cover_url: book?.cover_url ?? null,
+    requester_message: message?.trim() || null,
+  })
+
+  await supabaseAdmin.from('messages').insert({
+    sender_id: user.id,
+    receiver_id: ownerId,
+    content: borrowCardContent,
+  })
 
   // Notify the book owner
-  await supabase.from('notifications').insert({
+  await supabaseAdmin.from('notifications').insert({
     user_id: ownerId,
     type: 'borrow_request',
     actor_id: user.id,
@@ -89,9 +105,12 @@ export async function PATCH(request: NextRequest) {
   if (!id || !action) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
   // Fetch and verify ownership
-  const { data: req, error: fetchError } = await supabase
+  const { data: req, error: fetchError } = await supabaseAdmin
     .from('borrow_requests')
-    .select('id, book_id, requester_id, owner_id, status')
+    .select(`
+      id, book_id, requester_id, owner_id, status,
+      book:books!borrow_requests_book_id_fkey(title)
+    `)
     .eq('id', id)
     .eq('owner_id', user.id)
     .eq('status', 'pending')
@@ -103,7 +122,7 @@ export async function PATCH(request: NextRequest) {
 
   const newStatus = action === 'approve' ? 'approved' : 'rejected'
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await supabaseAdmin
     .from('borrow_requests')
     .update({
       status: newStatus,
@@ -115,29 +134,36 @@ export async function PATCH(request: NextRequest) {
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
   if (action === 'approve') {
-    await supabase.from('loans').insert({
+    await supabaseAdmin.from('loans').insert({
       book_id: req.book_id,
       lender_id: user.id,
       borrower_id: req.requester_id,
     })
-    await supabase
+    await supabaseAdmin
       .from('books')
       .update({ status: 'lent_out' })
       .eq('id', req.book_id)
       .eq('user_id', user.id)
   }
 
-  // If the owner included a message, save it to the messages table
-  if (message?.trim()) {
-    await supabase.from('messages').insert({
-      sender_id: user.id,
-      receiver_id: req.requester_id,
-      content: message.trim(),
-    })
-  }
+  // Always insert a borrow_response JSON message card into the thread
+  const bookTitle = (req.book as { title: string } | null)?.title ?? ''
+  const responseCardContent = JSON.stringify({
+    type: 'borrow_response',
+    borrow_request_id: req.id,
+    book_title: bookTitle,
+    status: newStatus,
+    owner_message: message?.trim() || null,
+  })
+
+  await supabaseAdmin.from('messages').insert({
+    sender_id: user.id,
+    receiver_id: req.requester_id,
+    content: responseCardContent,
+  })
 
   // Notify the requester
-  await supabase.from('notifications').insert({
+  await supabaseAdmin.from('notifications').insert({
     user_id: req.requester_id,
     type: action === 'approve' ? 'borrow_approved' : 'borrow_rejected',
     actor_id: user.id,

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Send, ArrowLeft } from 'lucide-react'
 import type { ConvItem, Message } from '@/types'
+import { parseBorrowPayload, BorrowRequestCard, BorrowResponseCard } from './borrow-card'
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -82,14 +83,32 @@ export default function MessagesClient({ userId }: { userId: string }) {
       return
     }
     const found = conversations.find(c => c.userId === activeConvId)
-    if (found) {
-      setActiveConv(found)
-    }
+    if (found) setActiveConv(found)
   }, [activeConvId, conversations])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Collect borrow_request IDs that already have a response in this thread
+  const respondedRequestIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const msg of messages) {
+      const payload = parseBorrowPayload(msg.content)
+      if (payload?.type === 'borrow_response') ids.add(payload.borrow_request_id)
+    }
+    return ids
+  }, [messages])
+
+  async function handleBorrowDecide(requestId: string, action: 'approve' | 'reject', message: string) {
+    await fetch('/api/borrow-requests', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: requestId, action, message }),
+    })
+    if (activeConvId) fetchMessages(activeConvId)
+    fetchConversations()
+  }
 
   async function sendMessage() {
     if (!activeConvId || !content.trim() || sending) return
@@ -227,6 +246,27 @@ export default function MessagesClient({ userId }: { userId: string }) {
               ) : (
                 messages.map(msg => {
                   const isMine = msg.sender_id === userId
+                  const borrowPayload = parseBorrowPayload(msg.content)
+
+                  if (borrowPayload) {
+                    return (
+                      <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                        {borrowPayload.type === 'borrow_request' ? (
+                          <BorrowRequestCard
+                            data={borrowPayload}
+                            isMine={isMine}
+                            hasResponse={respondedRequestIds.has(borrowPayload.borrow_request_id)}
+                            onDecide={(action, message) =>
+                              handleBorrowDecide(borrowPayload.borrow_request_id, action, message)
+                            }
+                          />
+                        ) : (
+                          <BorrowResponseCard data={borrowPayload} />
+                        )}
+                      </div>
+                    )
+                  }
+
                   return (
                     <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-sm leading-snug whitespace-pre-wrap break-words ${

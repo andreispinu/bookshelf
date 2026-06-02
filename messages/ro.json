@@ -167,7 +167,14 @@
     "sending": "Se trimite…",
     "requestApproved": "Solicitare aprobată — împrumut creat!",
     "requestDeclined": "Solicitare refuzată.",
-    "borrowRequestSent": "Solicitare de împrumut trimisă!"
+    "borrowRequestSent": "Solicitare de împrumut trimisă!",
+    "inChatBorrowRequest": "Solicitare de împrumut",
+    "confirmApprove": "Aprobă · adaugă un mesaj (opțional)",
+    "confirmDecline": "Refuză · adaugă un mesaj (opțional)",
+    "requestApprovedCard": "Solicitare aprobată",
+    "requestDeclinedCard": "Solicitare refuzată",
+    "optionalMessage": "Mesaj opțional…",
+    "confirm": "Confirmă"
   },
   "profile": {
     "title": "Profil",

@@ -167,7 +167,14 @@
     "sending": "Sending…",
     "requestApproved": "Request approved — loan created!",
     "requestDeclined": "Request declined.",
-    "borrowRequestSent": "Borrow request sent!"
+    "borrowRequestSent": "Borrow request sent!",
+    "inChatBorrowRequest": "Borrow request",
+    "confirmApprove": "Approve · add a message (optional)",
+    "confirmDecline": "Decline · add a message (optional)",
+    "requestApprovedCard": "Request approved",
+    "requestDeclinedCard": "Request declined",
+    "optionalMessage": "Optional message…",
+    "confirm": "Confirm"
   },
   "profile": {
     "title": "Profile",

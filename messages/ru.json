@@ -167,7 +167,14 @@
     "sending": "Отправка…",
     "requestApproved": "Запрос одобрен — займ создан!",
     "requestDeclined": "Запрос отклонён.",
-    "borrowRequestSent": "Запрос на одалживание отправлен!"
+    "borrowRequestSent": "Запрос на одалживание отправлен!",
+    "inChatBorrowRequest": "Запрос на займ",
+    "confirmApprove": "Одобрить · добавить сообщение (необязательно)",
+    "confirmDecline": "Отклонить · добавить сообщение (необязательно)",
+    "requestApprovedCard": "Запрос одобрен",
+    "requestDeclinedCard": "Запрос отклонён",
+    "optionalMessage": "Необязательное сообщение…",
+    "confirm": "Подтвердить"
   },
   "profile": {
     "title": "Профиль",
