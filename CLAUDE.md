@@ -722,6 +722,9 @@ NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID=<price_...>
 
 # Resend (transactional email)
 RESEND_API_KEY=<secret — from resend.com dashboard>
+
+# Vercel cron security
+CRON_SECRET=<random 32+ char string — set same value in Vercel env vars>
 ```
 
 Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `getStripe()` from `lib/stripe.ts` (lazy singleton) to avoid Next.js build crashes when the var is absent.
@@ -805,3 +808,43 @@ RLS: inviter can read/insert/update their own invitations.
 - `app/(dashboard)/friends/invite-section.tsx` — client component (form + list)
 - `app/(dashboard)/friends/page.tsx` — fetches invitations, renders InviteSection
 - `lib/email-templates.ts` — `invitationEmail(inviterName, token)`
+
+### Trial lifecycle emails (Vercel cron)
+Three automated emails sent at key moments in the trial lifecycle. A single cron job processes all three types in one daily run.
+
+**Vercel cron schedule** (`vercel.json`): `0 9 * * *` — runs every day at 09:00 UTC.
+
+**Cron route:** `GET /api/cron/trial-emails`
+- Secured by `Authorization: Bearer {CRON_SECRET}` header (Vercel sends this automatically)
+- Returns `{ ok: true, fiveDay, oneDay, expired, errors }` with counts
+
+**Three email types:**
+
+| Type | Trigger | Subject | CTA |
+|------|---------|---------|-----|
+| 5-day reminder | `trial_ends_at` between now+4.5d and now+5.5d, `trial_reminder_5day_sent_at IS NULL` | "5 days left on your BookShelf trial" | Choose a plan → `/profile#plans` |
+| 1-day reminder | `trial_ends_at` between now+20h and now+28h, `trial_reminder_1day_sent_at IS NULL` | "Your BookShelf trial ends tomorrow" | Keep my BookShelf → `/profile#plans` |
+| Expired | `trial_ends_at` between now-28h and now, `trial_expired_sent_at IS NULL` | "Your BookShelf trial has ended" | Reactivate my BookShelf → `/subscribe` |
+
+**Database fields** (run `supabase/add-trial-email-fields.sql`):
+- `trial_reminder_5day_sent_at` — timestamptz, nullable, set after 5-day email sent
+- `trial_reminder_1day_sent_at` — timestamptz, nullable, set after 1-day email sent
+- `trial_expired_sent_at` — timestamptz, nullable, set after expired email sent
+
+**Email content:**
+- Uses `first_name` from profiles (falls back to "there")
+- Trial end date formatted as e.g. "Tuesday, June 10" via `en-US` locale
+- Recipient email fetched via `supabaseAdmin.auth.admin.getUserById()`
+- Each send is awaited (cron context, not user-facing), errors caught per-profile so one failure doesn't stop the batch
+- Templates: `trialReminder5DayEmail`, `trialReminder1DayEmail`, `trialExpiredEmail` in `lib/email-templates.ts`
+
+**Files:**
+- `vercel.json` — cron schedule
+- `supabase/add-trial-email-fields.sql` — migration
+- `app/api/cron/trial-emails/route.ts` — cron handler
+- `lib/email-templates.ts` — three new template functions
+
+**Setup:**
+1. Run `supabase/add-trial-email-fields.sql` in Supabase SQL Editor
+2. Add `CRON_SECRET` to Vercel environment variables (generate with `openssl rand -hex 32`)
+3. Add same `CRON_SECRET` to `.env.local` for local testing

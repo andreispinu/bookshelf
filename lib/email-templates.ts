@@ -99,6 +99,86 @@ export function invitationEmail(inviterName: string, token: string): { subject: 
   return { subject, html }
 }
 
+function formatTrialDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+}
+
+export function trialReminder5DayEmail(
+  firstName: string,
+  trialEndsAt: Date,
+): { subject: string; html: string } {
+  const subject = '5 days left on your BookShelf trial'
+  const dateStr = formatTrialDate(trialEndsAt)
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">5 days left on your trial</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          Your free trial ends in 5 days, on <strong>${dateStr}</strong>.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          You've been building your personal library — don't let it go. Keep access to all your books, friends,
+          and lending history for just $1/month or $10/year.
+        </p>
+        ${ctaButton('Choose a plan →', `${BASE_URL}/profile#plans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function trialReminder1DayEmail(
+  firstName: string,
+  trialEndsAt: Date,
+): { subject: string; html: string } {
+  const subject = 'Your BookShelf trial ends tomorrow'
+  const dateStr = formatTrialDate(trialEndsAt)
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Your trial ends tomorrow</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          Your free trial ends tomorrow, on <strong>${dateStr}</strong>. After that you'll lose access
+          to your books, friends, and lending history.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          Keep your BookShelf for just $1/month or $10/year — that's less than a coffee.
+        </p>
+        ${ctaButton('Keep my BookShelf →', `${BASE_URL}/profile#plans`)}
+        <p style="margin:24px 0 0;font-size:13px;color:#a8a29e;line-height:1.6;">
+          P.S. Questions? Just reply to this email.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function trialExpiredEmail(firstName: string): { subject: string; html: string } {
+  const subject = 'Your BookShelf trial has ended'
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Your trial has ended</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          Your free trial ended yesterday. Your books and data are safe — we keep everything for 30 days.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          Subscribe now to regain full access. It's just $1/month or $10/year.
+        </p>
+        ${ctaButton('Reactivate my BookShelf →', `${BASE_URL}/subscribe`)}
+        <p style="margin:24px 0 0;font-size:13px;color:#a8a29e;line-height:1.6;">
+          P.S. Your library will be waiting for you.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
 export function borrowRequestEmail(
   requesterName: string,
   bookTitle: string,
