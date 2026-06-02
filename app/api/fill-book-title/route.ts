@@ -1,43 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import sharp from 'sharp'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-async function fetchGoogleBooksCover(
+// Check whether an OpenLibrary URL has a real cover.
+// OpenLibrary returns a 1×1 GIF (~35 bytes) for missing covers — real covers are >500 bytes.
+async function openLibraryHasCover(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, { method: 'HEAD' })
+    if (!res.ok) return false
+    const len = res.headers.get('content-length')
+    return len ? parseInt(len, 10) > 500 : false
+  } catch {
+    return false
+  }
+}
+
+// Download an image URL, resize with sharp, upload to Supabase Storage, return public URL.
+// Validates Content-Type starts with "image/" before uploading.
+async function downloadAndStore(url: string, userId: string): Promise<string | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    const ct = res.headers.get('content-type') ?? ''
+    if (!ct.startsWith('image/')) return null
+
+    const buffer = Buffer.from(await res.arrayBuffer())
+    const resized = await sharp(buffer)
+      .resize({ width: 600, withoutEnlargement: true })
+      .jpeg({ quality: 85 })
+      .toBuffer()
+
+    const filename = `${userId}/ai-${Date.now()}.jpg`
+    const { error } = await supabaseAdmin.storage
+      .from('book-covers')
+      .upload(filename, resized, { contentType: 'image/jpeg', upsert: false })
+    if (error) return null
+
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('book-covers')
+      .getPublicUrl(filename)
+    return publicUrl
+  } catch {
+    return null
+  }
+}
+
+async function resolveCover(
   isbn: string | null,
   title: string,
   author: string | null,
+  claudeCoverUrl: string | null,
+  userId: string,
 ): Promise<string | null> {
-  // Try ISBN first (most precise), then title+author
-  const queries: string[] = []
-  if (isbn) queries.push(`isbn:${isbn}`)
-  queries.push(
-    `intitle:${encodeURIComponent(title)}${author ? `+inauthor:${encodeURIComponent(author)}` : ''}`,
-  )
-
-  for (const q of queries) {
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`,
-      )
-      if (!res.ok) continue
-      const data = await res.json()
-      const thumbnail: string | undefined =
-        data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail
-      if (!thumbnail) continue
-
-      // Use HTTPS, higher zoom, remove decorative page-curl
-      return thumbnail
-        .replace('http://', 'https://')
-        .replace('zoom=1', 'zoom=2')
-        .replace('&edge=curl', '')
-    } catch {
-      continue
+  // 1. OpenLibrary by ISBN
+  if (isbn) {
+    const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
+    if (await openLibraryHasCover(url)) {
+      const stored = await downloadAndStore(url, userId)
+      if (stored) return stored
     }
   }
+
+  // 2. OpenLibrary by title
+  const titleUrl = `https://covers.openlibrary.org/b/title/${encodeURIComponent(title)}-L.jpg`
+  if (await openLibraryHasCover(titleUrl)) {
+    const stored = await downloadAndStore(titleUrl, userId)
+    if (stored) return stored
+  }
+
+  // 3. Google Books API — download & re-upload for permanence
+  try {
+    const q = `intitle:${encodeURIComponent(title)}${author ? `+inauthor:${encodeURIComponent(author)}` : ''}`
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`)
+    if (res.ok) {
+      const data = await res.json()
+      const thumbnail: string | undefined = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail
+      if (thumbnail) {
+        const cleanUrl = thumbnail
+          .replace('http://', 'https://')
+          .replace('zoom=1', 'zoom=3')
+          .replace('&edge=curl', '')
+        const stored = await downloadAndStore(cleanUrl, userId)
+        if (stored) return stored
+      }
+    }
+  } catch { /* continue */ }
+
+  // 4. Claude's suggested cover URL (only if it passes image validation)
+  if (claudeCoverUrl) {
+    const stored = await downloadAndStore(claudeCoverUrl, userId)
+    if (stored) return stored
+  }
+
   return null
 }
 
@@ -51,7 +111,7 @@ export async function POST(request: NextRequest) {
 
   const message = await anthropic.messages.create({
     model: 'claude-opus-4-5',
-    max_tokens: 768,
+    max_tokens: 900,
     messages: [{
       role: 'user',
       content: `You are a book knowledge assistant. Given a book title (and optionally author), return a JSON object with all fields you can confidently provide.
@@ -70,6 +130,7 @@ Otherwise return a JSON object with exactly these fields (null for anything you 
 - category: exactly one of: ${CATEGORIES.join(', ')}. (string or null)
 - language: language the book is written in, exactly one of: ${LANGUAGES.join(', ')}. (string or null)
 - description: what this book is about, its genre and tone. Maximum 100 words, written in the book's language. (string or null)
+- cover_url: if you know a reliable direct image URL for this book cover (ending in .jpg or .png) from a publisher, archive, or well-known image host, return it. Otherwise return null. (string or null)
 
 Return ONLY a raw JSON object. No markdown, no code blocks, no explanation.`,
     }],
@@ -84,12 +145,19 @@ Return ONLY a raw JSON object. No markdown, no code blocks, no explanation.`,
   if (suggested.error === 'not_found') return NextResponse.json({ error: 'not_found' })
   if (suggested.error === 'ambiguous') return NextResponse.json({ error: 'ambiguous' })
 
-  // Fetch cover server-side from Google Books (reliable thumbnails, no 1×1 placeholders)
   const isbn = suggested.isbn?.replace(/[-\s]/g, '') ?? null
   const resolvedAuthor = suggested.author ?? (author?.trim() || null)
-  suggested.cover_url = await fetchGoogleBooksCover(isbn, title.trim(), resolvedAuthor)
 
-  console.log('[fill-book-title] suggested:', { ...suggested })
+  // Resolve cover through the priority chain; always store in Supabase
+  suggested.cover_url = await resolveCover(
+    isbn,
+    title.trim(),
+    resolvedAuthor,
+    suggested.cover_url ?? null,
+    user.id,
+  )
+
+  console.log('[fill-book-title] isbn:', isbn, 'cover_url:', suggested.cover_url)
 
   return NextResponse.json({ suggested })
 }
