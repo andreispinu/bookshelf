@@ -547,11 +547,12 @@ Fiction, Non-Fiction, Science Fiction, Fantasy, Mystery & Thriller, Biography & 
 - Edit book dialog (`book-list.tsx`): same dropdown, pre-filled with existing category
 - Server action (`books/actions.ts`): `extractFields()` reads `category` from FormData, saves as null if blank
 
-**Books page filter:** When ≥1 book has a category, a pill filter bar appears above the list. Pills show "All" + one pill per category that exists in the user's books (ordered by the canonical CATEGORIES list). Active pill: `bg-stone-800 text-white`. Clicking active pill deselects (returns to All).
+**Books page filter:** When ≥1 book has a category, a pill filter bar appears above the list. Pills show "All (N)" + one pill per category with count, e.g. "Fiction (3)" (ordered by the canonical CATEGORIES list). Count is shown in muted `text-stone-400` (or `opacity-75` when pill is active). Active pill: `bg-stone-800 text-white`. Clicking active pill deselects (returns to All).
 
 **Category badge:** Shows as a muted `text-xs text-stone-400` line under the author name on:
-- My Books list (`book-list.tsx`)
-- Friend's bookshelf (`/friends/[id]`)
+- My Books list (`book-list.tsx`) — also has category filter pills with counts
+- Friend's bookshelf (`/friends/[id]`) — `FriendShelfClient` handles category filter pills with counts (client component, created to enable interactivity on the server-rendered page)
+- Public profile (`/[username]`) — `PublicShelf` client component has category filter pills with counts
 - Combined shelf (`/friends/shelf`) — also has category filter pills
 
 ### Description field

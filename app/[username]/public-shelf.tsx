@@ -20,6 +20,14 @@ export default function PublicShelf({ books }: { books: Book[] }) {
     [books]
   )
 
+  const categoryCounts = useMemo(() =>
+    books.reduce<Record<string, number>>((acc, b) => {
+      if (b.category) acc[b.category] = (acc[b.category] ?? 0) + 1
+      return acc
+    }, {}),
+    [books]
+  )
+
   const filtered = activeCategory
     ? books.filter(b => b.category === activeCategory)
     : books
@@ -34,7 +42,7 @@ export default function PublicShelf({ books }: { books: Book[] }) {
               !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            All
+            All <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({books.length})</span>
           </button>
           {categories.map(cat => (
             <button
@@ -44,7 +52,7 @@ export default function PublicShelf({ books }: { books: Book[] }) {
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {cat}
+              {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
             </button>
           ))}
         </div>

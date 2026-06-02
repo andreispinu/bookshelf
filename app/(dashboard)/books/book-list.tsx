@@ -136,6 +136,11 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
     books.filter(b => b.category).map(b => b.category as string)
   )].sort((a, b) => CATEGORIES.indexOf(a as typeof CATEGORIES[number]) - CATEGORIES.indexOf(b as typeof CATEGORIES[number]))
 
+  const categoryCounts = books.reduce<Record<string, number>>((acc, b) => {
+    if (b.category) acc[b.category] = (acc[b.category] ?? 0) + 1
+    return acc
+  }, {})
+
   const filteredBooks = activeCategory ? books.filter(b => b.category === activeCategory) : books
 
   function handleEditCoverSelect(file: File) {
@@ -320,7 +325,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
               !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            {tc('all')}
+            {tc('all')} <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({books.length})</span>
           </button>
           {uniqueCategories.map(cat => (
             <button
@@ -330,7 +335,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {cat}
+              {cat} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
             </button>
           ))}
         </div>
