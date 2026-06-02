@@ -265,7 +265,8 @@
     "completionTitle": "Completează-ți profilul",
     "completionProgress": "{done} din {total} câmpuri completate",
     "completionComplete": "Profil complet",
-    "completionDismiss": "Închide"
+    "completionDismiss": "Închide",
+    "profilePicture": "Fotografie de profil"
   },
   "notifications": {
     "title": "Notificări",

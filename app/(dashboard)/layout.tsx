@@ -35,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     profile?.username,
     profile?.country,
     profile?.city,
+    profile?.avatar_url,
   ].filter(v => !v).length
 
   const t = await getTranslations('profile')

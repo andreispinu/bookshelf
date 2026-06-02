@@ -265,7 +265,8 @@
     "completionTitle": "Complete your profile",
     "completionProgress": "{done} of {total} fields complete",
     "completionComplete": "Profile complete",
-    "completionDismiss": "Dismiss"
+    "completionDismiss": "Dismiss",
+    "profilePicture": "Profile picture"
   },
   "notifications": {
     "title": "Notifications",

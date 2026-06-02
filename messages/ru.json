@@ -265,7 +265,8 @@
     "completionTitle": "Заполните профиль",
     "completionProgress": "{done} из {total} полей заполнено",
     "completionComplete": "Профиль заполнен",
-    "completionDismiss": "Закрыть"
+    "completionDismiss": "Закрыть",
+    "profilePicture": "Фото профиля"
   },
   "notifications": {
     "title": "Уведомления",

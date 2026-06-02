@@ -26,12 +26,15 @@ type Props = {
 }
 
 const FIELD_SECTIONS: Record<string, string> = {
+  avatarUrl: '#profile-account',
   firstName: '#profile-account',
   lastName: '#profile-account',
   username: '#profile-username',
   country: '#profile-location',
   city: '#profile-location',
 }
+
+const ALL_FIELDS = ['avatarUrl', 'firstName', 'lastName', 'username', 'country', 'city'] as const
 
 function initials(firstName: string, lastName: string | null) {
   return ((firstName[0] ?? '') + (lastName?.[0] ?? '')).toUpperCase()
@@ -167,11 +170,12 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
     t('featurePWA'),
   ]
 
-  const totalFields = 5
+  const totalFields = 6
   const doneCount = totalFields - missingFields.length
   const progressPct = (doneCount / totalFields) * 100
 
   const fieldLabels: Record<string, string> = {
+    avatarUrl: t('profilePicture'),
     firstName: t('firstName'),
     lastName: t('lastName'),
     username: t('username'),
@@ -212,16 +216,41 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
               />
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {missingFields.map(field => (
-              <a
-                key={field}
-                href={FIELD_SECTIONS[field]}
-                className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-xs hover:bg-amber-200 transition-colors"
-              >
-                + {fieldLabels[field]}
-              </a>
-            ))}
+          <div className="space-y-1.5">
+            {ALL_FIELDS.map(field => {
+              const missing = missingFields.includes(field)
+              return (
+                <div key={field} className="flex items-center gap-2 text-xs">
+                  {missing ? (
+                    <span className="h-3.5 w-3.5 rounded-full border-2 border-dashed border-amber-400 shrink-0" />
+                  ) : (
+                    <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 shrink-0 flex items-center justify-center">
+                      <svg viewBox="0 0 10 10" className="h-2 w-2 text-white" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="1.5,5 4,7.5 8.5,2.5" />
+                      </svg>
+                    </span>
+                  )}
+                  <span className={missing ? 'text-amber-800' : 'text-stone-400 line-through'}>{fieldLabels[field]}</span>
+                  {missing && (
+                    field === 'avatarUrl' ? (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="ml-auto text-amber-600 hover:text-amber-800 font-medium transition-colors"
+                      >
+                        Add →
+                      </button>
+                    ) : (
+                      <a
+                        href={FIELD_SECTIONS[field]}
+                        className="ml-auto text-amber-600 hover:text-amber-800 font-medium transition-colors"
+                      >
+                        Add →
+                      </a>
+                    )
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       ) : null}

@@ -23,6 +23,7 @@ export default async function ProfilePage() {
   if (!profile) redirect('/login')
 
   const missingFields = [
+    !profile.avatar_url && 'avatarUrl',
     !profile.first_name && 'firstName',
     !profile.last_name && 'lastName',
     !profile.username && 'username',
