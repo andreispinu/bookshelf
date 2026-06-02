@@ -372,7 +372,7 @@ Route: `/friends/[id]` — read-only view of an accepted friend's book collectio
 Route: `/` — public marketing page, no auth required. Replaces the old redirect to `/books`. Fully multilingual (EN/RO/RU).
 
 **Sections (in order):**
-1. **Nav** — "BookShelf" logo left; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
+1. **Nav** — "BookShelf" logo left; center links: Books (#recent-books), Features, How it works, Install, Pricing; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
 2. **Hero** — headline, subheadline, two CTAs ("Start free trial" dark primary, "See how it works" ghost scrolls to `#how-it-works`), note "Free for 14 days. No credit card required."
 3. **Recently Added Books** — only shown if ≥ 3 books with a cover exist. Fetches up to 1000 most recent books from **all** users regardless of `profile_visibility` via `supabaseAdmin` (bypasses RLS). Shows only cover image, title, category pill, and availability badge — **no author, no owner name, no link to owner** (privacy preserved). Client component (`app/recently-added-client.tsx`) handles category filtering: pills for categories with ≥ 5 books, sorted by count descending, horizontally scrollable on mobile. "All (N)" pill shows total count. Selecting a category shows up to 10 most recent books in it; if a category has < 10 books (but ≥ 5), all are shown. No pills shown if no category has ≥ 5 books.
 4. **Features** — 3-column grid (stacked mobile): Add your library (AI scan), Lend to friends (track loans), Always with you (PWA).

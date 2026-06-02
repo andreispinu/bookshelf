@@ -98,7 +98,9 @@ export default async function LandingPage() {
 
       {/* Recently Added Books */}
       {allBooks.length >= 3 && (
-        <RecentlyAddedClient books={allBooks} categoryCounts={categoryCounts} />
+        <div id="recent-books">
+          <RecentlyAddedClient books={allBooks} categoryCounts={categoryCounts} />
+        </div>
       )}
 
       {/* Features */}

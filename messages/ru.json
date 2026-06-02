@@ -276,6 +276,7 @@
     "newMessage": "{name} отправил вам сообщение"
   },
   "landing": {
+    "navBooks": "Книги",
     "navFeatures": "Возможности",
     "navHowItWorks": "Как это работает",
     "navInstall": "Установка",

@@ -276,6 +276,7 @@
     "newMessage": "{name} sent you a message"
   },
   "landing": {
+    "navBooks": "Books",
     "navFeatures": "Features",
     "navHowItWorks": "How it works",
     "navInstall": "Install",

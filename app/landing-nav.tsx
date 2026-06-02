@@ -27,6 +27,7 @@ export default function LandingNav({
   const menuRef = useRef<HTMLDivElement>(null)
 
   const navLinks = [
+    { label: t('navBooks'), href: '#recent-books' },
     { label: t('navFeatures'), href: '#features' },
     { label: t('navHowItWorks'), href: '#how-it-works' },
     { label: t('navInstall'), href: '#install' },
