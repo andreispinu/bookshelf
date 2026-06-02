@@ -162,7 +162,12 @@
     "noMessages": "Нет сообщений — поздоровайтесь!",
     "placeholder": "Написать сообщение… (Enter для отправки)",
     "send": "Отправить",
-    "backToConversations": "Назад к перепискам"
+    "backToConversations": "Назад к перепискам",
+    "newMessage": "Новое сообщение",
+    "searchFriends": "Поиск друзей...",
+    "startConversation": "Начать разговор",
+    "noFriends": "Пока нет друзей",
+    "noFriendsMatch": "Нет совпадений"
   },
   "loans": {
     "title": "Займы",

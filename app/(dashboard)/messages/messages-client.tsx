@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Send, ArrowLeft } from 'lucide-react'
+import { Send, ArrowLeft, SquarePen, X, Search } from 'lucide-react'
 import type { ConvItem, Message } from '@/types'
+import { COUNTRY_FLAGS } from '@/lib/countries'
 import { parseBorrowPayload, BorrowRequestCard, BorrowResponseCard } from './borrow-card'
 
 function timeAgo(dateStr: string): string {
@@ -30,7 +31,9 @@ function formatPreview(content: string): string {
   return `Request ${status}: ${payload.book_title}`
 }
 
-export default function MessagesClient({ userId }: { userId: string }) {
+type FriendForCompose = { id: string; name: string; avatar_url: string | null; country: string | null }
+
+export default function MessagesClient({ userId, friends }: { userId: string; friends: FriendForCompose[] }) {
   const t = useTranslations('messages')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -43,6 +46,23 @@ export default function MessagesClient({ userId }: { userId: string }) {
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [composing, setComposing] = useState(false)
+  const [friendSearch, setFriendSearch] = useState('')
+
+  const filteredFriends = friends.filter(f =>
+    f.name.toLowerCase().includes(friendSearch.toLowerCase())
+  )
+
+  function openConversation(friendId: string) {
+    setComposing(false)
+    setFriendSearch('')
+    router.push(`/messages?with=${friendId}`)
+  }
+
+  function closeCompose() {
+    setComposing(false)
+    setFriendSearch('')
+  }
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -173,14 +193,87 @@ export default function MessagesClient({ userId }: { userId: string }) {
   return (
     <div className="flex h-full bg-white border border-stone-200 rounded-xl overflow-hidden">
 
+      {/* New message modal */}
+      {composing && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4 bg-black/40"
+          onClick={e => { if (e.target === e.currentTarget) closeCompose() }}
+        >
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm flex flex-col max-h-[70vh]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
+              <h3 className="font-semibold text-stone-800 text-sm">{t('newMessage')}</h3>
+              <button
+                onClick={closeCompose}
+                className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-3 py-2 border-b border-stone-100">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder={t('searchFriends')}
+                  value={friendSearch}
+                  onChange={e => setFriendSearch(e.target.value)}
+                  autoFocus
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-transparent placeholder-stone-400"
+                />
+              </div>
+            </div>
+            <ul className="flex-1 overflow-y-auto divide-y divide-stone-100">
+              {filteredFriends.length === 0 ? (
+                <li className="py-8 text-center text-sm text-stone-400">
+                  {friendSearch ? t('noFriendsMatch') : t('noFriends')}
+                </li>
+              ) : (
+                filteredFriends.map(friend => (
+                  <li key={friend.id}>
+                    <button
+                      onClick={() => openConversation(friend.id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-stone-50 transition-colors text-left"
+                    >
+                      <div className="shrink-0 h-9 w-9 rounded-full bg-stone-200 flex items-center justify-center text-stone-700 text-xs font-medium overflow-hidden">
+                        {friend.avatar_url
+                          ? <img src={friend.avatar_url} alt={friend.name} className="h-full w-full object-cover" />
+                          : initials(friend.name)
+                        }
+                      </div>
+                      <span className="text-sm text-stone-800 font-medium">{friend.name}</span>
+                      {friend.country && (
+                        <span className="text-base ml-auto">{COUNTRY_FLAGS[friend.country] ?? ''}</span>
+                      )}
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+
       {/* Conversation list — hidden on mobile when a chat is open */}
       <div className={`w-full sm:w-72 border-r border-stone-200 flex flex-col shrink-0 ${activeConvId ? 'hidden sm:flex' : 'flex'}`}>
-        <div className="px-4 py-3 border-b border-stone-100">
+        <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
           <h2 className="font-semibold text-stone-800">{t('title')}</h2>
+          <button
+            onClick={() => setComposing(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-stone-800 text-white text-xs font-medium hover:bg-stone-700 transition-colors"
+          >
+            <SquarePen className="h-3.5 w-3.5 shrink-0" />
+            <span className="hidden sm:inline">{t('newMessage')}</span>
+          </button>
         </div>
         {conversations.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center p-8 text-center text-sm text-stone-400">
-            {t('noConversations')}
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
+            <p className="text-sm text-stone-400">{t('noConversations')}</p>
+            <button
+              onClick={() => setComposing(true)}
+              className="text-sm font-medium text-stone-700 hover:text-stone-900 underline underline-offset-2 transition-colors"
+            >
+              {t('startConversation')}
+            </button>
           </div>
         ) : (
           <ul className="flex-1 overflow-y-auto divide-y divide-stone-100">

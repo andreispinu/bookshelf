@@ -162,7 +162,12 @@
     "noMessages": "Niciun mesaj încă — salută!",
     "placeholder": "Scrie un mesaj… (Enter pentru a trimite)",
     "send": "Trimite",
-    "backToConversations": "Înapoi la conversații"
+    "backToConversations": "Înapoi la conversații",
+    "newMessage": "Mesaj nou",
+    "searchFriends": "Caută prieteni...",
+    "startConversation": "Începe o conversație",
+    "noFriends": "Nu ai prieteni încă",
+    "noFriendsMatch": "Niciun prieten nu corespunde căutării"
   },
   "loans": {
     "title": "Împrumuturi",

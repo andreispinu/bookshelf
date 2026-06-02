@@ -616,6 +616,14 @@ RLS: participant read (sender OR receiver), sender insert, receiver update.
 - Optimistic send; polls every 10 seconds; marks received messages read on open
 - Enter to send (Shift+Enter for newline)
 
+**New message flow:**
+- "New message" button (SquarePen icon) sits in the conversation list header — icon only on mobile, icon + text on desktop
+- Clicking it opens a modal overlay with a searchable list of all accepted friends
+- Friends are fetched server-side in `page.tsx` via `getFriends()`, filtered to `status === 'accepted'`, and passed as a `friends` prop to `MessagesClient`
+- Selecting a friend closes the modal and navigates to `?with=<friendId>` — opens an existing conversation if one exists, or starts a new empty chat
+- Empty conversations state also shows a "Start a conversation" button that opens the same modal
+- Modal closes on backdrop click or X button; search is cleared on close
+
 **Nav badge:** "Messages" link shows red badge with unread count, polled every 30s via `/api/nav-counts`.
 
 **API routes:**

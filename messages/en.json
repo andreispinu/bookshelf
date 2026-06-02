@@ -162,7 +162,12 @@
     "noMessages": "No messages yet — say hello!",
     "placeholder": "Write a message… (Enter to send)",
     "send": "Send",
-    "backToConversations": "Back to conversations"
+    "backToConversations": "Back to conversations",
+    "newMessage": "New message",
+    "searchFriends": "Search friends...",
+    "startConversation": "Start a conversation",
+    "noFriends": "No friends yet",
+    "noFriendsMatch": "No friends match your search"
   },
   "loans": {
     "title": "Loans",
