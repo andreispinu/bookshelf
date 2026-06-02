@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 const plans = [
   { id: 'monthly', label: 'Monthly', price: '$1', period: 'per month', description: 'Cancel any time.', highlight: false },
@@ -34,7 +35,7 @@ export default function SubscribePage() {
     <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center px-4 py-16">
       <div className="max-w-lg w-full">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-semibold text-stone-800 tracking-tight">BookShelf</h1>
+          <h1 className="text-3xl font-semibold text-stone-800 tracking-tight"><Link href="/">BookShelf</Link></h1>
           <p className="text-stone-500 mt-2">Your free trial has ended. Choose a plan to continue.</p>
         </div>
 

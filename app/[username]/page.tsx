@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MapPin } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
@@ -129,7 +130,7 @@ export default async function PublicProfilePage({ params }: Props) {
       </section>
 
       <footer className="text-center py-8 text-xs text-stone-400">
-        {t('publicProfilePoweredBy')} <a href="https://bookshelf.name" className="hover:text-stone-600 transition-colors">BookShelf</a>
+        {t('publicProfilePoweredBy')} <Link href="/" className="hover:text-stone-600 transition-colors">BookShelf</Link>
       </footer>
     </div>
   )
