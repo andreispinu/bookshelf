@@ -486,7 +486,13 @@ Language appears in:
 - Fill with AI: Claude identifies language from title/author knowledge
 - Description generation: always written in the book's language (if known), else English
 
-### Fill with AI
+### Fill with AI (inline — add form)
+The manual add book form (`/books/add`) has a "Fill with AI" button inline next to the Title field label. It appears always but is only active (clickable) when the title has ≥ 3 characters. Clicking it calls `POST /api/fill-book-title` with `{ title, author? }`. Claude returns `{ author, isbn, publisher, year, category, language, description, cover_url }`. Only empty fields are filled; already-typed values are never overwritten. Shows a Sparkles icon (Loader2 spinner while loading). Toast feedback: "Fields filled by AI — review before saving", "Couldn't find this book — please fill in manually", or "Add more details to the title for better results". The form uses controlled state (useState `fields` object) to enable programmatic updates.
+
+**Files:**
+- `app/api/fill-book-title/route.ts` — POST `{ title, author? }` → calls Claude → returns `{ suggested }` or `{ error: 'not_found' | 'ambiguous' }`
+
+### Fill with AI (book detail — ⋯ menu)
 Each book's ⋯ menu has a "Fill with AI" option that uses Claude to look up missing metadata.
 
 **Flow:**

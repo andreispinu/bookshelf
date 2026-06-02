@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import { Sparkles, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,10 +30,11 @@ export default function AddBookForm() {
   const formRef = useRef<HTMLFormElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [fillLoading, setFillLoading] = useState(false)
   const [showDuplicate, setShowDuplicate] = useState(false)
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
 
-  const prefill = {
+  const [fields, setFields] = useState({
     title:       searchParams.get('title')       ?? '',
     author:      searchParams.get('author')      ?? '',
     isbn:        searchParams.get('isbn')        ?? '',
@@ -42,15 +44,65 @@ export default function AddBookForm() {
     cover_url:   searchParams.get('cover_url')   ?? '',
     category:    searchParams.get('category')    ?? '',
     language:    searchParams.get('language')    ?? '',
-  }
+  })
 
-  const hasPreFill = !!(prefill.title || prefill.author)
+  const hasPreFill = !!(fields.title || fields.author)
 
   useEffect(() => {
     if (searchParams.get('error') === '1') {
       toast.error("Couldn't read the cover, please fill in manually")
     }
   }, [searchParams])
+
+  function set(key: keyof typeof fields, value: string) {
+    setFields(prev => ({ ...prev, [key]: value }))
+  }
+
+  async function handleFillWithAI() {
+    const title = fields.title.trim()
+    if (title.length < 3) return
+    setFillLoading(true)
+    try {
+      const res = await fetch('/api/fill-book-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, author: fields.author.trim() || undefined }),
+      })
+      const data = await res.json()
+
+      if (data.error === 'not_found') {
+        toast.error("Couldn't find this book — please fill in manually")
+        return
+      }
+      if (data.error === 'ambiguous') {
+        toast.error("Add more details to the title for better results")
+        return
+      }
+      if (!data.suggested) {
+        toast.error("Couldn't find this book — please fill in manually")
+        return
+      }
+
+      const s = data.suggested as Record<string, string | null>
+      // Only fill empty fields
+      setFields(prev => ({
+        title:       prev.title,
+        author:      prev.author      || s.author      || '',
+        isbn:        prev.isbn        || s.isbn        || '',
+        publisher:   prev.publisher   || s.publisher   || '',
+        year:        prev.year        || s.year        || '',
+        description: prev.description || s.description || '',
+        cover_url:   prev.cover_url   || s.cover_url   || '',
+        category:    prev.category    || s.category    || '',
+        language:    prev.language    || s.language    || '',
+      }))
+      toast.success("Fields filled by AI — review before saving")
+    } catch {
+      toast.error("Couldn't find this book — please fill in manually")
+    } finally {
+      setFillLoading(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -82,6 +134,8 @@ export default function AddBookForm() {
     }
   }
 
+  const canFill = fields.title.trim().length >= 3
+
   return (
     <div className="max-w-md">
       <div className="mb-6">
@@ -100,26 +154,45 @@ export default function AddBookForm() {
         <form ref={formRef} onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
 
-            {/* Cover preview (from photo scan) */}
-            {prefill.cover_url && (
+            {/* Cover preview */}
+            {fields.cover_url && (
               <div className="flex justify-center">
                 <img
-                  src={prefill.cover_url}
+                  src={fields.cover_url}
                   alt={t('coverImage')}
                   className="h-40 w-auto rounded shadow-sm object-cover"
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                 />
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="title" className="text-stone-700">{t('titleField')} <span className="text-red-500">*</span></Label>
-              <Input id="title" name="title" defaultValue={prefill.title}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="title" className="text-stone-700">{t('titleField')} <span className="text-red-500">*</span></Label>
+                <button
+                  type="button"
+                  onClick={handleFillWithAI}
+                  disabled={!canFill || fillLoading}
+                  className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md transition-all ${
+                    canFill
+                      ? 'text-stone-600 hover:text-stone-900 hover:bg-stone-100 cursor-pointer'
+                      : 'text-stone-300 cursor-default'
+                  }`}
+                >
+                  {fillLoading
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <Sparkles className="h-3 w-3" />
+                  }
+                  Fill with AI
+                </button>
+              </div>
+              <Input id="title" name="title" value={fields.title} onChange={e => set('title', e.target.value)}
                 placeholder="e.g. The Name of the Wind" required
                 className="border-stone-200 focus-visible:ring-stone-400" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="author" className="text-stone-700">{t('author')} <span className="text-red-500">*</span></Label>
-              <Input id="author" name="author" defaultValue={prefill.author}
+              <Input id="author" name="author" value={fields.author} onChange={e => set('author', e.target.value)}
                 placeholder="e.g. Patrick Rothfuss" required
                 className="border-stone-200 focus-visible:ring-stone-400" />
             </div>
@@ -128,7 +201,7 @@ export default function AddBookForm() {
                 <Label htmlFor="publisher" className="text-stone-700">
                   {t('publisher')} <span className="text-stone-400 font-normal text-xs">({tc('optional')})</span>
                 </Label>
-                <Input id="publisher" name="publisher" defaultValue={prefill.publisher}
+                <Input id="publisher" name="publisher" value={fields.publisher} onChange={e => set('publisher', e.target.value)}
                   placeholder="e.g. Gollancz"
                   className="border-stone-200 focus-visible:ring-stone-400" />
               </div>
@@ -136,7 +209,7 @@ export default function AddBookForm() {
                 <Label htmlFor="year" className="text-stone-700">
                   {t('year')} <span className="text-stone-400 font-normal text-xs">({tc('optional')})</span>
                 </Label>
-                <Input id="year" name="year" defaultValue={prefill.year}
+                <Input id="year" name="year" value={fields.year} onChange={e => set('year', e.target.value)}
                   placeholder="e.g. 2007"
                   className="border-stone-200 focus-visible:ring-stone-400" />
               </div>
@@ -145,7 +218,7 @@ export default function AddBookForm() {
               <Label htmlFor="isbn" className="text-stone-700">
                 {t('isbn')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
               </Label>
-              <Input id="isbn" name="isbn" defaultValue={prefill.isbn}
+              <Input id="isbn" name="isbn" value={fields.isbn} onChange={e => set('isbn', e.target.value)}
                 placeholder="e.g. 9780756404741"
                 className="border-stone-200 focus-visible:ring-stone-400" />
             </div>
@@ -153,7 +226,7 @@ export default function AddBookForm() {
               <Label htmlFor="cover_url" className="text-stone-700">
                 {t('coverUrl')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
               </Label>
-              <Input id="cover_url" name="cover_url" type="url" defaultValue={prefill.cover_url}
+              <Input id="cover_url" name="cover_url" type="url" value={fields.cover_url} onChange={e => set('cover_url', e.target.value)}
                 placeholder="https://…"
                 className="border-stone-200 focus-visible:ring-stone-400" />
             </div>
@@ -164,7 +237,8 @@ export default function AddBookForm() {
               <select
                 id="category"
                 name="category"
-                defaultValue={prefill.category}
+                value={fields.category}
+                onChange={e => set('category', e.target.value)}
                 className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
               >
                 <option value="">{t('noCategory')}</option>
@@ -178,7 +252,8 @@ export default function AddBookForm() {
               <select
                 id="language"
                 name="language"
-                defaultValue={prefill.language}
+                value={fields.language}
+                onChange={e => set('language', e.target.value)}
                 className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
               >
                 <option value="">{t('noLanguage')}</option>
@@ -189,7 +264,7 @@ export default function AddBookForm() {
               <Label htmlFor="description" className="text-stone-700">
                 {t('description')} <span className="text-stone-400 font-normal">({tc('optional')})</span>
               </Label>
-              <Textarea id="description" name="description" defaultValue={prefill.description}
+              <Textarea id="description" name="description" value={fields.description} onChange={e => set('description', e.target.value)}
                 placeholder="A short description of the book…" rows={3}
                 className="border-stone-200 focus-visible:ring-stone-400 resize-none" />
             </div>
