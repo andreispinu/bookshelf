@@ -75,7 +75,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
     return () => clearInterval(interval)
   }, [activeConvId, fetchMessages])
 
-  // Sync activeConv from conversations list; if not found fetch profile directly
+  // Sync activeConv from conversations list
   useEffect(() => {
     if (!activeConvId) {
       setActiveConv(null)
@@ -84,12 +84,8 @@ export default function MessagesClient({ userId }: { userId: string }) {
     const found = conversations.find(c => c.userId === activeConvId)
     if (found) {
       setActiveConv(found)
-    } else if (!activeConv || activeConv.userId !== activeConvId) {
-      // Fetch profile for users we haven't messaged yet (new conversation)
-      fetch(`/api/users/search?q=`)
-        .catch(() => null)
     }
-  }, [activeConvId, conversations, activeConv])
+  }, [activeConvId, conversations])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

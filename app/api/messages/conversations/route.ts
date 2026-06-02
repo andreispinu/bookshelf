@@ -7,18 +7,28 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-  const { data: messages, error } = await supabase
-    .from('messages')
-    .select('id, sender_id, receiver_id, content, read, created_at')
-    .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-    .order('created_at', { ascending: false })
+  // Use two simple eq() queries instead of .or() to avoid filter compatibility issues
+  const [{ data: sent }, { data: received }] = await Promise.all([
+    supabase
+      .from('messages')
+      .select('id, sender_id, receiver_id, content, read, created_at')
+      .eq('sender_id', user.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('messages')
+      .select('id, sender_id, receiver_id, content, read, created_at')
+      .eq('receiver_id', user.id)
+      .order('created_at', { ascending: false }),
+  ])
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!messages || messages.length === 0) return NextResponse.json({ conversations: [] })
+  const allMessages = [...(sent ?? []), ...(received ?? [])]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  // Group by conversation partner, messages are DESC so first occurrence per partner = latest
+  if (allMessages.length === 0) return NextResponse.json({ conversations: [] })
+
+  // Group by conversation partner — messages are DESC so first occurrence per partner = latest
   const convMap = new Map<string, { lastMessage: string; lastAt: string; unread: number }>()
-  for (const msg of messages) {
+  for (const msg of allMessages) {
     const otherId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id
     if (!convMap.has(otherId)) {
       convMap.set(otherId, { lastMessage: msg.content, lastAt: msg.created_at, unread: 0 })
