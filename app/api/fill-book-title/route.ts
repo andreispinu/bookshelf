@@ -8,29 +8,28 @@ import { LANGUAGES } from '@/lib/languages'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-// Check whether an OpenLibrary URL has a real cover.
-// OpenLibrary returns a 1×1 GIF (~35 bytes) for missing covers — real covers are >500 bytes.
-async function openLibraryHasCover(url: string): Promise<boolean> {
-  try {
-    const res = await fetch(url, { method: 'HEAD' })
-    if (!res.ok) return false
-    const len = res.headers.get('content-length')
-    return len ? parseInt(len, 10) > 500 : false
-  } catch {
-    return false
-  }
-}
-
-// Download an image URL, resize with sharp, upload to Supabase Storage, return public URL.
-// Validates Content-Type starts with "image/" before uploading.
-async function downloadAndStore(url: string, userId: string): Promise<string | null> {
+/**
+ * Download an image URL, validate it is a real image, resize with sharp,
+ * upload to Supabase Storage, and return the public URL.
+ *
+ * @param minBytes - reject images smaller than this (used to filter OpenLibrary's
+ *   1×1 placeholder GIF which is ~35 bytes; real covers are tens of KB).
+ */
+async function downloadAndStore(
+  url: string,
+  userId: string,
+  minBytes = 0,
+): Promise<string | null> {
   try {
     const res = await fetch(url)
     if (!res.ok) return null
+
     const ct = res.headers.get('content-type') ?? ''
     if (!ct.startsWith('image/')) return null
 
     const buffer = Buffer.from(await res.arrayBuffer())
+    if (buffer.length < minBytes) return null   // reject tiny placeholders
+
     const resized = await sharp(buffer)
       .resize({ width: 600, withoutEnlargement: true })
       .jpeg({ quality: 85 })
@@ -40,13 +39,17 @@ async function downloadAndStore(url: string, userId: string): Promise<string | n
     const { error } = await supabaseAdmin.storage
       .from('book-covers')
       .upload(filename, resized, { contentType: 'image/jpeg', upsert: false })
-    if (error) return null
+    if (error) {
+      console.error('[fill-book-title] storage upload error:', error.message)
+      return null
+    }
 
     const { data: { publicUrl } } = supabaseAdmin.storage
       .from('book-covers')
       .getPublicUrl(filename)
     return publicUrl
-  } catch {
+  } catch (err) {
+    console.error('[fill-book-title] downloadAndStore error:', err)
     return null
   }
 }
@@ -58,23 +61,25 @@ async function resolveCover(
   claudeCoverUrl: string | null,
   userId: string,
 ): Promise<string | null> {
-  // 1. OpenLibrary by ISBN
+  // 1. OpenLibrary by ISBN — minBytes=1000 rejects the 1×1 placeholder GIF (~35 bytes)
   if (isbn) {
-    const url = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
-    if (await openLibraryHasCover(url)) {
-      const stored = await downloadAndStore(url, userId)
-      if (stored) return stored
-    }
+    const stored = await downloadAndStore(
+      `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`,
+      userId,
+      1000,
+    )
+    if (stored) { console.log('[fill-book-title] cover from OpenLibrary/ISBN'); return stored }
   }
 
   // 2. OpenLibrary by title
-  const titleUrl = `https://covers.openlibrary.org/b/title/${encodeURIComponent(title)}-L.jpg`
-  if (await openLibraryHasCover(titleUrl)) {
-    const stored = await downloadAndStore(titleUrl, userId)
-    if (stored) return stored
-  }
+  const stored2 = await downloadAndStore(
+    `https://covers.openlibrary.org/b/title/${encodeURIComponent(title)}-L.jpg`,
+    userId,
+    1000,
+  )
+  if (stored2) { console.log('[fill-book-title] cover from OpenLibrary/title'); return stored2 }
 
-  // 3. Google Books API — download & re-upload for permanence
+  // 3. Google Books API — no API key required for basic queries
   try {
     const q = `intitle:${encodeURIComponent(title)}${author ? `+inauthor:${encodeURIComponent(author)}` : ''}`
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`)
@@ -86,18 +91,21 @@ async function resolveCover(
           .replace('http://', 'https://')
           .replace('zoom=1', 'zoom=3')
           .replace('&edge=curl', '')
-        const stored = await downloadAndStore(cleanUrl, userId)
-        if (stored) return stored
+        const stored3 = await downloadAndStore(cleanUrl, userId)
+        if (stored3) { console.log('[fill-book-title] cover from Google Books'); return stored3 }
       }
     }
-  } catch { /* continue */ }
-
-  // 4. Claude's suggested cover URL (only if it passes image validation)
-  if (claudeCoverUrl) {
-    const stored = await downloadAndStore(claudeCoverUrl, userId)
-    if (stored) return stored
+  } catch (err) {
+    console.error('[fill-book-title] Google Books error:', err)
   }
 
+  // 4. Claude's suggested cover URL (validated by Content-Type check inside downloadAndStore)
+  if (claudeCoverUrl) {
+    const stored4 = await downloadAndStore(claudeCoverUrl, userId)
+    if (stored4) { console.log('[fill-book-title] cover from Claude hint'); return stored4 }
+  }
+
+  console.log('[fill-book-title] no cover found')
   return null
 }
 
@@ -148,7 +156,6 @@ Return ONLY a raw JSON object. No markdown, no code blocks, no explanation.`,
   const isbn = suggested.isbn?.replace(/[-\s]/g, '') ?? null
   const resolvedAuthor = suggested.author ?? (author?.trim() || null)
 
-  // Resolve cover through the priority chain; always store in Supabase
   suggested.cover_url = await resolveCover(
     isbn,
     title.trim(),
@@ -157,7 +164,7 @@ Return ONLY a raw JSON object. No markdown, no code blocks, no explanation.`,
     user.id,
   )
 
-  console.log('[fill-book-title] isbn:', isbn, 'cover_url:', suggested.cover_url)
+  console.log('[fill-book-title] result — isbn:', isbn, 'cover_url:', suggested.cover_url)
 
   return NextResponse.json({ suggested })
 }
