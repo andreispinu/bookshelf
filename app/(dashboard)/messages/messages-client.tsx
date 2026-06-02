@@ -22,6 +22,14 @@ function initials(name: string) {
   return name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
+function formatPreview(content: string): string {
+  const payload = parseBorrowPayload(content)
+  if (!payload) return content
+  if (payload.type === 'borrow_request') return `Borrow request: ${payload.book_title}`
+  const status = payload.status === 'approved' ? 'approved' : 'rejected'
+  return `Request ${status}: ${payload.book_title}`
+}
+
 export default function MessagesClient({ userId }: { userId: string }) {
   const t = useTranslations('messages')
   const router = useRouter()
@@ -192,7 +200,7 @@ export default function MessagesClient({ userId }: { userId: string }) {
                       <span className="text-[11px] text-stone-400 shrink-0">{timeAgo(conv.lastAt)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-1 mt-0.5">
-                      <span className="text-xs text-stone-500 truncate">{conv.lastMessage}</span>
+                      <span className="text-xs text-stone-500 truncate">{formatPreview(conv.lastMessage)}</span>
                       {conv.unread > 0 && (
                         <span className="shrink-0 h-4 w-4 rounded-full bg-stone-800 text-white text-[10px] font-bold flex items-center justify-center">
                           {conv.unread > 9 ? '9+' : conv.unread}
