@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { MapPin } from 'lucide-react'
+import { getTranslations } from 'next-intl/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { COUNTRY_FLAGS } from '@/lib/countries'
 import type { Metadata } from 'next'
@@ -27,6 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params
+  const t = await getTranslations('landing')
 
   const { data: profile } = await supabaseAdmin
     .from('profiles')
@@ -71,9 +73,9 @@ export default async function PublicProfilePage({ params }: Props) {
             }
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-stone-800">{profile.name}'s BookShelf</h1>
+            <h1 className="text-2xl font-semibold text-stone-800">{t('publicProfileTitle', { name: profile.name })}</h1>
             <p className="text-stone-500 text-sm mt-0.5">
-              {bookCount} {bookCount === 1 ? 'book' : 'books'} on their shelf
+              {t('publicProfileBookCount', { count: bookCount })}
             </p>
             {(profile.city || profile.country) && (
               <p className="flex items-center gap-1 text-sm text-stone-400 mt-1">
@@ -92,8 +94,8 @@ export default async function PublicProfilePage({ params }: Props) {
         {/* Minimal — no book list */}
         {visibility === 'public_minimal' && (
           <div className="bg-white rounded-xl border border-stone-200 p-6 text-center text-stone-500 text-sm">
-            {profile.name} has {bookCount} {bookCount === 1 ? 'book' : 'books'} on their shelf.
-            <br />Their full library is private.
+            {t('publicProfileMinimalCount', { name: profile.name, count: bookCount })}
+            <br />{t('publicProfilePrivateNote')}
           </div>
         )}
 
@@ -104,7 +106,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
         {visibility === 'public_full' && books.length === 0 && (
           <div className="text-center py-16 text-stone-400">
-            <p>No books on this shelf yet.</p>
+            <p>{t('publicProfileNoBooks')}</p>
           </div>
         )}
 
@@ -113,21 +115,21 @@ export default async function PublicProfilePage({ params }: Props) {
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-4 py-10">
         <div className="rounded-xl border border-stone-200 bg-white p-6 text-center">
-          <h2 className="text-base font-semibold text-stone-800">Discover your own bookshelf</h2>
+          <h2 className="text-base font-semibold text-stone-800">{t('publicProfileCtaHeading')}</h2>
           <p className="text-sm text-stone-500 mt-1.5 mb-4">
-            Track your books, connect with friends, and lend your favourites.
+            {t('publicProfileCtaText')}
           </p>
           <a
             href="https://bookshelf.name"
             className="inline-block px-5 py-2.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
           >
-            Try BookShelf free
+            {t('publicProfileCtaButton')}
           </a>
         </div>
       </section>
 
       <footer className="text-center py-8 text-xs text-stone-400">
-        Powered by <a href="https://bookshelf.name" className="hover:text-stone-600 transition-colors">BookShelf</a>
+        {t('publicProfilePoweredBy')} <a href="https://bookshelf.name" className="hover:text-stone-600 transition-colors">BookShelf</a>
       </footer>
     </div>
   )

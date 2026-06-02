@@ -350,6 +350,19 @@
     "pricingStartFreeTrial": "Start free trial",
     "pricingStripeNote": "Payments processed securely by Stripe. Cancel any time.",
     "footerLogIn": "Log in",
-    "footerSignUp": "Sign up"
+    "footerSignUp": "Sign up",
+    "recentlyAddedHeading": "Recently added to shelves",
+    "recentlyAddedSubheading": "Books our community is reading right now",
+    "bookAvailable": "Available",
+    "bookLentOut": "Lent out",
+    "publicProfileTitle": "{name}'s BookShelf",
+    "publicProfileBookCount": "{count, plural, one {# book} other {# books}} on their shelf",
+    "publicProfileMinimalCount": "{name} has {count, plural, one {# book} other {# books}} on their shelf.",
+    "publicProfilePrivateNote": "Their full library is private.",
+    "publicProfileNoBooks": "No books on this shelf yet.",
+    "publicProfileCtaHeading": "Discover your own bookshelf",
+    "publicProfileCtaText": "Track your books, connect with friends, and lend your favourites.",
+    "publicProfileCtaButton": "Try BookShelf free",
+    "publicProfilePoweredBy": "Powered by"
   }
 }

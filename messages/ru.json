@@ -350,6 +350,19 @@
     "pricingStartFreeTrial": "Попробовать бесплатно",
     "pricingStripeNote": "Платежи безопасно обрабатываются через Stripe. Отмена в любое время.",
     "footerLogIn": "Войти",
-    "footerSignUp": "Зарегистрироваться"
+    "footerSignUp": "Зарегистрироваться",
+    "recentlyAddedHeading": "Недавно добавлено на полки",
+    "recentlyAddedSubheading": "Книги, которые читает наше сообщество прямо сейчас",
+    "bookAvailable": "Доступна",
+    "bookLentOut": "Выдана",
+    "publicProfileTitle": "Полка {name}",
+    "publicProfileBookCount": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}} на полке",
+    "publicProfileMinimalCount": "У {name} {count, plural, one {# книга} few {# книги} many {# книг} other {# книги}} на полке.",
+    "publicProfilePrivateNote": "Полная библиотека закрыта.",
+    "publicProfileNoBooks": "На этой полке пока нет книг.",
+    "publicProfileCtaHeading": "Создайте свою библиотеку",
+    "publicProfileCtaText": "Отслеживайте книги, общайтесь с друзьями и делитесь любимыми.",
+    "publicProfileCtaButton": "Попробовать BookShelf бесплатно",
+    "publicProfilePoweredBy": "Работает на"
   }
 }

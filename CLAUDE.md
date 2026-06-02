@@ -136,6 +136,7 @@ returned_at  timestamptz  -- NULL until returned
 - **Component naming** — PascalCase for components, camelCase for functions and variables
 - **File naming** — kebab-case for files (e.g. `add-book-form.tsx`)
 - **Co-location** — keep components close to the page that uses them; only move to `/components` if used in 2+ places
+- **Translations — ALWAYS add to all three files simultaneously** — every new UI string must be added to `messages/en.json`, `messages/ro.json`, AND `messages/ru.json` at the same time. Never add a key to only one file. JSON does not support comments, so this rule lives here. Namespaces: `auth` (login/signup), `books`, `friends`, `messages`, `loans`, `profile`, `notifications`, `nav`, `common`, `landing` (landing page + public profile page).
 
 ## Auth conventions
 

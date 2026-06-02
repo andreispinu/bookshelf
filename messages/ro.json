@@ -350,6 +350,19 @@
     "pricingStartFreeTrial": "Încearcă gratuit",
     "pricingStripeNote": "Plăți procesate în siguranță de Stripe. Anulezi oricând.",
     "footerLogIn": "Conectare",
-    "footerSignUp": "Înregistrare"
+    "footerSignUp": "Înregistrare",
+    "recentlyAddedHeading": "Adăugate recent pe rafturi",
+    "recentlyAddedSubheading": "Cărțile pe care comunitatea noastră le citește acum",
+    "bookAvailable": "Disponibilă",
+    "bookLentOut": "Împrumutată",
+    "publicProfileTitle": "Raftul lui {name}",
+    "publicProfileBookCount": "{count, plural, one {# carte} other {# cărți}} pe raft",
+    "publicProfileMinimalCount": "{name} are {count, plural, one {# carte} other {# cărți}} pe raft.",
+    "publicProfilePrivateNote": "Biblioteca completă este privată.",
+    "publicProfileNoBooks": "Nicio carte pe acest raft.",
+    "publicProfileCtaHeading": "Descoperă propria ta bibliotecă",
+    "publicProfileCtaText": "Urmărește cărțile tale, conectează-te cu prieteni și împrumută-ți preferatele.",
+    "publicProfileCtaButton": "Încearcă BookShelf gratuit",
+    "publicProfilePoweredBy": "Creat cu"
   }
 }

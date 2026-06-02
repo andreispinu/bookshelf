@@ -99,10 +99,10 @@ export default async function LandingPage() {
         <section className="py-16 px-4 bg-white border-b border-stone-200">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">
-              Recently added to shelves
+              {t('recentlyAddedHeading')}
             </h2>
             <p className="text-center text-stone-500 text-sm mb-8">
-              Books our community is reading right now
+              {t('recentlyAddedSubheading')}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {recentBooks.map((book: { id: string; title: string; cover_url: string | null; category: string | null; status: string }) => (
@@ -127,7 +127,7 @@ export default async function LandingPage() {
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : 'bg-amber-50 text-amber-700 border-amber-200'
                   }`}>
-                    {book.status === 'available' ? 'Available' : 'Lent out'}
+                    {book.status === 'available' ? t('bookAvailable') : t('bookLentOut')}
                   </span>
                 </div>
               ))}
