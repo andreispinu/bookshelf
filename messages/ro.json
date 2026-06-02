@@ -51,7 +51,11 @@
     "enterEmailForReset": "Introdu adresa de email și îți vom trimite un link pentru resetarea parolei.",
     "tagline": "Biblioteca ta personală de împrumuturi",
     "passwordTooShort": "Parola trebuie să aibă cel puțin 8 caractere.",
-    "passwordMismatch": "Parolele nu se potrivesc."
+    "passwordMismatch": "Parolele nu se potrivesc.",
+    "firstName": "Prenume",
+    "yourFirstName": "Prenumele tău",
+    "lastName": "Nume de familie",
+    "yourLastName": "Nume de familie (opțional)"
   },
   "books": {
     "title": "Cărțile mele",
@@ -235,7 +239,9 @@
     "featureLibrary": "Bibliotecă completă",
     "featureFriends": "Prieteni și împrumuturi",
     "featureAI": "Scanare AI",
-    "featurePWA": "Aplicație mobilă PWA"
+    "featurePWA": "Aplicație mobilă PWA",
+    "firstName": "Prenume",
+    "lastName": "Nume de familie"
   },
   "notifications": {
     "title": "Notificări",

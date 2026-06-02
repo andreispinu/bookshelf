@@ -51,7 +51,11 @@
     "enterEmailForReset": "Введите адрес email, и мы отправим вам ссылку для сброса пароля.",
     "tagline": "Ваша личная библиотека для обмена книгами",
     "passwordTooShort": "Пароль должен содержать не менее 8 символов.",
-    "passwordMismatch": "Пароли не совпадают."
+    "passwordMismatch": "Пароли не совпадают.",
+    "firstName": "Имя",
+    "yourFirstName": "Ваше имя",
+    "lastName": "Фамилия",
+    "yourLastName": "Фамилия (необязательно)"
   },
   "books": {
     "title": "Мои книги",
@@ -235,7 +239,9 @@
     "featureLibrary": "Полная библиотека",
     "featureFriends": "Друзья и займы",
     "featureAI": "Сканирование AI",
-    "featurePWA": "Мобильное PWA-приложение"
+    "featurePWA": "Мобильное PWA-приложение",
+    "firstName": "Имя",
+    "lastName": "Фамилия"
   },
   "notifications": {
     "title": "Уведомления",

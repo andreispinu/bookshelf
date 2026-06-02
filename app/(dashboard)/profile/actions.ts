@@ -6,17 +6,18 @@ import { revalidatePath } from 'next/cache'
 
 const USERNAME_REGEX = /^[a-z0-9-]{3,30}$/
 
-export async function updateName(name: string): Promise<{ error: string | null }> {
+export async function updateName(firstName: string, lastName: string): Promise<{ error: string | null }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const trimmed = name.trim()
-  if (!trimmed) return { error: 'Name cannot be empty' }
+  const trimmedFirst = firstName.trim()
+  if (!trimmedFirst) return { error: 'First name cannot be empty' }
+  const trimmedLast = lastName.trim() || null
 
   const { error } = await supabase
     .from('profiles')
-    .update({ name: trimmed })
+    .update({ first_name: trimmedFirst, last_name: trimmedLast })
     .eq('id', user.id)
 
   if (error) return { error: error.message }

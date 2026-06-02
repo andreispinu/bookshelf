@@ -35,16 +35,28 @@ export default function SignupPage() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-stone-700">{t('name')}</Label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              placeholder={t('yourName')}
-              required
-              className="border-stone-200 focus-visible:ring-stone-400"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="first_name" className="text-stone-700">{t('firstName')}</Label>
+              <Input
+                id="first_name"
+                name="first_name"
+                type="text"
+                placeholder={t('yourFirstName')}
+                required
+                className="border-stone-200 focus-visible:ring-stone-400"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="last_name" className="text-stone-700">{t('lastName')}</Label>
+              <Input
+                id="last_name"
+                name="last_name"
+                type="text"
+                placeholder={t('yourLastName')}
+                className="border-stone-200 focus-visible:ring-stone-400"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-stone-700">{t('email')}</Label>

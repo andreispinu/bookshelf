@@ -77,7 +77,9 @@ proxy.ts                → Session refresh + route protection (Next.js 16)
 ### `profiles`
 ```sql
 id                   uuid  PRIMARY KEY REFERENCES auth.users(id)
-name                 text  NOT NULL
+name                 text  NOT NULL  -- kept in sync as trim(first_name || ' ' || last_name) by DB trigger
+first_name           text  -- nullable (populated for all users after add-first-last-name.sql migration)
+last_name            text  -- nullable, optional
 avatar_url           text
 created_at           timestamptz DEFAULT now()
 trial_ends_at        timestamptz

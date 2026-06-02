@@ -51,7 +51,11 @@
     "enterEmailForReset": "Enter your email address and we'll send you a link to reset your password.",
     "tagline": "Your personal lending library",
     "passwordTooShort": "Password must be at least 8 characters.",
-    "passwordMismatch": "Passwords do not match."
+    "passwordMismatch": "Passwords do not match.",
+    "firstName": "First name",
+    "yourFirstName": "Your first name",
+    "lastName": "Last name",
+    "yourLastName": "Last name (optional)"
   },
   "books": {
     "title": "My Books",
@@ -235,7 +239,9 @@
     "featureLibrary": "Full book library",
     "featureFriends": "Friends & lending",
     "featureAI": "AI book scanning",
-    "featurePWA": "PWA mobile app"
+    "featurePWA": "PWA mobile app",
+    "firstName": "First name",
+    "lastName": "Last name"
   },
   "notifications": {
     "title": "Notifications",

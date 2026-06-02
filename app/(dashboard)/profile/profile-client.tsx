@@ -24,8 +24,8 @@ type Props = {
   email: string
 }
 
-function initials(name: string) {
-  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+function initials(firstName: string, lastName: string | null) {
+  return ((firstName[0] ?? '') + (lastName?.[0] ?? '')).toUpperCase()
 }
 
 function scrollToPlans() {
@@ -41,10 +41,13 @@ export default function ProfileClient({ profile, email }: Props) {
   const [avatarUploading, setAvatarUploading] = useState(false)
 
   const [editOpen, setEditOpen] = useState(false)
-  const [editName, setEditName] = useState(profile.name)
+  const [editFirstName, setEditFirstName] = useState(profile.first_name ?? '')
+  const [editLastName, setEditLastName] = useState(profile.last_name ?? '')
   const [editError, setEditError] = useState<string | null>(null)
   const [editLoading, setEditLoading] = useState(false)
   const [currentName, setCurrentName] = useState(profile.name)
+  const [currentFirstName, setCurrentFirstName] = useState(profile.first_name ?? profile.name.split(' ')[0] ?? '')
+  const [currentLastName, setCurrentLastName] = useState<string | null>(profile.last_name ?? profile.name.split(' ')[1] ?? null)
 
   const [subscribeLoading, setSubscribeLoading] = useState<string | null>(null)
   const [subscribeError, setSubscribeError] = useState<string | null>(null)
@@ -94,13 +97,16 @@ export default function ProfileClient({ profile, email }: Props) {
   async function handleSaveName() {
     setEditError(null)
     setEditLoading(true)
-    const result = await updateName(editName)
+    const result = await updateName(editFirstName, editLastName)
     if (result.error) {
       setEditError(result.error)
       setEditLoading(false)
       return
     }
-    setCurrentName(editName)
+    const newName = [editFirstName, editLastName].filter(s => s.trim()).join(' ')
+    setCurrentName(newName)
+    setCurrentFirstName(editFirstName)
+    setCurrentLastName(editLastName.trim() || null)
     setEditOpen(false)
     setEditLoading(false)
   }
@@ -159,7 +165,7 @@ export default function ProfileClient({ profile, email }: Props) {
               <img src={avatarUrl} alt={currentName} className="h-full w-full object-cover" />
             ) : (
               <div className="h-full w-full bg-stone-800 flex items-center justify-center text-white text-lg font-semibold">
-                {initials(currentName)}
+                {initials(currentFirstName, currentLastName)}
               </div>
             )}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -188,7 +194,7 @@ export default function ProfileClient({ profile, email }: Props) {
             variant="outline"
             size="sm"
             className="border-stone-200 text-stone-700 hover:bg-stone-50 shrink-0"
-            onClick={() => { setEditName(currentName); setEditError(null); setEditOpen(true) }}
+            onClick={() => { setEditFirstName(currentFirstName); setEditLastName(currentLastName ?? ''); setEditError(null); setEditOpen(true) }}
           >
             {t('editName')}
           </Button>
@@ -340,15 +346,27 @@ export default function ProfileClient({ profile, email }: Props) {
             <DialogTitle className="text-stone-800">{t('editName')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-name" className="text-stone-700">{t('name')}</Label>
-              <Input
-                id="edit-name"
-                value={editName}
-                onChange={e => setEditName(e.target.value)}
-                className="border-stone-200 focus-visible:ring-stone-400"
-                onKeyDown={e => e.key === 'Enter' && handleSaveName()}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-first-name" className="text-stone-700">{t('firstName')}</Label>
+                <Input
+                  id="edit-first-name"
+                  value={editFirstName}
+                  onChange={e => setEditFirstName(e.target.value)}
+                  className="border-stone-200 focus-visible:ring-stone-400"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-last-name" className="text-stone-700">{t('lastName')}</Label>
+                <Input
+                  id="edit-last-name"
+                  value={editLastName}
+                  onChange={e => setEditLastName(e.target.value)}
+                  className="border-stone-200 focus-visible:ring-stone-400"
+                  onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                />
+              </div>
             </div>
             {editError && <p className="text-sm text-red-600">{editError}</p>}
           </div>

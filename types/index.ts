@@ -17,6 +17,8 @@ export type Book = {
 export type Profile = {
   id: string
   name: string
+  first_name: string | null
+  last_name: string | null
   avatar_url: string | null
   created_at: string
   trial_ends_at: string | null
