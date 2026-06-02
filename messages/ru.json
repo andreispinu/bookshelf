@@ -244,7 +244,8 @@
     "friendNewBook": "{name} добавил {title} на полку",
     "borrowRequest": "{name} хочет взять {title}",
     "borrowApproved": "{name} одобрил ваш запрос на {title}",
-    "borrowRejected": "{name} отклонил ваш запрос на {title}"
+    "borrowRejected": "{name} отклонил ваш запрос на {title}",
+    "newMessage": "{name} отправил вам сообщение"
   },
   "landing": {
     "navFeatures": "Возможности",

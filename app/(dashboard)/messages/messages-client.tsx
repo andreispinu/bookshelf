@@ -65,6 +65,12 @@ export default function MessagesClient({ userId }: { userId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ senderId: withId }),
       })
+      // Mark new_message notifications from this sender as read
+      fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actorId: withId, type: 'new_message' }),
+      })
     } catch {}
   }, [])
 

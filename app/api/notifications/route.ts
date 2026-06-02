@@ -40,6 +40,14 @@ export async function PATCH(request: NextRequest) {
       .update({ read: true })
       .eq('id', body.id)
       .eq('user_id', user.id)
+  } else if (body.actorId && body.type) {
+    await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .eq('actor_id', body.actorId)
+      .eq('type', body.type)
+      .eq('read', false)
   }
 
   return NextResponse.json({ ok: true })

@@ -244,7 +244,8 @@
     "friendNewBook": "{name} added {title} to their shelf",
     "borrowRequest": "{name} wants to borrow {title}",
     "borrowApproved": "{name} approved your request to borrow {title}",
-    "borrowRejected": "{name} declined your request to borrow {title}"
+    "borrowRejected": "{name} declined your request to borrow {title}",
+    "newMessage": "{name} sent you a message"
   },
   "landing": {
     "navFeatures": "Features",

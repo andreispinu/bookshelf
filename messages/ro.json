@@ -244,7 +244,8 @@
     "friendNewBook": "{name} a adăugat {title} pe raftul său",
     "borrowRequest": "{name} vrea să împrumute {title}",
     "borrowApproved": "{name} a aprobat cererea ta pentru {title}",
-    "borrowRejected": "{name} a refuzat cererea ta pentru {title}"
+    "borrowRejected": "{name} a refuzat cererea ta pentru {title}",
+    "newMessage": "{name} ți-a trimis un mesaj"
   },
   "landing": {
     "navFeatures": "Funcționalități",

@@ -420,6 +420,7 @@ created_at timestamptz DEFAULT now()
 | `on_friend_request` | INSERT friendships (status=pending) | addressee_id | `friend_request` |
 | `on_friend_accepted` | UPDATE friendships (pending→accepted) | requester_id | `friend_accepted` |
 | `on_new_book` | INSERT books | all accepted friends of book owner | `friend_new_book` |
+| `on_new_message` | INSERT messages | receiver_id | `new_message` — skips borrow_request JSON; upserts (bumps created_at if unread notification from same actor already exists) |
 
 **Nav bell** (`app/(dashboard)/notifications-bell.tsx`):
 - Polls `GET /api/notifications` every 60 seconds + on mount
@@ -617,7 +618,7 @@ RLS: participant read, requester insert, owner update.
 
 **Loans page tabs:** "Lent out" | "Borrowed" | "Requests" — Requests tab shows all sent requests with status badges (Pending/Approved/Declined). Link to `/loans/requests` for incoming.
 
-**Notification types added:** `borrow_request` (→ `/loans/requests`), `borrow_approved` (→ `/loans?tab=requests`), `borrow_rejected` (→ `/loans?tab=requests`)
+**Notification types added:** `borrow_request` (→ `/loans/requests`), `borrow_approved` (→ `/loans?tab=requests`), `borrow_rejected` (→ `/loans?tab=requests`), `new_message` (→ `/messages?with={actorId}`)
 
 **API route:** `app/api/borrow-requests/route.ts` — GET pending incoming, POST create, PATCH approve/reject. Uses `supabaseAdmin` for all DB operations. POST always inserts a `borrow_request` JSON card into `messages`; PATCH always inserts a `borrow_response` JSON card.
 
