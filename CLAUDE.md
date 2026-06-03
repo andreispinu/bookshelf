@@ -621,6 +621,7 @@ RLS: participant read (sender OR receiver), sender insert, receiver update.
 - Clicking it opens a modal overlay with a searchable list of all accepted friends
 - Friends are fetched server-side in `page.tsx` via `getFriends()`, filtered to `status === 'accepted'`, and passed as a `friends` prop to `MessagesClient`
 - Selecting a friend closes the modal and navigates to `?with=<friendId>` — opens an existing conversation if one exists, or starts a new empty chat
+- Chat panel header always shows recipient avatar, name, and country flag (if set) — even for brand-new conversations with no messages. Header info is resolved from the `friends` prop first (`FriendForCompose` includes country); falls back to `activeConv` data for conversations with ex-friends who are no longer in the friends list
 - Empty conversations state also shows a "Start a conversation" button that opens the same modal
 - Modal closes on backdrop click or X button; search is cleared on close
 

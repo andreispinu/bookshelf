@@ -124,6 +124,16 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Resolve recipient info for the chat header — friends prop is the primary source
+  // (always has country); activeConv is a fallback for ex-friends with history
+  const activeRecipient = useMemo(() => {
+    if (!activeConvId) return null
+    const fromFriends = friends.find(f => f.id === activeConvId)
+    if (fromFriends) return fromFriends
+    if (activeConv) return { id: activeConv.userId, name: activeConv.name, avatar_url: activeConv.avatar_url, country: null }
+    return null
+  }, [activeConvId, friends, activeConv])
+
   // Collect borrow_request IDs that already have a response in this thread
   const respondedRequestIds = useMemo(() => {
     const ids = new Set<string>()
@@ -331,15 +341,18 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
-              {activeConv && (
+              {activeRecipient && (
                 <>
-                  <div className="shrink-0 h-8 w-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-700 text-xs font-medium overflow-hidden">
-                    {activeConv.avatar_url
-                      ? <img src={activeConv.avatar_url} alt={activeConv.name} className="h-full w-full object-cover" />
-                      : initials(activeConv.name)
+                  <div className="shrink-0 h-9 w-9 rounded-full bg-stone-200 flex items-center justify-center text-stone-700 text-xs font-medium overflow-hidden">
+                    {activeRecipient.avatar_url
+                      ? <img src={activeRecipient.avatar_url} alt={activeRecipient.name} className="h-full w-full object-cover" />
+                      : initials(activeRecipient.name)
                     }
                   </div>
-                  <span className="font-medium text-stone-800 text-sm">{activeConv.name}</span>
+                  <span className="font-medium text-stone-800 text-sm">{activeRecipient.name}</span>
+                  {activeRecipient.country && (
+                    <span className="text-base">{COUNTRY_FLAGS[activeRecipient.country] ?? ''}</span>
+                  )}
                 </>
               )}
             </div>
