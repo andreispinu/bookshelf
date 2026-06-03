@@ -9,6 +9,7 @@ import FriendList from './friend-list'
 import FriendsTabs from './friends-tabs'
 import SuggestionsClient from './suggestions-client'
 import InviteSection from './invite-section'
+import InviteCta from './invite-cta'
 import type { Invitation } from './invite-section'
 
 export default async function FriendsPage() {
@@ -28,6 +29,8 @@ export default async function FriendsPage() {
       .order('created_at', { ascending: false }),
   ])
 
+  const inviteCount = (invitations ?? []).length
+
   return (
     <div className="max-w-lg">
       <FriendsTabs active="friends" />
@@ -35,6 +38,8 @@ export default async function FriendsPage() {
         <h2 className="text-2xl font-semibold text-stone-800">{t('title')}</h2>
         <p className="text-stone-500 text-sm mt-0.5">{t('connectWith')}</p>
       </div>
+
+      <InviteCta initialCount={inviteCount} />
 
       <UserSearch currentUserId={user.id} existingFriends={friends ?? []} />
 

@@ -153,7 +153,11 @@
     "invited": "Invited",
     "accepted": "Accepted",
     "resend": "Resend",
-    "resent": "Resent"
+    "resent": "Resent",
+    "ctaHeading": "Invite your friends to BookShelf",
+    "ctaSubtext": "Share your love of books — invite friends to join and connect your libraries",
+    "ctaProgress": "{count} of 5 friends invited",
+    "ctaButton": "Invite a friend"
   },
   "messages": {
     "title": "Messages",

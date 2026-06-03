@@ -63,6 +63,7 @@ export default function InviteSection({ initialInvitations }: { initialInvitatio
       setResult(data)
       if (data.sent) {
         setEmail('')
+        window.dispatchEvent(new CustomEvent('invite-sent'))
         router.refresh()
       }
     } catch {
@@ -92,13 +93,14 @@ export default function InviteSection({ initialInvitations }: { initialInvitatio
   }
 
   return (
-    <div className="space-y-6">
+    <div id="invite-section" className="space-y-6">
       {/* Invite input */}
       <div>
         <h3 className="text-base font-semibold text-stone-800 mb-1">{t('inviteAFriend')}</h3>
         <p className="text-sm text-stone-500 mb-4">{t('inviteByEmail')}</p>
         <form onSubmit={handleInvite} className="flex gap-2">
           <Input
+            id="invite-email-input"
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}

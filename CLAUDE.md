@@ -888,6 +888,8 @@ Mobile (below 640px breakpoint) uses a **bottom navigation bar** instead of the 
 ### Invite friends by email
 Users can invite friends who aren't yet on BookShelf via email.
 
+**Invite CTA banner** (`app/(dashboard)/friends/invite-cta.tsx`): shown at the top of `/friends`, below the page heading. Encourages users to invite 5 friends. Shows amber card with `UserPlus` icon, heading, subtext, 5-dot progress indicator (filled amber = sent, empty stone = remaining), and "Invite a friend" button that scrolls to and focuses the invite email input. Auto-disappears (returns null) once `count >= 5` — no dismiss button. Uses optimistic UI: listens for `invite-sent` custom DOM event dispatched by `InviteSection` on successful send. Also syncs with `initialCount` prop via `useEffect` so `router.refresh()` keeps it accurate. `InviteSection` has `id="invite-section"` on its root div and `id="invite-email-input"` on the email `<Input>`.
+
 **Database table: `invitations`** (run `supabase/add-invitations.sql`):
 ```sql
 id               uuid        PRIMARY KEY DEFAULT gen_random_uuid()
