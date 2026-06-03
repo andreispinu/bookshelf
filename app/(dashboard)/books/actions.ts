@@ -69,6 +69,7 @@ export async function addBook(formData: FormData) {
   if (error) return { error: error.message }
 
   revalidatePath('/books')
+  revalidatePath('/')
   redirect('/books')
 }
 
@@ -82,6 +83,7 @@ export async function addBookForce(formData: FormData) {
   if (error) return { error: error.message }
 
   revalidatePath('/books')
+  revalidatePath('/')
   redirect('/books')
 }
 

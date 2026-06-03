@@ -1,3 +1,5 @@
+export const revalidate = 300
+
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'

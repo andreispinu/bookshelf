@@ -371,6 +371,8 @@ Route: `/friends/[id]` — read-only view of an accepted friend's book collectio
 ### Landing page
 Route: `/` — public marketing page, no auth required. Replaces the old redirect to `/books`. Fully multilingual (EN/RO/RU).
 
+**Cache strategy (ISR):** `export const revalidate = 300` at the top of `app/page.tsx` — Next.js regenerates the page in the background every 5 minutes as a safety net. Additionally, `addBook()` and `addBookForce()` server actions call `revalidatePath('/')` after a successful insert, so the landing page is invalidated immediately whenever any user adds a book. The two approaches complement each other: on-demand revalidation for instant freshness, time-based revalidation as a fallback.
+
 **Sections (in order):**
 1. **Nav** — "BookShelf" logo left; center links: Books (#recent-books), Features, How it works, Install, Pricing; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
 2. **Hero** — headline, subheadline, two CTAs ("Start free trial" dark primary, "See how it works" ghost scrolls to `#how-it-works`), note "Free for 14 days. No credit card required."
