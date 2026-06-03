@@ -112,7 +112,19 @@
     "noNewInfo": "Новая информация для этой книги не найдена.",
     "fillWithAITitle": "Заполнить с AI — {title}",
     "applyFields": "{count, plural, one {Применить # поле} few {Применить # поля} many {Применить # полей} other {Применить # поля}}",
-    "coverImage": "Изображение обложки"
+    "coverImage": "Изображение обложки",
+    "shareMyShelf": "Поделиться полкой",
+    "shareYourShelf": "Поделитесь своей полкой",
+    "setupProfileFirst": "Сначала настройте публичный профиль",
+    "setupProfileFirstText": "Вам нужно имя пользователя для создания публичной ссылки на полку.",
+    "saveAndContinue": "Сохранить и продолжить",
+    "makePublicAndShare": "Сделать публичным и поделиться",
+    "copyLink": "Копировать ссылку",
+    "copied": "Скопировано!",
+    "shareOnFacebook": "Поделиться в Facebook",
+    "shareOnLinkedIn": "Поделиться в LinkedIn",
+    "profileIsPrivate": "Ваш профиль приватный. Сделайте его публичным, чтобы друзья могли видеть ваши книги.",
+    "shelfPreviewBooks": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}} на их полке"
   },
   "friends": {
     "title": "Друзья",

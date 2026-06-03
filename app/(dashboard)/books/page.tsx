@@ -5,6 +5,7 @@ import { getBooks } from '@/lib/db/books'
 import { getFriends } from '@/lib/db/friends'
 import BookList from './book-list'
 import AddBookButton from './photo-button'
+import ShareShelfButton from './share-shelf-button'
 
 export default async function BooksPage() {
   const supabase = await createClient()
@@ -13,9 +14,10 @@ export default async function BooksPage() {
 
   const t = await getTranslations('books')
 
-  const [{ data: books, error }, { data: friends }] = await Promise.all([
+  const [{ data: books, error }, { data: friends }, { data: profile }] = await Promise.all([
     getBooks(user.id),
     getFriends(user.id),
+    supabase.from('profiles').select('username, profile_visibility, name').eq('id', user.id).single(),
   ])
 
   return (
@@ -27,7 +29,15 @@ export default async function BooksPage() {
             {t('booksCount', { count: books?.length ?? 0 })}
           </p>
         </div>
-        <AddBookButton />
+        <div className="flex items-center gap-2">
+          <ShareShelfButton
+            username={profile?.username ?? null}
+            visibility={(profile?.profile_visibility as 'private' | 'public_minimal' | 'public_full') ?? 'private'}
+            name={profile?.name ?? ''}
+            bookCount={books?.length ?? 0}
+          />
+          <AddBookButton />
+        </div>
       </div>
 
       {error && (

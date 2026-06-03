@@ -112,7 +112,19 @@
     "noNewInfo": "No new information found for this book.",
     "fillWithAITitle": "Fill with AI — {title}",
     "applyFields": "{count, plural, one {Apply # field} other {Apply # fields}}",
-    "coverImage": "Cover image"
+    "coverImage": "Cover image",
+    "shareMyShelf": "Share my shelf",
+    "shareYourShelf": "Share your shelf",
+    "setupProfileFirst": "Set up your public profile first",
+    "setupProfileFirstText": "You need a username to create your public shelf link before sharing.",
+    "saveAndContinue": "Save & continue",
+    "makePublicAndShare": "Make public & share",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "shareOnFacebook": "Share on Facebook",
+    "shareOnLinkedIn": "Share on LinkedIn",
+    "profileIsPrivate": "Your profile is currently private. Make it public so friends can see your books.",
+    "shelfPreviewBooks": "{count, plural, one {# book} other {# books}} on their shelf"
   },
   "friends": {
     "title": "Friends",

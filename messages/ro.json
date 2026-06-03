@@ -112,7 +112,19 @@
     "noNewInfo": "Nu s-au găsit informații noi pentru această carte.",
     "fillWithAITitle": "Completează cu AI — {title}",
     "applyFields": "{count, plural, one {Aplică # câmp} other {Aplică # câmpuri}}",
-    "coverImage": "Imagine copertă"
+    "coverImage": "Imagine copertă",
+    "shareMyShelf": "Distribuie raftul meu",
+    "shareYourShelf": "Distribuie raftul tău",
+    "setupProfileFirst": "Configurează-ți mai întâi profilul public",
+    "setupProfileFirstText": "Ai nevoie de un nume de utilizator pentru a crea un link public al raftului tău.",
+    "saveAndContinue": "Salvează și continuă",
+    "makePublicAndShare": "Fă public și distribuie",
+    "copyLink": "Copiază link-ul",
+    "copied": "Copiat!",
+    "shareOnFacebook": "Distribuie pe Facebook",
+    "shareOnLinkedIn": "Distribuie pe LinkedIn",
+    "profileIsPrivate": "Profilul tău este privat. Fă-l public pentru ca prietenii să îți vadă cărțile.",
+    "shelfPreviewBooks": "{count, plural, one {# carte} other {# cărți}} pe raftul lor"
   },
   "friends": {
     "title": "Prieteni",

@@ -268,6 +268,26 @@ Before any book is saved (`addBook` server action), a case-insensitive check que
 - "Add anyway" calls `addBookForce()` which skips the check and inserts directly
 - "Cancel" dismisses the dialog and returns to the form
 
+### Share my shelf
+A "Share my shelf" button (ghost style, `Share2` icon) sits next to "Add a book" in the top-right of `/books`. Icon-only on mobile, icon + text on desktop.
+
+**Flow:**
+1. Click → check if `profile.username` is set
+2. **No username** → "Set up your public profile first" modal: username input with 500ms debounced availability check (same regex/API as profile page), "Save & continue" calls `updateUsername()`, then advances to the share modal
+3. **Username exists** → Share modal directly
+
+**Share modal:**
+- Preview card: `[Name]'s BookShelf` / `bookshelf.name/[username]` / book count
+- If `profile_visibility === 'private'`: amber warning + "Make public & share" button (calls `updateProfileVisibility('public_full')`, updates local state immediately)
+- Copy link button: copies `https://bookshelf.name/[username]`, shows "Copied!" for 2s
+- Facebook button (`#1877F2`): opens `https://www.facebook.com/sharer/sharer.php?u=<encoded-url>` in new tab
+- LinkedIn button (`#0A66C2`): opens `https://www.linkedin.com/sharing/share-offsite/?url=<encoded-url>` in new tab
+- Share buttons only shown when visibility is public (private → show make-public CTA instead)
+
+**Files:**
+- `app/(dashboard)/books/share-shelf-button.tsx` — self-contained client component with both modals
+- `app/(dashboard)/books/page.tsx` — fetches `profiles.username, profile_visibility, name`; renders `<ShareShelfButton>` next to `<AddBookButton>`
+
 ### Book list actions
 Each row in the book list shows: status badge, **View** button (navigates to detail page), and **⋯** button. The ⋯ dropdown contains:
 - **Lend** — disabled/grayed when `status === 'lent_out'`
