@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
@@ -204,7 +204,7 @@ type LoanCardProps = {
   loan: LoanWithDetails
   role: 'lender' | 'borrower'
   onWorkflowAction: (loanId: string, action: string) => Promise<void>
-  onExtensionDecision: (extensionId: string, action: 'approve' | 'decline') => Promise<void>
+  onExtensionDecision: (extensionId: string, loanId: string, action: 'approve' | 'decline') => Promise<void>
   onRecallAcknowledge: (recallId: string) => Promise<void>
   onRequestExtension: (loanId: string) => void
   onRequestRecall: (loanId: string) => void
@@ -264,7 +264,7 @@ function LoanCard({ loan, role, onWorkflowAction, onExtensionDecision, onRecallA
             <div className="flex items-center gap-2">
               <Button size="sm" disabled={loading} onClick={() => onWorkflowAction(loan.id, 'confirm_handoff')}
                 className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs">
-                {t('confirmHandoff')}
+                {loading ? tc('saving') : t('confirmHandoff')}
               </Button>
             </div>
           )}
@@ -290,14 +290,14 @@ function LoanCard({ loan, role, onWorkflowAction, onExtensionDecision, onRecallA
               )}
               <div className="flex gap-2">
                 <Button size="sm" disabled={loading}
-                  onClick={() => onExtensionDecision(loan.pendingExtension!.id, 'approve')}
+                  onClick={() => onExtensionDecision(loan.pendingExtension!.id, loan.id, 'approve')}
                   className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs">
-                  {t('approveExtension')}
+                  {loading ? tc('saving') : t('approveExtension')}
                 </Button>
                 <Button size="sm" variant="outline" disabled={loading}
-                  onClick={() => onExtensionDecision(loan.pendingExtension!.id, 'decline')}
+                  onClick={() => onExtensionDecision(loan.pendingExtension!.id, loan.id, 'decline')}
                   className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs">
-                  {t('declineExtension')}
+                  {loading ? tc('saving') : t('declineExtension')}
                 </Button>
               </div>
             </div>
@@ -316,12 +316,12 @@ function LoanCard({ loan, role, onWorkflowAction, onExtensionDecision, onRecallA
                 <Button size="sm" disabled={loading}
                   onClick={() => onWorkflowAction(loan.id, 'confirm_return')}
                   className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs">
-                  {t('confirmReturn')}
+                  {loading ? tc('saving') : t('confirmReturn')}
                 </Button>
                 <Button size="sm" variant="outline" disabled={loading}
                   onClick={() => onWorkflowAction(loan.id, 'deny_return')}
                   className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs">
-                  {t('denyReturn')}
+                  {loading ? tc('saving') : t('denyReturn')}
                 </Button>
               </div>
             </div>
@@ -336,7 +336,7 @@ function LoanCard({ loan, role, onWorkflowAction, onExtensionDecision, onRecallA
             <Button size="sm" disabled={loading}
               onClick={() => onWorkflowAction(loan.id, 'confirm_receipt')}
               className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs">
-              {t('confirmReceipt')}
+              {loading ? tc('saving') : t('confirmReceipt')}
             </Button>
           )}
 
@@ -345,7 +345,7 @@ function LoanCard({ loan, role, onWorkflowAction, onExtensionDecision, onRecallA
               <Button size="sm" disabled={loading}
                 onClick={() => onWorkflowAction(loan.id, 'initiate_return')}
                 className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs">
-                {t('initiateReturn')}
+                {loading ? tc('saving') : t('initiateReturn')}
               </Button>
               <button onClick={() => onRequestExtension(loan.id)}
                 className="text-xs text-stone-500 hover:text-stone-800 underline underline-offset-2 transition-colors">
@@ -370,12 +370,12 @@ function LoanCard({ loan, role, onWorkflowAction, onExtensionDecision, onRecallA
                 <Button size="sm" disabled={loading}
                   onClick={() => onRecallAcknowledge(loan.pendingRecall!.id)}
                   className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs">
-                  {t('acknowledgeRecall')}
+                  {loading ? tc('saving') : t('acknowledgeRecall')}
                 </Button>
                 <Button size="sm" variant="outline" disabled={loading}
                   onClick={() => onWorkflowAction(loan.id, 'initiate_return')}
                   className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs">
-                  {t('initiateReturn')}
+                  {loading ? tc('saving') : t('initiateReturn')}
                 </Button>
               </div>
             </div>
@@ -412,6 +412,16 @@ export default function LoanList({
   const [extensionModal, setExtensionModal] = useState<string | null>(null)
   const [recallModal, setRecallModal] = useState<string | null>(null)
 
+  // Sync state when server data refreshes (after router.refresh())
+  useEffect(() => { setLentOut(initialLentOut) }, [initialLentOut])
+  useEffect(() => { setBorrowed(initialBorrowed) }, [initialBorrowed])
+
+  function updateLoanInState(loanId: string, update: Partial<LoanWithDetails>) {
+    const apply = (l: LoanWithDetails) => l.id === loanId ? { ...l, ...update } : l
+    setLentOut(prev => prev.map(apply))
+    setBorrowed(prev => prev.map(apply))
+  }
+
   async function callWorkflow(loanId: string, action: string) {
     setLoadingLoanId(loanId)
     try {
@@ -425,6 +435,25 @@ export default function LoanList({
         toast.error(d.error ?? t('actionFailed'))
         return
       }
+      // Optimistic update — mutate local state immediately
+      if (action === 'confirm_handoff') {
+        updateLoanInState(loanId, { workflow_status: 'pending_receipt' })
+        toast.success(t('handoffConfirmedToast'))
+      } else if (action === 'confirm_receipt') {
+        updateLoanInState(loanId, { workflow_status: 'active' })
+        toast.success(t('receiptConfirmedToast'))
+      } else if (action === 'initiate_return') {
+        updateLoanInState(loanId, { workflow_status: 'pending_return' })
+        toast.success(t('returnInitiatedToast'))
+      } else if (action === 'confirm_return') {
+        setLentOut(prev => prev.filter(l => l.id !== loanId))
+        toast.success(t('returnConfirmedToast'))
+      } else if (action === 'deny_return') {
+        const loan = lentOut.find(l => l.id === loanId)
+        const reverted: WorkflowStatus = loan && isOverdueDate(loan.due_date) ? 'overdue' : 'active'
+        updateLoanInState(loanId, { workflow_status: reverted })
+        toast.success(t('returnDeniedToast'))
+      }
       router.refresh()
     } catch {
       toast.error(t('actionFailed'))
@@ -433,7 +462,7 @@ export default function LoanList({
     }
   }
 
-  async function callExtensionDecision(extensionId: string, action: 'approve' | 'decline') {
+  async function callExtensionDecision(extensionId: string, loanId: string, action: 'approve' | 'decline') {
     setLoadingLoanId(extensionId)
     try {
       const res = await fetch('/api/loan-extensions', {
@@ -446,6 +475,12 @@ export default function LoanList({
         toast.error(d.error ?? t('actionFailed'))
         return
       }
+      // Optimistic: clear pending extension, revert to active/overdue
+      const loan = lentOut.find(l => l.id === loanId)
+      const newStatus: WorkflowStatus = action === 'approve'
+        ? 'active'
+        : (loan && isOverdueDate(loan.due_date) ? 'overdue' : 'active')
+      updateLoanInState(loanId, { workflow_status: newStatus, pendingExtension: undefined })
       toast.success(action === 'approve' ? t('extensionApprovedToast') : t('extensionDeclinedToast'))
       router.refresh()
     } catch {
@@ -497,14 +532,22 @@ export default function LoanList({
         <ExtensionModal
           loanId={extensionModal}
           onClose={() => setExtensionModal(null)}
-          onSuccess={() => { setExtensionModal(null); router.refresh() }}
+          onSuccess={() => {
+            updateLoanInState(extensionModal, { workflow_status: 'extension_requested' })
+            setExtensionModal(null)
+            router.refresh()
+          }}
         />
       )}
       {recallModal && (
         <RecallModal
           loanId={recallModal}
           onClose={() => setRecallModal(null)}
-          onSuccess={() => { setRecallModal(null); router.refresh() }}
+          onSuccess={() => {
+            updateLoanInState(recallModal, { workflow_status: 'recall_requested' })
+            setRecallModal(null)
+            router.refresh()
+          }}
         />
       )}
 

@@ -842,11 +842,44 @@ The loan lifecycle follows a strict 8-status workflow managed via the `workflow_
 - `app/api/loan-extensions/route.ts` — extension CRUD
 - `app/api/loan-recalls/route.ts` — recall CRUD
 - `app/api/cron/overdue-loans/route.ts` — daily overdue check
-- `app/(dashboard)/loans/loan-list.tsx` — fully workflow-aware loan list with modals
+- `app/(dashboard)/loans/loan-list.tsx` — fully workflow-aware loan list with modals (all buttons use optimistic UI updates with success toasts)
 - `app/(dashboard)/loans/page.tsx` — fetches extensions + recalls, merges with loans
 - `app/(dashboard)/friends/[id]/borrow-button.tsx` — duration selector added
 - `app/(dashboard)/messages/borrow-card.tsx` — `requested_days` display + `approved_days` input
 - `lib/email-templates.ts` — 10 new templates
+
+### System messages in chat
+
+Every workflow action automatically posts a system event message to the messages thread between the lender and borrower.
+
+**Format:** Content is stored in the `messages` table with a `SYSTEM:` prefix (e.g. `SYSTEM:🤝 Alice confirmed handing over "Dune". Please confirm you received it.`).
+
+**Detection:** `content.startsWith('SYSTEM:')` — no separate DB column needed.
+
+**Chat UI rendering** (`messages-client.tsx`): System messages are rendered as a centered pill — `text-xs text-stone-400 bg-stone-100 px-3 py-1 rounded-full` — with no sender avatar. Regular and borrow-card messages are unaffected.
+
+**Conversation list preview** (`formatPreview`): SYSTEM: prefix is stripped and the text is shown as-is in italic muted style.
+
+**No notification triggered:** The DB trigger `notify_new_message()` skips messages starting with `SYSTEM:`. Run `supabase/update-message-notification-trigger.sql` to apply this rule.
+
+**Helper:** `lib/send-system-message.ts` → `sendSystemMessage(senderId, receiverId, text)` — inserts via `supabaseAdmin`, safe to call from any server context.
+
+**12 workflow events that trigger system messages:**
+
+| # | Event | File | Sender → Receiver | Message |
+|---|-------|------|-------------------|---------|
+| 1 | Borrow request sent | borrow-requests POST | — | (existing borrow_request card, no change) |
+| 2 | Request approved | borrow-requests PATCH | lender → borrower | 📚 [Lender] approved your request to borrow "[Book]" for N days |
+| 3 | Request declined | borrow-requests PATCH | lender → borrower | ❌ [Lender] declined your request to borrow "[Book]" |
+| 4 | Handoff confirmed | loans/workflow confirm_handoff | lender → borrower | 🤝 [Lender] confirmed handing over "[Book]". Please confirm you received it. |
+| 5 | Receipt confirmed | loans/workflow confirm_receipt | borrower → lender | ✅ [Borrower] confirmed receiving "[Book]". Loan is active — due back by [date]. |
+| 6 | Loan overdue | cron/overdue-loans | lender → borrower | ⏰ "[Book]" was due on [date] and is now overdue. Please return it or request an extension. |
+| 7 | Extension requested | loan-extensions POST | borrower → lender | 🔄 [Borrower] is requesting N more days for "[Book]"[. Note: "..."] |
+| 8 | Extension approved | loan-extensions PATCH | lender → borrower | ✅ [Lender] approved the extension. New due date: [date]. |
+| 9 | Extension declined | loan-extensions PATCH | lender → borrower | ❌ [Lender] declined the extension request. Please return "[Book]" by [date]. |
+| 10 | Recall requested | loan-recalls POST | lender → borrower | 📬 [Lender] needs "[Book]" back.[If reason: Reason: "..."] |
+| 11 | Return initiated | loans/workflow initiate_return | borrower → lender | 📦 [Borrower] says they've returned "[Book]". Please confirm you received it. |
+| 12 | Return confirmed | loans/workflow confirm_return | lender → borrower | 🎉 [Lender] confirmed receiving "[Book]" back. Loan complete! |
 
 ### Email notifications
 Transactional emails are sent via **Resend** (domain: bookshelf.name, from: noreply@bookshelf.name). All sends are fire-and-forget — never awaited in the request handler, always `.catch(console.error)` so failures never break the main flow.

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
 import { borrowRequestEmail, borrowRequestApprovedEmail, lenderHandoffReminderEmail } from '@/lib/email-templates'
+import { sendSystemMessage } from '@/lib/send-system-message'
 
 export async function GET() {
   const supabase = await createClient()
@@ -137,6 +138,11 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Request not found' }, { status: 404 })
   }
 
+  const [ownerProfile] = await Promise.all([
+    supabaseAdmin.from('profiles').select('name').eq('id', user.id).single(),
+  ])
+  const ownerName = ownerProfile.data?.name ?? 'The owner'
+
   const newStatus = action === 'approve' ? 'approved' : 'rejected'
 
   const { error: updateError } = await supabaseAdmin
@@ -180,6 +186,22 @@ export async function PATCH(request: NextRequest) {
     receiver_id: req.requester_id,
     content: responseCardContent,
   })
+
+  // System message for approved/declined
+  if (action === 'approve') {
+    const daysNote = approvedDays ? ` for ${approvedDays} days` : ''
+    await sendSystemMessage(
+      user.id,
+      req.requester_id,
+      `📚 ${ownerName} approved your request to borrow "${bookTitle}"${daysNote}`,
+    )
+  } else {
+    await sendSystemMessage(
+      user.id,
+      req.requester_id,
+      `❌ ${ownerName} declined your request to borrow "${bookTitle}"`,
+    )
+  }
 
   // Notify the requester
   await supabaseAdmin.from('notifications').insert({

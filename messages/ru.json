@@ -284,7 +284,12 @@
     "extensionApprovedToast": "Продление одобрено",
     "extensionDeclinedToast": "Продление отклонено",
     "actionFailed": "Действие не выполнено. Попробуйте снова.",
-    "selectDaysFirst": "Пожалуйста, выберите количество дней"
+    "selectDaysFirst": "Пожалуйста, выберите количество дней",
+    "handoffConfirmedToast": "Передача подтверждена",
+    "receiptConfirmedToast": "Получение подтверждено — займ активен",
+    "returnInitiatedToast": "Книга отмечена как возвращённая",
+    "returnConfirmedToast": "Возврат подтверждён — займ завершён",
+    "returnDeniedToast": "Возврат оспорен"
   },
   "profile": {
     "title": "Профиль",

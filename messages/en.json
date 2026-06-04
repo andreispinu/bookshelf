@@ -284,7 +284,12 @@
     "extensionApprovedToast": "Extension approved",
     "extensionDeclinedToast": "Extension declined",
     "actionFailed": "Action failed. Please try again.",
-    "selectDaysFirst": "Please select a number of days"
+    "selectDaysFirst": "Please select a number of days",
+    "handoffConfirmedToast": "Handoff confirmed",
+    "receiptConfirmedToast": "Receipt confirmed — loan is now active",
+    "returnInitiatedToast": "Book marked as returned",
+    "returnConfirmedToast": "Return confirmed — loan completed",
+    "returnDeniedToast": "Return disputed"
   },
   "profile": {
     "title": "Profile",

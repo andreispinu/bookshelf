@@ -284,7 +284,12 @@
     "extensionApprovedToast": "Extensie aprobată",
     "extensionDeclinedToast": "Extensie refuzată",
     "actionFailed": "Acțiunea a eșuat. Încearcă din nou.",
-    "selectDaysFirst": "Te rugăm să selectezi numărul de zile"
+    "selectDaysFirst": "Te rugăm să selectezi numărul de zile",
+    "handoffConfirmedToast": "Predare confirmată",
+    "receiptConfirmedToast": "Primire confirmată — împrumutul este acum activ",
+    "returnInitiatedToast": "Carte marcată ca returnată",
+    "returnConfirmedToast": "Returnare confirmată — împrumut finalizat",
+    "returnDeniedToast": "Returnare contestată"
   },
   "profile": {
     "title": "Profil",

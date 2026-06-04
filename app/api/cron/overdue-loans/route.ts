@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
 import { loanOverdueEmail } from '@/lib/email-templates'
+import { sendSystemMessage } from '@/lib/send-system-message'
 
 export const maxDuration = 60
 
@@ -42,23 +43,34 @@ export async function GET(request: Request) {
           supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
         ])
 
+        const bookTitle = bookData.data?.title ?? 'the book'
         const borrowerEmail = borrowerAuth.data?.user?.email
-        if (borrowerEmail && loan.due_date) {
+        if (loan.due_date) {
           const dueDateStr = new Date(loan.due_date as string).toLocaleDateString('en-GB', {
             day: 'numeric', month: 'long', year: 'numeric',
           })
-          const { subject, html } = loanOverdueEmail(
-            borrowerProf.data?.first_name ?? 'there',
-            bookData.data?.title ?? 'the book',
-            lenderProf.data?.name ?? 'your friend',
-            dueDateStr,
+
+          await sendSystemMessage(
+            loan.lender_id,
+            loan.borrower_id,
+            `⏰ "${bookTitle}" was due on ${dueDateStr} and is now overdue. Please return it or request an extension.`,
           )
-          await sendEmail({ to: borrowerEmail, subject, html })
+
+          if (borrowerEmail) {
+            const { subject, html } = loanOverdueEmail(
+              borrowerProf.data?.first_name ?? 'there',
+              bookTitle,
+              lenderProf.data?.name ?? 'your friend',
+              dueDateStr,
+            )
+            await sendEmail({ to: borrowerEmail, subject, html })
+            emailsSent++
+          }
+
           await supabaseAdmin
             .from('loans')
             .update({ overdue_email_sent_at: new Date().toISOString() })
             .eq('id', loan.id)
-          emailsSent++
         }
       }
     } catch (e) {

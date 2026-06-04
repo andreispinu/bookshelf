@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
 import { extensionRequestEmail, extensionApprovedEmail, extensionDeclinedEmail } from '@/lib/email-templates'
+import { sendSystemMessage } from '@/lib/send-system-message'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -47,19 +48,29 @@ export async function POST(request: NextRequest) {
     .update({ workflow_status: 'extension_requested' })
     .eq('id', loanId)
 
+  const [borrowerProf, lenderProf, bookData] = await Promise.all([
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', user.id).single(),
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', loan.lender_id).single(),
+    supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
+  ])
+  const borrowerName = borrowerProf.data?.name ?? 'Borrower'
+  const bookTitle = bookData.data?.title ?? 'the book'
+
+  const noteText = requesterNote?.trim() ? `. Note: "${requesterNote.trim()}"` : ''
+  await sendSystemMessage(
+    user.id,
+    loan.lender_id,
+    `🔄 ${borrowerName} is requesting ${requestedDays} more days for "${bookTitle}"${noteText}`,
+  )
+
   ;(async () => {
-    const [borrowerProf, lenderProf, lenderAuth, bookData] = await Promise.all([
-      supabaseAdmin.from('profiles').select('name').eq('id', user.id).single(),
-      supabaseAdmin.from('profiles').select('first_name').eq('id', loan.lender_id).single(),
-      supabaseAdmin.auth.admin.getUserById(loan.lender_id),
-      supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-    ])
+    const lenderAuth = await supabaseAdmin.auth.admin.getUserById(loan.lender_id)
     const lenderEmail = lenderAuth.data?.user?.email
     if (!lenderEmail) return
     const { subject, html } = extensionRequestEmail(
       lenderProf.data?.first_name ?? 'there',
-      borrowerProf.data?.name ?? 'Your borrower',
-      bookData.data?.title ?? 'the book',
+      borrowerName,
+      bookTitle,
       requestedDays,
       requesterNote?.trim() || null,
     )
@@ -107,6 +118,14 @@ export async function PATCH(request: NextRequest) {
     .update({ status: newStatus, owner_note: ownerNote?.trim() || null, responded_at: now })
     .eq('id', extensionId)
 
+  const [lenderProf, borrowerProf, bookData] = await Promise.all([
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', loan.lender_id).single(),
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', loan.borrower_id).single(),
+    supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
+  ])
+  const lenderName = lenderProf.data?.name ?? 'Lender'
+  const bookTitle = bookData.data?.title ?? 'the book'
+
   if (action === 'approve') {
     const currentDue = loan.due_date ? new Date(loan.due_date as string) : new Date()
     const newDue = new Date(currentDue.getTime() + (ext.requested_days as number) * 24 * 60 * 60 * 1000)
@@ -117,20 +136,21 @@ export async function PATCH(request: NextRequest) {
       .update({ workflow_status: 'active', due_date: newDue.toISOString(), approved_days: newApprovedDays })
       .eq('id', ext.loan_id)
 
+    const dueDateStr = newDue.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    await sendSystemMessage(
+      loan.lender_id,
+      loan.borrower_id,
+      `✅ ${lenderName} approved the extension. New due date: ${dueDateStr}.`,
+    )
+
     ;(async () => {
-      const [lenderProf, borrowerProf, borrowerAuth, bookData] = await Promise.all([
-        supabaseAdmin.from('profiles').select('name').eq('id', loan.lender_id).single(),
-        supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
-        supabaseAdmin.auth.admin.getUserById(loan.borrower_id),
-        supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-      ])
+      const borrowerAuth = await supabaseAdmin.auth.admin.getUserById(loan.borrower_id)
       const borrowerEmail = borrowerAuth.data?.user?.email
       if (!borrowerEmail) return
-      const dueDateStr = newDue.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
       const { subject, html } = extensionApprovedEmail(
         borrowerProf.data?.first_name ?? 'there',
-        lenderProf.data?.name ?? 'Your lender',
-        bookData.data?.title ?? 'the book',
+        lenderName,
+        bookTitle,
         dueDateStr,
       )
       await sendEmail({ to: borrowerEmail, subject, html })
@@ -142,19 +162,23 @@ export async function PATCH(request: NextRequest) {
       .update({ workflow_status: isOverdue ? 'overdue' : 'active' })
       .eq('id', ext.loan_id)
 
+    const originalDueDateStr = loan.due_date
+      ? new Date(loan.due_date as string).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      : 'the original date'
+    await sendSystemMessage(
+      loan.lender_id,
+      loan.borrower_id,
+      `❌ ${lenderName} declined the extension request. Please return "${bookTitle}" by ${originalDueDateStr}.`,
+    )
+
     ;(async () => {
-      const [lenderProf, borrowerProf, borrowerAuth, bookData] = await Promise.all([
-        supabaseAdmin.from('profiles').select('name').eq('id', loan.lender_id).single(),
-        supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
-        supabaseAdmin.auth.admin.getUserById(loan.borrower_id),
-        supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-      ])
+      const borrowerAuth = await supabaseAdmin.auth.admin.getUserById(loan.borrower_id)
       const borrowerEmail = borrowerAuth.data?.user?.email
       if (!borrowerEmail) return
       const { subject, html } = extensionDeclinedEmail(
         borrowerProf.data?.first_name ?? 'there',
-        lenderProf.data?.name ?? 'Your lender',
-        bookData.data?.title ?? 'the book',
+        lenderName,
+        bookTitle,
       )
       await sendEmail({ to: borrowerEmail, subject, html })
     })().catch(console.error)

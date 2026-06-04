@@ -24,6 +24,7 @@ function initials(name: string) {
 }
 
 function formatPreview(content: string): string {
+  if (content.startsWith('SYSTEM:')) return content.slice(7).trim()
   const payload = parseBorrowPayload(content)
   if (!payload) return content
   if (payload.type === 'borrow_request') return `Borrow request: ${payload.book_title}`
@@ -366,6 +367,18 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
               ) : (
                 messages.map(msg => {
                   const isMine = msg.sender_id === userId
+
+                  // System event messages — centered pill, no avatar
+                  if (msg.content.startsWith('SYSTEM:')) {
+                    return (
+                      <div key={msg.id} className="flex justify-center my-1">
+                        <span className="text-xs text-stone-400 bg-stone-100 px-3 py-1 rounded-full max-w-[85%] text-center">
+                          {msg.content.slice(7).trim()}
+                        </span>
+                      </div>
+                    )
+                  }
+
                   const borrowPayload = parseBorrowPayload(msg.content)
 
                   if (borrowPayload) {

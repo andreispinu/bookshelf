@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
 import { recallRequestEmail } from '@/lib/email-templates'
+import { sendSystemMessage } from '@/lib/send-system-message'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -42,19 +43,29 @@ export async function POST(request: NextRequest) {
     .update({ workflow_status: 'recall_requested' })
     .eq('id', loanId)
 
+  const [lenderProf, borrowerProf, bookData] = await Promise.all([
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', loan.lender_id).single(),
+    supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
+    supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
+  ])
+  const lenderName = lenderProf.data?.name ?? 'Lender'
+  const bookTitle = bookData.data?.title ?? 'the book'
+
+  const reasonText = reason?.trim() ? ` Reason: "${reason.trim()}"` : ''
+  await sendSystemMessage(
+    loan.lender_id,
+    loan.borrower_id,
+    `📬 ${lenderName} needs "${bookTitle}" back.${reasonText}`,
+  )
+
   ;(async () => {
-    const [lenderProf, borrowerProf, borrowerAuth, bookData] = await Promise.all([
-      supabaseAdmin.from('profiles').select('name').eq('id', loan.lender_id).single(),
-      supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
-      supabaseAdmin.auth.admin.getUserById(loan.borrower_id),
-      supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-    ])
+    const borrowerAuth = await supabaseAdmin.auth.admin.getUserById(loan.borrower_id)
     const borrowerEmail = borrowerAuth.data?.user?.email
     if (!borrowerEmail) return
     const { subject, html } = recallRequestEmail(
       borrowerProf.data?.first_name ?? 'there',
-      lenderProf.data?.name ?? 'Your lender',
-      bookData.data?.title ?? 'the book',
+      lenderName,
+      bookTitle,
       reason?.trim() || null,
     )
     await sendEmail({ to: borrowerEmail, subject, html })

@@ -8,6 +8,7 @@ import {
   returnInitiatedEmail,
   returnConfirmedEmail,
 } from '@/lib/email-templates'
+import { sendSystemMessage } from '@/lib/send-system-message'
 
 export async function PATCH(request: NextRequest) {
   const supabase = await createClient()
@@ -28,6 +29,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  // Fetch names and book title upfront — used for system messages and emails
+  const [lenderProf, borrowerProf, bookData] = await Promise.all([
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', loan.lender_id).single(),
+    supabaseAdmin.from('profiles').select('name, first_name').eq('id', loan.borrower_id).single(),
+    supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
+  ])
+  const lenderName = lenderProf.data?.name ?? 'Lender'
+  const borrowerName = borrowerProf.data?.name ?? 'Borrower'
+  const bookTitle = bookData.data?.title ?? 'the book'
+
   const now = new Date().toISOString()
 
   if (action === 'confirm_handoff') {
@@ -39,19 +50,20 @@ export async function PATCH(request: NextRequest) {
       .update({ workflow_status: 'pending_receipt', handoff_confirmed_at: now })
       .eq('id', loanId)
 
+    await sendSystemMessage(
+      loan.lender_id,
+      loan.borrower_id,
+      `🤝 ${lenderName} confirmed handing over "${bookTitle}". Please confirm you received it.`,
+    )
+
     ;(async () => {
-      const [lenderProf, borrowerProf, borrowerAuth, bookData] = await Promise.all([
-        supabaseAdmin.from('profiles').select('name').eq('id', loan.lender_id).single(),
-        supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
-        supabaseAdmin.auth.admin.getUserById(loan.borrower_id),
-        supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-      ])
+      const borrowerAuth = await supabaseAdmin.auth.admin.getUserById(loan.borrower_id)
       const borrowerEmail = borrowerAuth.data?.user?.email
       if (!borrowerEmail) return
       const { subject, html } = borrowerReceiptConfirmEmail(
         borrowerProf.data?.first_name ?? 'there',
-        lenderProf.data?.name ?? 'Your friend',
-        bookData.data?.title ?? 'the book',
+        lenderName,
+        bookTitle,
       )
       await sendEmail({ to: borrowerEmail, subject, html })
     })().catch(console.error)
@@ -69,19 +81,23 @@ export async function PATCH(request: NextRequest) {
       .update({ workflow_status: 'active', received_confirmed_at: now, due_date: dueDate })
       .eq('id', loanId)
 
+    const duePart = dueDate
+      ? ` — due back by ${new Date(dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`
+      : ''
+    await sendSystemMessage(
+      loan.borrower_id,
+      loan.lender_id,
+      `✅ ${borrowerName} confirmed receiving "${bookTitle}". Loan is active${duePart}.`,
+    )
+
     ;(async () => {
-      const [borrowerProf, lenderProf, borrowerAuth, bookData] = await Promise.all([
-        supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
-        supabaseAdmin.from('profiles').select('name').eq('id', loan.lender_id).single(),
-        supabaseAdmin.auth.admin.getUserById(loan.borrower_id),
-        supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-      ])
+      const borrowerAuth = await supabaseAdmin.auth.admin.getUserById(loan.borrower_id)
       const borrowerEmail = borrowerAuth.data?.user?.email
       if (!borrowerEmail) return
       const { subject, html } = loanStartedEmail(
         borrowerProf.data?.first_name ?? 'there',
-        lenderProf.data?.name ?? 'Your friend',
-        bookData.data?.title ?? 'the book',
+        lenderName,
+        bookTitle,
         dueDate,
       )
       await sendEmail({ to: borrowerEmail, subject, html })
@@ -98,19 +114,20 @@ export async function PATCH(request: NextRequest) {
       .update({ workflow_status: 'pending_return', return_initiated_at: now })
       .eq('id', loanId)
 
+    await sendSystemMessage(
+      loan.borrower_id,
+      loan.lender_id,
+      `📦 ${borrowerName} says they've returned "${bookTitle}". Please confirm you received it.`,
+    )
+
     ;(async () => {
-      const [borrowerProf, lenderProf, lenderAuth, bookData] = await Promise.all([
-        supabaseAdmin.from('profiles').select('name').eq('id', loan.borrower_id).single(),
-        supabaseAdmin.from('profiles').select('first_name').eq('id', loan.lender_id).single(),
-        supabaseAdmin.auth.admin.getUserById(loan.lender_id),
-        supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-      ])
+      const lenderAuth = await supabaseAdmin.auth.admin.getUserById(loan.lender_id)
       const lenderEmail = lenderAuth.data?.user?.email
       if (!lenderEmail) return
       const { subject, html } = returnInitiatedEmail(
         lenderProf.data?.first_name ?? 'there',
-        borrowerProf.data?.name ?? 'Your friend',
-        bookData.data?.title ?? 'the book',
+        borrowerName,
+        bookTitle,
       )
       await sendEmail({ to: lenderEmail, subject, html })
     })().catch(console.error)
@@ -130,19 +147,20 @@ export async function PATCH(request: NextRequest) {
       .eq('id', loan.book_id)
       .eq('user_id', loan.lender_id)
 
+    await sendSystemMessage(
+      loan.lender_id,
+      loan.borrower_id,
+      `🎉 ${lenderName} confirmed receiving "${bookTitle}" back. Loan complete!`,
+    )
+
     ;(async () => {
-      const [lenderProf, borrowerProf, borrowerAuth, bookData] = await Promise.all([
-        supabaseAdmin.from('profiles').select('name').eq('id', loan.lender_id).single(),
-        supabaseAdmin.from('profiles').select('first_name').eq('id', loan.borrower_id).single(),
-        supabaseAdmin.auth.admin.getUserById(loan.borrower_id),
-        supabaseAdmin.from('books').select('title').eq('id', loan.book_id).single(),
-      ])
+      const borrowerAuth = await supabaseAdmin.auth.admin.getUserById(loan.borrower_id)
       const borrowerEmail = borrowerAuth.data?.user?.email
       if (!borrowerEmail) return
       const { subject, html } = returnConfirmedEmail(
         borrowerProf.data?.first_name ?? 'there',
-        lenderProf.data?.name ?? 'Your friend',
-        bookData.data?.title ?? 'the book',
+        lenderName,
+        bookTitle,
       )
       await sendEmail({ to: borrowerEmail, subject, html })
     })().catch(console.error)
