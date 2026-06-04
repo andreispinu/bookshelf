@@ -1201,8 +1201,21 @@ RLS: inviter can read/insert/update their own invitations.
 **Signup with invite token:**
 - Signup action no longer calls `redirect()` — returns `{ error: null }` on success
 - Signup page reads `?invite=` from `window.location.search` in the submit handler
-- After successful signup: calls `/api/invitations/accept`, then `router.push('/friends')`
+- After successful signup: calls `/api/invitations/accept` (wrapped in try/catch with error logging), then `router.push('/friends')`
 - Without invite: `router.push('/books')`
+
+**Invitation acceptance flow (`POST /api/invitations/accept`):**
+- Requires auth (`getUser()`). If session isn't ready, returns 401 — logged as `[invitations/accept] no authenticated user`
+- Finds pending invitation by token, verifies `status === 'pending'`
+- Updates `status = 'accepted'`, `accepted_user_id = user.id`, `updated_at = now()`
+- DB errors are checked and returned as 500 (not silently swallowed)
+- Auto-creates a pending friend request from inviter → new user (if no existing friendship)
+- `accepted_user_id` column already exists in the `invitations` table (in `add-invitations.sql`)
+
+**Sent invitations display** (`invite-section.tsx`):
+- Pending: shows email, date sent, amber "Invited" badge, Resend button
+- Accepted: shows accepted user's avatar + name, date joined, green "Joined BookShelf" badge (no Resend button)
+- The accepted user's profile is fetched via the `accepted_user:accepted_user_id(id, name, avatar_url)` FK join in the page query
 
 **Files:**
 - `supabase/add-invitations.sql` — table + RLS

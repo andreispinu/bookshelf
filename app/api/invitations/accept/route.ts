@@ -5,20 +5,33 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) {
+    console.error('[invitations/accept] no authenticated user')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const { token } = await req.json()
   if (!token) return NextResponse.json({ error: 'Token required' }, { status: 400 })
 
+  console.log('[invitations/accept] accepting token for user', user.id)
+
   // Find pending invitation by token
-  const { data: invitation } = await supabaseAdmin
+  const { data: invitation, error: findError } = await supabaseAdmin
     .from('invitations')
     .select('id, inviter_id, status')
     .eq('token', token)
     .eq('status', 'pending')
     .maybeSingle()
 
-  if (!invitation) return NextResponse.json({ error: 'Invalid or already accepted token' }, { status: 404 })
+  if (findError) {
+    console.error('[invitations/accept] find error', findError)
+    return NextResponse.json({ error: 'Database error' }, { status: 500 })
+  }
+
+  if (!invitation) {
+    console.log('[invitations/accept] token not found or already accepted')
+    return NextResponse.json({ error: 'Invalid or already accepted token' }, { status: 404 })
+  }
 
   const inv = invitation as { id: string; inviter_id: string; status: string }
 
@@ -27,10 +40,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Mark as accepted
-  await supabaseAdmin
+  const { error: updateError } = await supabaseAdmin
     .from('invitations')
     .update({ status: 'accepted', accepted_user_id: user.id, updated_at: new Date().toISOString() })
     .eq('id', inv.id)
+
+  if (updateError) {
+    console.error('[invitations/accept] update error', updateError)
+    return NextResponse.json({ error: 'Failed to accept invitation' }, { status: 500 })
+  }
+
+  console.log('[invitations/accept] invitation accepted', inv.id)
 
   // Send friend request from inviter to new user (if no existing friendship)
   const { data: existing } = await supabaseAdmin

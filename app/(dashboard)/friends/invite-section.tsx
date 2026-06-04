@@ -159,36 +159,49 @@ export default function InviteSection({ initialInvitations }: { initialInvitatio
           <ul className="divide-y divide-stone-100">
             {initialInvitations.map(inv => (
               <li key={inv.id} className="flex items-center gap-3 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-stone-800 truncate">{inv.email}</p>
-                  {inv.accepted_user && (
-                    <p className="text-xs text-stone-500">{inv.accepted_user.name} joined</p>
-                  )}
-                  <p className="text-xs text-stone-400 mt-0.5">
-                    {new Date(inv.created_at).toLocaleDateString('en-US', {
-                      month: 'short', day: 'numeric', year: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <Badge
-                  className={
-                    inv.status === 'accepted'
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                      : 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100'
-                  }
-                >
-                  {inv.status === 'accepted' ? t('accepted') : t('invited')}
-                </Badge>
-                {inv.status === 'pending' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={isInCooldown(inv.updated_at) || resentIds.has(inv.id)}
-                    onClick={() => handleResend(inv.id)}
-                    className="shrink-0 border-stone-200 text-stone-700 hover:bg-stone-50 disabled:opacity-40"
-                  >
-                    {resentIds.has(inv.id) ? t('resent') : t('resend')}
-                  </Button>
+                {inv.status === 'accepted' && inv.accepted_user ? (
+                  <>
+                    <Avatar className="h-8 w-8 shrink-0">
+                      {inv.accepted_user.avatar_url && <AvatarImage src={inv.accepted_user.avatar_url} />}
+                      <AvatarFallback className="bg-stone-200 text-stone-700 text-xs">
+                        {nameInitials(inv.accepted_user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-stone-800 truncate">{inv.accepted_user.name}</p>
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        {new Date(inv.updated_at).toLocaleDateString('en-US', {
+                          month: 'short', day: 'numeric', year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100 shrink-0">
+                      {t('joinedBookShelf')}
+                    </Badge>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-stone-800 truncate">{inv.email}</p>
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        {new Date(inv.created_at).toLocaleDateString('en-US', {
+                          month: 'short', day: 'numeric', year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100 shrink-0">
+                      {t('invited')}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isInCooldown(inv.updated_at) || resentIds.has(inv.id)}
+                      onClick={() => handleResend(inv.id)}
+                      className="shrink-0 border-stone-200 text-stone-700 hover:bg-stone-50 disabled:opacity-40"
+                    >
+                      {resentIds.has(inv.id) ? t('resent') : t('resend')}
+                    </Button>
+                  </>
                 )}
               </li>
             ))}

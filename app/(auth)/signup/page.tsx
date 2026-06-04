@@ -33,11 +33,19 @@ export default function SignupPage() {
     // Handle invite token if present
     const inviteToken = new URLSearchParams(window.location.search).get('invite')
     if (inviteToken) {
-      await fetch('/api/invitations/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: inviteToken }),
-      })
+      try {
+        const acceptRes = await fetch('/api/invitations/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: inviteToken }),
+        })
+        if (!acceptRes.ok) {
+          const body = await acceptRes.json().catch(() => ({}))
+          console.error('[signup] invitation accept failed', acceptRes.status, body)
+        }
+      } catch (err) {
+        console.error('[signup] invitation accept error', err)
+      }
       router.push('/friends')
     } else {
       router.push('/books')

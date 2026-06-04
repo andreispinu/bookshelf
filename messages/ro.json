@@ -186,7 +186,8 @@
     "ctaHeading": "Invită-ți prietenii pe BookShelf",
     "ctaSubtext": "Împărtășește dragostea pentru cărți — invită prieteni să se alăture și să vă conectați bibliotecile",
     "ctaProgress": "{count} din 5 prieteni invitați",
-    "ctaButton": "Invită un prieten"
+    "ctaButton": "Invită un prieten",
+    "joinedBookShelf": "S-a alăturat pe BookShelf"
   },
   "messages": {
     "title": "Mesaje",
