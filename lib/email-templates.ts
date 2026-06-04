@@ -179,6 +179,41 @@ export function trialExpiredEmail(firstName: string): { subject: string; html: s
   return { subject, html }
 }
 
+export function dailyInsightEmail(
+  firstName: string,
+  bookTitle: string,
+  bookAuthor: string,
+  insightTitle: string,
+  insightText: string,
+  extract: string,
+  position: number,
+  total: number,
+): { subject: string; html: string } {
+  const subject = `Your daily insight from "${bookTitle}"`
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeAuthor = bookAuthor.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeInsightTitle = insightTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeInsightText = insightText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeExtract = extract.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#a8a29e;text-transform:uppercase;letter-spacing:0.05em;">Insight ${position} of ${total}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#78716c;">${safeTitle} · ${safeAuthor}</p>
+        <p style="margin:0 0 20px;font-size:18px;font-weight:bold;color:#292524;">${safeInsightTitle}</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.7;">${safeInsightText}</p>
+        <blockquote style="margin:0 0 24px;padding:12px 16px;background:#fafaf9;border-left:3px solid #d6d3d1;border-radius:0 6px 6px 0;font-size:14px;color:#78716c;line-height:1.6;font-style:italic;">${safeExtract}</blockquote>
+        ${ctaButton('View all my insights →', `${BASE_URL}/books/read-with-ai`)}
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.6;">
+          You're receiving this because you have daily insights enabled.
+          <a href="${BASE_URL}/books/read-with-ai" style="color:#a8a29e;">Manage preferences</a>
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
 export function borrowRequestEmail(
   requesterName: string,
   bookTitle: string,

@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { updateBook, deleteBook, fillBookFields } from './actions'
+import { addToReadWithAI, removeFromReadWithAI } from './read-with-ai/actions'
 import { lendBook } from '../loans/actions'
 import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
@@ -33,13 +34,16 @@ type FillSuggestion = {
 }
 
 function BookMenu({
-  book, isDeleting, onLend, onEdit, onFill, onDelete,
+  book, isDeleting, isInReadingAI, onLend, onEdit, onFill, onAddToAI, onRemoveFromAI, onDelete,
 }: {
   book: Book
   isDeleting: boolean
+  isInReadingAI: boolean
   onLend: () => void
   onEdit: () => void
   onFill: () => void
+  onAddToAI: () => void
+  onRemoveFromAI: () => void
   onDelete: () => void
 }) {
   const t = useTranslations('books')
@@ -88,6 +92,21 @@ function BookMenu({
           >
             {t('fillWithAI')}
           </button>
+          {isInReadingAI ? (
+            <button
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+              onClick={() => { setOpen(false); onRemoveFromAI() }}
+            >
+              {t('removeFromReadWithAI')}
+            </button>
+          ) : (
+            <button
+              className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+              onClick={() => { setOpen(false); onAddToAI() }}
+            >
+              {t('addToReadWithAI')}
+            </button>
+          )}
           <button
             className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40"
             disabled={isDeleting}
@@ -105,7 +124,7 @@ function initials(name: string) {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
-export default function BookList({ books: initial, friends }: { books: Book[], friends: Friend[] }) {
+export default function BookList({ books: initial, friends, readingAIMap }: { books: Book[], friends: Friend[], readingAIMap: Record<string, string> }) {
   const t = useTranslations('books')
   const tc = useTranslations('common')
   const tCat = useTranslations('categories')
@@ -132,6 +151,7 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   const [fillSuggestions, setFillSuggestions] = useState<FillSuggestion[]>([])
   const [fillConfirming, setFillConfirming] = useState(false)
 
+  const [localReadingAIMap, setLocalReadingAIMap] = useState(readingAIMap)
   const acceptedFriends = friends.filter(f => f.status === 'accepted')
 
   const uniqueCategories = [...new Set(
@@ -144,6 +164,30 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
   }, {})
 
   const filteredBooks = activeCategory ? books.filter(b => b.category === activeCategory) : books
+
+  async function handleAddToAI(bookId: string) {
+    const result = await addToReadWithAI(bookId)
+    if (result.tooMany) {
+      toast.error(t('tooManyReadingBooks'))
+    } else if (result.error) {
+      toast.error(result.error)
+    } else {
+      router.refresh()
+    }
+  }
+
+  async function handleRemoveFromAI(readingId: string, bookId: string) {
+    const result = await removeFromReadWithAI(readingId)
+    if (result.error) {
+      toast.error(result.error)
+    } else {
+      setLocalReadingAIMap(prev => {
+        const next = { ...prev }
+        delete next[bookId]
+        return next
+      })
+    }
+  }
 
   function handleEditCoverSelect(file: File) {
     setEditCoverFile(file)
@@ -363,6 +407,11 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                 {book.isbn && <p className="text-xs text-stone-400 mt-0.5">ISBN {book.isbn}</p>}
               </div>
 
+              {localReadingAIMap[book.id] && (
+                <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 text-xs">
+                  {t('aiReadingBadge')}
+                </Badge>
+              )}
               <Badge
                 variant="outline"
                 className={
@@ -386,9 +435,12 @@ export default function BookList({ books: initial, friends }: { books: Book[], f
                 <BookMenu
                   book={book}
                   isDeleting={deletingId === book.id}
+                  isInReadingAI={!!localReadingAIMap[book.id]}
                   onLend={() => { setLending(book); setLendError(null) }}
                   onEdit={() => { setEditing(book); setEditError(null); setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(false) }}
                   onFill={() => handleFillWithAI(book)}
+                  onAddToAI={() => handleAddToAI(book.id)}
+                  onRemoveFromAI={() => handleRemoveFromAI(localReadingAIMap[book.id]!, book.id)}
                   onDelete={() => handleDelete(book.id)}
                 />
               </div>
