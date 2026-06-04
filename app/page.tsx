@@ -25,6 +25,11 @@ const FEATURE_KEYS = [
 
 const LIBRARY_STEP_KEYS = ['createAccount', 'addBooks', 'organiseCategories', 'shareShelf'] as const
 const LEND_STEP_KEYS = ['addFriends', 'browseShelves', 'requestBorrow', 'coordinateHandoff', 'returnSmoothly'] as const
+const PAID_FEATURE_KEYS = [
+  'pricingFullLibrary', 'pricingAiScan', 'pricingReadWithAI',
+  'pricingFriendsLending', 'pricingBorrowWorkflow', 'pricingPublicProfile',
+  'pricingPwa', 'pricingEmailNotifications',
+] as const
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -51,6 +56,8 @@ export default async function LandingPage() {
     title: t(`s_${key}_title`),
     desc: t(`s_${key}_desc`),
   }))
+
+  const paidFeatures = PAID_FEATURE_KEYS.map(key => t(key))
 
   const iosSteps = [t('installIos1'), t('installIos2'), t('installIos3'), t('installIos4')]
   const androidSteps = [t('installAndroid1'), t('installAndroid2'), t('installAndroid3'), t('installAndroid4')]
@@ -257,7 +264,7 @@ export default async function LandingPage() {
           <h2 className="text-2xl font-bold text-stone-800 text-center mb-3">{t('pricingHeading')}</h2>
           <p className="text-center text-stone-500 text-sm mb-10">{t('pricingSubheading')}</p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
 
             {/* Free trial */}
             <div className="rounded-xl border border-stone-200 bg-stone-50 p-6 flex flex-col gap-4">
@@ -269,9 +276,9 @@ export default async function LandingPage() {
                 <span className="text-sm text-stone-400 ml-1">{t('pricingPerDays')}</span>
               </div>
               <ul className="space-y-1.5 text-sm text-stone-600 flex-1">
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingFullAccess')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingNoCreditCard')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingCancelAnyTime')}</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-500 shrink-0 mt-px">✓</span> {t('pricingFullAccess')}</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-500 shrink-0 mt-px">✓</span> {t('pricingNoCreditCard')}</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-500 shrink-0 mt-px">✓</span> {t('pricingCancelAnyTime')}</li>
               </ul>
               <Link
                 href="/signup"
@@ -290,11 +297,13 @@ export default async function LandingPage() {
                 <span className="text-3xl font-bold text-stone-800">$1</span>
                 <span className="text-sm text-stone-400 ml-1">{t('pricingPerMonth')}</span>
               </div>
+              <p className="text-xs italic text-stone-400 -mt-2">{t('pricingMonthlyComparison')}</p>
               <ul className="space-y-1.5 text-sm text-stone-600 flex-1">
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingFullLibrary')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingFriendsLending')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingAiScan')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-500">✓</span> {t('pricingPwa')}</li>
+                {paidFeatures.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-emerald-500 shrink-0 mt-px">✓</span> {f}
+                  </li>
+                ))}
               </ul>
               <Link
                 href="/signup"
@@ -314,11 +323,13 @@ export default async function LandingPage() {
                 <span className="text-3xl font-bold text-white">$10</span>
                 <span className="text-sm text-stone-400 ml-1">{t('pricingPerYear')}</span>
               </div>
+              <p className="text-xs italic text-stone-400 -mt-2">{t('pricingAnnualComparison')}</p>
               <ul className="space-y-1.5 text-sm text-stone-300 flex-1">
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> {t('pricingFullLibrary')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> {t('pricingFriendsLending')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> {t('pricingAiScan')}</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> {t('pricingPwa')}</li>
+                {paidFeatures.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-emerald-400 shrink-0 mt-px">✓</span> {f}
+                  </li>
+                ))}
               </ul>
               <Link
                 href="/signup"
@@ -328,6 +339,12 @@ export default async function LandingPage() {
               </Link>
             </div>
 
+          </div>
+
+          {/* Why do we charge? */}
+          <div className="mt-10 border-t border-stone-100 pt-8 text-center">
+            <h3 className="text-sm font-semibold text-stone-700 mb-2">{t('pricingWhyHeading')}</h3>
+            <p className="text-sm text-stone-500 max-w-xl mx-auto leading-relaxed">{t('pricingWhyText')}</p>
           </div>
 
           <p className="text-center text-xs text-stone-400 mt-6">{t('pricingStripeNote')}</p>
