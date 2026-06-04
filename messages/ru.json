@@ -304,7 +304,10 @@
     "completionProgress": "{done} из {total} полей заполнено",
     "completionComplete": "Профиль заполнен",
     "completionDismiss": "Закрыть",
-    "profilePicture": "Фото профиля"
+    "profilePicture": "Фото профиля",
+    "notificationsSection": "Уведомления",
+    "messageDigest": "Ежедневный дайджест сообщений",
+    "messageDigestDesc": "Получать ежедневное письмо о непрочитанных сообщениях"
   },
   "notifications": {
     "title": "Уведомления",

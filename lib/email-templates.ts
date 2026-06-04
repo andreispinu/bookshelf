@@ -179,6 +179,73 @@ export function trialExpiredEmail(firstName: string): { subject: string; html: s
   return { subject, html }
 }
 
+export function borrowRequestApprovedEmail(
+  firstName: string,
+  ownerName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `${ownerName} approved your borrow request for '${bookTitle}'`
+  const safeOwner = ownerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Great news, ${firstName}!</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeOwner} has approved your request to borrow <strong>'${safeTitle}'</strong>.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          You can now arrange to pick up the book. Send them a message to coordinate.
+        </p>
+        ${ctaButton('View your loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function messageDigestEmail(
+  firstName: string,
+  conversations: { senderName: string; messageCount: number; lastMessagePreview: string }[],
+): { subject: string; html: string } {
+  const totalMessages = conversations.reduce((sum, c) => sum + c.messageCount, 0)
+  const senderCount = conversations.length
+  const subject = `You have ${totalMessages} unread message${totalMessages === 1 ? '' : 's'} on BookShelf`
+
+  const conversationRows = conversations.map(c => {
+    const safeName = c.senderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const safePreview = c.lastMessagePreview.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const truncated = safePreview.length > 60 ? safePreview.slice(0, 60) + '…' : safePreview
+    const countLabel = c.messageCount === 1 ? '1 message' : `${c.messageCount} messages`
+    return `<p style="margin:0 0 10px;font-size:14px;color:#57534e;line-height:1.6;">
+      <strong>${safeName}</strong> — ${countLabel}:<br>
+      <span style="color:#78716c;font-style:italic;">"${truncated}"</span>
+    </p>`
+  }).join('')
+
+  const fromLine = senderCount === 1
+    ? `You received a message from <strong>${conversations[0].senderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</strong> today on BookShelf.`
+    : `You received messages from <strong>${senderCount} friends</strong> today on BookShelf.`
+
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Hi ${firstName},</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">${fromLine}</p>
+        <div style="background:#fafaf9;border:1px solid #e7e5e4;border-radius:8px;padding:16px 20px;margin:0 0 24px;">
+          ${conversationRows}
+        </div>
+        ${ctaButton('Read your messages →', `${BASE_URL}/messages`)}
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.6;">
+          You're receiving this daily digest because you have unread messages.
+          <a href="${BASE_URL}/profile" style="color:#a8a29e;">Manage notification preferences</a>
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
 export function dailyInsightEmail(
   firstName: string,
   bookTitle: string,

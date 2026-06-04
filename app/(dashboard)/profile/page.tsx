@@ -5,6 +5,7 @@ import ProfileClient from './profile-client'
 import UsernameSection from './username-section'
 import LocationSection from './location-section'
 import LanguageSection from './language-section'
+import NotificationsSection from './notifications-section'
 import type { Profile } from '@/types'
 
 export default async function ProfilePage() {
@@ -16,7 +17,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, name, first_name, last_name, avatar_url, created_at, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_ends_at, username, profile_visibility, country, city, ui_language')
+    .select('id, name, first_name, last_name, avatar_url, created_at, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_ends_at, username, profile_visibility, country, city, ui_language, message_digest_enabled')
     .eq('id', user.id)
     .single()
 
@@ -56,6 +57,7 @@ export default async function ProfilePage() {
           />
         </div>
         <LanguageSection currentLanguage={profile.ui_language ?? 'en'} />
+        <NotificationsSection initialMessageDigestEnabled={profile.message_digest_enabled ?? true} />
         {process.env.NEXT_PUBLIC_BUILD_ID && (
           <p className="text-xs text-stone-300 text-center pt-2">
             Version: {process.env.NEXT_PUBLIC_BUILD_ID}

@@ -304,7 +304,10 @@
     "completionProgress": "{done} of {total} fields complete",
     "completionComplete": "Profile complete",
     "completionDismiss": "Dismiss",
-    "profilePicture": "Profile picture"
+    "profilePicture": "Profile picture",
+    "notificationsSection": "Notifications",
+    "messageDigest": "Daily message digest",
+    "messageDigestDesc": "Get a once-daily email when you have unread messages"
   },
   "notifications": {
     "title": "Notifications",

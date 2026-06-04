@@ -304,7 +304,10 @@
     "completionProgress": "{done} din {total} câmpuri completate",
     "completionComplete": "Profil complet",
     "completionDismiss": "Închide",
-    "profilePicture": "Fotografie de profil"
+    "profilePicture": "Fotografie de profil",
+    "notificationsSection": "Notificări",
+    "messageDigest": "Rezumat zilnic de mesaje",
+    "messageDigestDesc": "Primești un email zilnic când ai mesaje necitite"
   },
   "notifications": {
     "title": "Notificări",

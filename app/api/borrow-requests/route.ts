@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
-import { borrowRequestEmail } from '@/lib/email-templates'
+import { borrowRequestEmail, borrowRequestApprovedEmail } from '@/lib/email-templates'
 
 export async function GET() {
   const supabase = await createClient()
@@ -184,6 +184,25 @@ export async function PATCH(request: NextRequest) {
     actor_id: user.id,
     book_id: req.book_id,
   })
+
+  // Fire-and-forget approval email to the requester
+  if (action === 'approve') {
+    ;(async () => {
+      const [requesterProfile, requesterAuth, ownerProfile] = await Promise.all([
+        supabaseAdmin.from('profiles').select('first_name').eq('id', req.requester_id).single(),
+        supabaseAdmin.auth.admin.getUserById(req.requester_id),
+        supabaseAdmin.from('profiles').select('name').eq('id', user.id).single(),
+      ])
+      const requesterEmail = requesterAuth.data?.user?.email
+      if (!requesterEmail) return
+      const { subject, html } = borrowRequestApprovedEmail(
+        requesterProfile.data?.first_name ?? 'there',
+        ownerProfile.data?.name ?? 'Your friend',
+        bookTitle,
+      )
+      await sendEmail({ to: requesterEmail, subject, html })
+    })().catch(console.error)
+  }
 
   return NextResponse.json({ ok: true })
 }
