@@ -63,6 +63,10 @@ npm run build     # production build (webpack, generates service worker)
   /api/cron/deliver-insights → GET (cron, 08:00 UTC) — delivers one insight/day per active reading
   /api/cron/message-digest   → GET (cron, 18:00 UTC) — sends daily unread message digest emails
   /api/cron/trial-emails     → GET (cron, 09:00 UTC) — 5-day, 1-day, expired trial reminder emails
+  /api/cron/overdue-loans    → GET (cron, 09:00 UTC) — marks active loans past due_date as overdue, sends email
+  /api/loans/workflow        → PATCH — loan lifecycle transitions (confirm_handoff, confirm_receipt, initiate_return, confirm_return, deny_return)
+  /api/loan-extensions       → POST create extension request | PATCH approve/decline
+  /api/loan-recalls          → POST create recall | PATCH acknowledge
 /components/ui          → shadcn/ui components
 /lib
   supabase.ts           → Browser client (Client Components)
@@ -125,12 +129,45 @@ UNIQUE(requester_id, addressee_id)
 
 ### `loans`
 ```sql
-id           uuid  PRIMARY KEY DEFAULT gen_random_uuid()
-book_id      uuid  NOT NULL REFERENCES books(id) ON DELETE CASCADE
-lender_id    uuid  NOT NULL REFERENCES profiles(id)
-borrower_id  uuid  NOT NULL REFERENCES profiles(id)
-loaned_at    timestamptz DEFAULT now()
-returned_at  timestamptz  -- NULL until returned
+id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+book_id               uuid        NOT NULL REFERENCES books(id) ON DELETE CASCADE
+lender_id             uuid        NOT NULL REFERENCES profiles(id)
+borrower_id           uuid        NOT NULL REFERENCES profiles(id)
+loaned_at             timestamptz DEFAULT now()
+returned_at           timestamptz   -- set when workflow_status = 'completed'
+due_date              timestamptz   -- set when borrower confirms receipt
+handoff_confirmed_at  timestamptz
+received_confirmed_at timestamptz
+return_initiated_at   timestamptz
+return_confirmed_at   timestamptz
+workflow_status       text        NOT NULL DEFAULT 'pending_handoff'
+approved_days         int           -- set at approval time
+overdue_email_sent_at timestamptz
+```
+
+Run `supabase/add-lending-workflow.sql` in the Supabase SQL Editor to add these columns.
+
+### `loan_extensions`
+```sql
+id             uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+loan_id        uuid        NOT NULL REFERENCES loans(id) ON DELETE CASCADE
+requested_by   uuid        NOT NULL REFERENCES profiles(id)
+requested_days int         NOT NULL
+status         text        NOT NULL DEFAULT 'pending'  -- 'pending' | 'approved' | 'declined'
+requester_note text
+owner_note     text
+created_at     timestamptz DEFAULT now()
+responded_at   timestamptz
+```
+
+### `loan_recalls`
+```sql
+id           uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+loan_id      uuid        NOT NULL REFERENCES loans(id) ON DELETE CASCADE
+requested_by uuid        NOT NULL REFERENCES profiles(id)
+reason       text
+status       text        NOT NULL DEFAULT 'pending'  -- 'pending' | 'acknowledged'
+created_at   timestamptz DEFAULT now()
 ```
 
 ### `reading_ai_books`
@@ -743,6 +780,74 @@ RLS: participant read, requester insert, owner update.
 - `app/(dashboard)/loans/loan-list.tsx` — updated with Requests tab + `sentRequests` prop
 - `app/(dashboard)/loans/page.tsx` — fetches sent requests, passes `defaultTab` from searchParams
 
+### Lending workflow
+
+The loan lifecycle follows a strict 8-status workflow managed via the `workflow_status` field on `loans`.
+
+**Statuses:**
+`pending_handoff` → `pending_receipt` → `active` → (`overdue` / `extension_requested` / `recall_requested`) → `pending_return` → `completed`
+
+**Transitions:**
+| Action | Actor | From → To |
+|--------|-------|-----------|
+| Approve borrow request | Lender | — → `pending_handoff` (loan created) |
+| confirm_handoff | Lender | `pending_handoff` → `pending_receipt` |
+| confirm_receipt | Borrower | `pending_receipt` → `active` (sets `due_date`) |
+| Cron runs | System | `active` (past due) → `overdue` |
+| Request extension | Borrower | `active`/`overdue` → `extension_requested` |
+| Approve extension | Lender | `extension_requested` → `active` (new due_date) |
+| Decline extension | Lender | `extension_requested` → `active`/`overdue` |
+| Request recall | Lender | `active`/`overdue` → `recall_requested` |
+| Acknowledge recall | Borrower | stays `recall_requested` (status updated on recall row) |
+| initiate_return | Borrower | `active`/`overdue`/`recall_requested` → `pending_return` |
+| confirm_return | Lender | `pending_return` → `completed` |
+| deny_return | Lender | `pending_return` → `active`/`overdue` |
+
+**Duration selector:** Borrow request modal shows 7/14/30/60/custom days selector. Stored as `requested_days` on `borrow_requests`. Lender can override when approving (`approved_days`). Due date is set = `received_confirmed_at + approved_days`.
+
+**Loans page UI:**
+- Lent out / Borrowed tabs show status badge per loan with contextual action buttons
+- Loans sorted: action-needed statuses first (extension_requested, recall_requested, pending_return, etc.)
+- Extension modal: borrower picks days (7/14/30/60/custom) + optional note → POST /api/loan-extensions
+- Recall modal: lender optionally adds reason → POST /api/loan-recalls
+- All mutations call `router.refresh()` after success to re-fetch server data
+
+**API routes:**
+- `PATCH /api/loans/workflow` — `{ loanId, action }` — handles all workflow transitions
+- `POST /api/loan-extensions` — borrower creates extension request
+- `PATCH /api/loan-extensions` — lender approves or declines extension
+- `POST /api/loan-recalls` — lender creates recall
+- `PATCH /api/loan-recalls` — borrower acknowledges recall
+- `GET /api/cron/overdue-loans` — daily cron at 09:00 UTC, sets active loans past due_date to overdue, sends email once
+
+**Cron:** `0 9 * * *` — `overdue_email_sent_at` guards against duplicate emails
+
+**Email notifications (10 templates):**
+- `lenderHandoffReminderEmail` — after lender approves borrow request
+- `borrowerReceiptConfirmEmail` — after lender confirms handoff
+- `loanStartedEmail` — after borrower confirms receipt
+- `loanOverdueEmail` — sent by overdue cron (once per loan)
+- `extensionRequestEmail` — to lender when borrower requests extension
+- `extensionApprovedEmail` — to borrower when lender approves
+- `extensionDeclinedEmail` — to borrower when lender declines
+- `recallRequestEmail` — to borrower when lender recalls
+- `returnInitiatedEmail` — to lender when borrower initiates return
+- `returnConfirmedEmail` — to borrower when lender confirms return
+
+**DB migration:** Run `supabase/add-lending-workflow.sql` in the Supabase SQL Editor.
+
+**Files:**
+- `supabase/add-lending-workflow.sql` — migration (ALTER TABLE loans, borrow_requests; CREATE TABLE loan_extensions, loan_recalls)
+- `app/api/loans/workflow/route.ts` — workflow transitions
+- `app/api/loan-extensions/route.ts` — extension CRUD
+- `app/api/loan-recalls/route.ts` — recall CRUD
+- `app/api/cron/overdue-loans/route.ts` — daily overdue check
+- `app/(dashboard)/loans/loan-list.tsx` — fully workflow-aware loan list with modals
+- `app/(dashboard)/loans/page.tsx` — fetches extensions + recalls, merges with loans
+- `app/(dashboard)/friends/[id]/borrow-button.tsx` — duration selector added
+- `app/(dashboard)/messages/borrow-card.tsx` — `requested_days` display + `approved_days` input
+- `lib/email-templates.ts` — 10 new templates
+
 ### Email notifications
 Transactional emails are sent via **Resend** (domain: bookshelf.name, from: noreply@bookshelf.name). All sends are fire-and-forget — never awaited in the request handler, always `.catch(console.error)` so failures never break the main flow.
 
@@ -759,6 +864,16 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
   - `trialReminder5DayEmail(firstName, trialEndsAt)`
   - `trialReminder1DayEmail(firstName, trialEndsAt)`
   - `trialExpiredEmail(firstName)`
+  - `lenderHandoffReminderEmail(firstName, borrowerName, bookTitle, approvedDays)` — to lender after approving request
+  - `borrowerReceiptConfirmEmail(firstName, lenderName, bookTitle)` — to borrower after lender confirms handoff
+  - `loanStartedEmail(firstName, lenderName, bookTitle, dueDate)` — to borrower after confirming receipt
+  - `loanOverdueEmail(firstName, bookTitle, lenderName, dueDateStr)` — to borrower from overdue cron
+  - `extensionRequestEmail(firstName, borrowerName, bookTitle, days, note?)` — to lender
+  - `extensionApprovedEmail(firstName, lenderName, bookTitle, newDueDateStr)` — to borrower
+  - `extensionDeclinedEmail(firstName, lenderName, bookTitle)` — to borrower
+  - `recallRequestEmail(firstName, lenderName, bookTitle, reason?)` — to borrower
+  - `returnInitiatedEmail(firstName, borrowerName, bookTitle)` — to lender
+  - `returnConfirmedEmail(firstName, lenderName, bookTitle)` — to borrower
 - Templates use inline HTML/CSS with the BookShelf stone brand (Georgia serif, stone-800 background CTA button, warm grey palette)
 - Recipient email fetched via `supabaseAdmin.auth.admin.getUserById(userId)` (only auth.users has email)
 
