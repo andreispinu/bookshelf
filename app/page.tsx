@@ -9,6 +9,7 @@ import RecentlyAddedClient from './recently-added-client'
 import {
   BookOpen, Camera, HandHelping, Users, Tag, Globe,
   Link as LinkIcon, Smartphone, UserPlus, ClipboardList, Bell, CreditCard,
+  ArrowLeftRight,
 } from 'lucide-react'
 
 const FEATURE_ICONS = [
@@ -22,7 +23,8 @@ const FEATURE_KEYS = [
   'friendRequests', 'loanTracking', 'notifications', 'plans',
 ] as const
 
-const STEP_KEYS = ['createAccount', 'addBooks', 'addFriends', 'startLending'] as const
+const LIBRARY_STEP_KEYS = ['createAccount', 'addBooks', 'organiseCategories', 'shareShelf'] as const
+const LEND_STEP_KEYS = ['addFriends', 'browseShelves', 'requestBorrow', 'coordinateHandoff', 'returnSmoothly'] as const
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -38,7 +40,13 @@ export default async function LandingPage() {
     description: t(`f_${key}_desc`),
   }))
 
-  const steps = STEP_KEYS.map((key, i) => ({
+  const librarySteps = LIBRARY_STEP_KEYS.map((key, i) => ({
+    n: i + 1,
+    title: t(`s_${key}_title`),
+    desc: t(`s_${key}_desc`),
+  }))
+
+  const lendSteps = LEND_STEP_KEYS.map((key, i) => ({
     n: i + 1,
     title: t(`s_${key}_title`),
     desc: t(`s_${key}_desc`),
@@ -129,17 +137,56 @@ export default async function LandingPage() {
       {/* How it works */}
       <section id="how-it-works" className="py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-stone-800 text-center mb-12">{t('howItWorksHeading')}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-8">
-            {steps.map(step => (
-              <div key={step.n} className="flex flex-col gap-3">
-                <div className="h-9 w-9 rounded-full bg-stone-800 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                  {step.n}
+          <h2 className="text-2xl font-bold text-stone-800 text-center mb-2">{t('howItWorksHeading')}</h2>
+          <p className="text-center text-stone-500 text-sm mb-12">{t('howItWorksSubheading')}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+
+            {/* Build your library */}
+            <div className="bg-stone-100 rounded-2xl border border-stone-200 p-7 flex flex-col gap-6">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-stone-800 flex items-center justify-center shrink-0">
+                  <BookOpen className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="font-semibold text-stone-800">{step.title}</h3>
-                <p className="text-sm text-stone-500 leading-relaxed">{step.desc}</p>
+                <h3 className="text-base font-semibold text-stone-900">{t('howItWorksLibraryTitle')}</h3>
               </div>
-            ))}
+              <ol className="flex flex-col gap-4">
+                {librarySteps.map(step => (
+                  <li key={step.n} className="flex gap-3">
+                    <span className="shrink-0 h-6 w-6 rounded-full bg-stone-800 text-white text-xs flex items-center justify-center font-bold mt-0.5">
+                      {step.n}
+                    </span>
+                    <div>
+                      <p className="font-medium text-stone-800 text-sm">{step.title}</p>
+                      <p className="text-sm text-stone-500 mt-0.5 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Lend & borrow with friends */}
+            <div className="bg-stone-100 rounded-2xl border border-stone-200 p-7 flex flex-col gap-6">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-stone-800 flex items-center justify-center shrink-0">
+                  <ArrowLeftRight className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="text-base font-semibold text-stone-900">{t('howItWorksLendTitle')}</h3>
+              </div>
+              <ol className="flex flex-col gap-4">
+                {lendSteps.map(step => (
+                  <li key={step.n} className="flex gap-3">
+                    <span className="shrink-0 h-6 w-6 rounded-full bg-stone-800 text-white text-xs flex items-center justify-center font-bold mt-0.5">
+                      {step.n}
+                    </span>
+                    <div>
+                      <p className="font-medium text-stone-800 text-sm">{step.title}</p>
+                      <p className="text-sm text-stone-500 mt-0.5 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
           </div>
         </div>
       </section>
