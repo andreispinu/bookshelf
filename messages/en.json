@@ -473,7 +473,7 @@
     "pricingMonthlyComparison": "Less than a coffee a month",
     "pricingAnnualComparison": "One lunch. One year of BookShelf.",
     "pricingWhyHeading": "Why do we charge?",
-    "pricingWhyText": "No ads, no data selling — just a fair price for a useful tool",
+    "pricingWhyText": "BookShelf is built and maintained by a small team. Your subscription covers the AI that scans book covers and generates daily reading insights, plus hosting, email delivery, and everything that keeps the platform running. No ads. No data selling. Just a fair price for a tool we use ourselves.",
     "pricingStartFreeTrial": "Start free trial",
     "pricingStripeNote": "Payments processed securely by Stripe. Cancel any time.",
     "footerLogIn": "Log in",

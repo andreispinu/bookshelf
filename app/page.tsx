@@ -262,7 +262,16 @@ export default async function LandingPage() {
       <section id="pricing" className="py-16 px-4 bg-white border-y border-stone-200">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-stone-800 text-center mb-3">{t('pricingHeading')}</h2>
-          <p className="text-center text-stone-500 text-sm mb-10">{t('pricingSubheading')}</p>
+          <p className="text-center text-stone-500 text-sm mb-8">{t('pricingSubheading')}</p>
+
+          {/* Why do we charge? */}
+          <div className="max-w-[600px] mx-auto mb-10 rounded-lg border border-[#fcd34d]/50 bg-[#fffbeb] px-6 py-4 flex gap-3">
+            <span className="text-amber-400 shrink-0 mt-0.5 text-base">♥</span>
+            <div>
+              <p className="text-stone-900 font-medium text-base leading-snug mb-1.5">{t('pricingWhyHeading')}</p>
+              <p className="text-stone-600 text-sm leading-relaxed">{t('pricingWhyText')}</p>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
 
@@ -341,13 +350,7 @@ export default async function LandingPage() {
 
           </div>
 
-          {/* Why do we charge? */}
-          <div className="mt-10 border-t border-stone-100 pt-8 text-center">
-            <h3 className="text-sm font-semibold text-stone-700 mb-2">{t('pricingWhyHeading')}</h3>
-            <p className="text-sm text-stone-500 max-w-xl mx-auto leading-relaxed">{t('pricingWhyText')}</p>
-          </div>
-
-          <p className="text-center text-xs text-stone-400 mt-6">{t('pricingStripeNote')}</p>
+          <p className="text-center text-xs text-stone-400 mt-8">{t('pricingStripeNote')}</p>
         </div>
       </section>
 
