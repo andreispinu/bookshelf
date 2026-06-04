@@ -23,12 +23,12 @@ export async function getLentOut(userId: string): Promise<{ data: LoanWithDetail
   const { data, error } = await supabase
     .from('loans')
     .select(`
-      id, loaned_at, returned_at,
-      book:books!loans_book_id_fkey(id, title, author),
+      id, loaned_at, returned_at, due_date, workflow_status, approved_days,
+      book:books!loans_book_id_fkey(id, title, author, cover_url),
       borrower:profiles!loans_borrower_id_fkey(id, name)
     `)
     .eq('lender_id', userId)
-    .is('returned_at', null)
+    .neq('workflow_status', 'completed')
     .order('loaned_at', { ascending: false })
 
   if (error) return { data: null, error: error.message }
@@ -37,6 +37,9 @@ export async function getLentOut(userId: string): Promise<{ data: LoanWithDetail
     id: row.id,
     loaned_at: row.loaned_at,
     returned_at: row.returned_at,
+    due_date: (row as unknown as { due_date: string | null }).due_date,
+    workflow_status: (row as unknown as { workflow_status: string }).workflow_status as LoanWithDetails['workflow_status'],
+    approved_days: (row as unknown as { approved_days: number | null }).approved_days,
     book: row.book as unknown as LoanWithDetails['book'],
     otherParty: row.borrower as unknown as LoanWithDetails['otherParty'],
   }))
@@ -50,12 +53,12 @@ export async function getBorrowed(userId: string): Promise<{ data: LoanWithDetai
   const { data, error } = await supabase
     .from('loans')
     .select(`
-      id, loaned_at, returned_at,
-      book:books!loans_book_id_fkey(id, title, author),
+      id, loaned_at, returned_at, due_date, workflow_status, approved_days,
+      book:books!loans_book_id_fkey(id, title, author, cover_url),
       lender:profiles!loans_lender_id_fkey(id, name)
     `)
     .eq('borrower_id', userId)
-    .is('returned_at', null)
+    .neq('workflow_status', 'completed')
     .order('loaned_at', { ascending: false })
 
   if (error) return { data: null, error: error.message }
@@ -64,6 +67,9 @@ export async function getBorrowed(userId: string): Promise<{ data: LoanWithDetai
     id: row.id,
     loaned_at: row.loaned_at,
     returned_at: row.returned_at,
+    due_date: (row as unknown as { due_date: string | null }).due_date,
+    workflow_status: (row as unknown as { workflow_status: string }).workflow_status as LoanWithDetails['workflow_status'],
+    approved_days: (row as unknown as { approved_days: number | null }).approved_days,
     book: row.book as unknown as LoanWithDetails['book'],
     otherParty: row.lender as unknown as LoanWithDetails['otherParty'],
   }))

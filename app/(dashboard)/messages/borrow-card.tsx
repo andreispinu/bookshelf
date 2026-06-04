@@ -14,6 +14,7 @@ export type BorrowRequestPayload = {
   book_author: string
   book_cover_url: string | null
   requester_message: string | null
+  requested_days: number | null
 }
 
 export type BorrowResponsePayload = {
@@ -43,7 +44,7 @@ type BorrowRequestCardProps = {
   data: BorrowRequestPayload
   isMine: boolean
   hasResponse: boolean
-  onDecide: (action: 'approve' | 'reject', message: string) => Promise<void>
+  onDecide: (action: 'approve' | 'reject', message: string, approvedDays?: number | null) => Promise<void>
 }
 
 export function BorrowRequestCard({ data, isMine, hasResponse, onDecide }: BorrowRequestCardProps) {
@@ -51,6 +52,9 @@ export function BorrowRequestCard({ data, isMine, hasResponse, onDecide }: Borro
   const tc = useTranslations('common')
   const [confirming, setConfirming] = useState<'approve' | 'reject' | null>(null)
   const [responseText, setResponseText] = useState('')
+  const [approvedDaysValue, setApprovedDaysValue] = useState<string>(
+    data.requested_days ? String(data.requested_days) : ''
+  )
   const [loading, setLoading] = useState(false)
 
   const showActions = !isMine && !hasResponse
@@ -58,7 +62,8 @@ export function BorrowRequestCard({ data, isMine, hasResponse, onDecide }: Borro
   async function handleConfirm() {
     if (!confirming) return
     setLoading(true)
-    await onDecide(confirming, responseText)
+    const days = confirming === 'approve' ? (parseInt(approvedDaysValue) || null) : null
+    await onDecide(confirming, responseText, days)
     setLoading(false)
     setConfirming(null)
     setResponseText('')
@@ -93,9 +98,14 @@ export function BorrowRequestCard({ data, isMine, hasResponse, onDecide }: Borro
       {/* Status / actions */}
       <div className="px-3 py-2.5">
         {!hasResponse && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
-            ● {t('pending')}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+              ● {t('pending')}
+            </span>
+            {data.requested_days && (
+              <span className="text-xs text-stone-500">{t('requestedDaysLabel', { days: data.requested_days })}</span>
+            )}
+          </div>
         )}
 
         {/* Approve / Decline buttons (owner only, while pending) */}
@@ -122,6 +132,20 @@ export function BorrowRequestCard({ data, isMine, hasResponse, onDecide }: Borro
             <p className="text-xs font-medium text-stone-600">
               {confirming === 'approve' ? t('confirmApprove') : t('confirmDecline')}
             </p>
+            {confirming === 'approve' && (
+              <div>
+                <p className="text-xs text-stone-500 mb-1">{t('approveForDays')}</p>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={approvedDaysValue}
+                  onChange={e => setApprovedDaysValue(e.target.value)}
+                  placeholder={t('daysPlaceholder')}
+                  className="w-24 rounded-lg border border-stone-200 px-2.5 py-1.5 text-xs text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-300"
+                />
+              </div>
+            )}
             <textarea
               value={responseText}
               onChange={e => setResponseText(e.target.value)}

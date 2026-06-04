@@ -144,11 +144,11 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
     return ids
   }, [messages])
 
-  async function handleBorrowDecide(requestId: string, action: 'approve' | 'reject', message: string) {
+  async function handleBorrowDecide(requestId: string, action: 'approve' | 'reject', message: string, approvedDays?: number | null) {
     await fetch('/api/borrow-requests', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: requestId, action, message }),
+      body: JSON.stringify({ id: requestId, action, message, approvedDays: approvedDays ?? null }),
     })
     if (activeConvId) fetchMessages(activeConvId)
     fetchConversations()
@@ -376,8 +376,8 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
                             data={borrowPayload}
                             isMine={isMine}
                             hasResponse={respondedRequestIds.has(borrowPayload.borrow_request_id)}
-                            onDecide={(action, message) =>
-                              handleBorrowDecide(borrowPayload.borrow_request_id, action, message)
+                            onDecide={(action, message, approvedDays) =>
+                              handleBorrowDecide(borrowPayload.borrow_request_id, action, message, approvedDays)
                             }
                           />
                         ) : (

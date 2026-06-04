@@ -51,12 +51,55 @@ export type Friend = {
   status: FriendshipStatus
 }
 
+export type WorkflowStatus =
+  | 'pending_handoff'
+  | 'pending_receipt'
+  | 'active'
+  | 'overdue'
+  | 'extension_requested'
+  | 'recall_requested'
+  | 'pending_return'
+  | 'completed'
+
 export type LoanWithDetails = {
   id: string
   loaned_at: string
   returned_at: string | null
-  book: Pick<Book, 'id' | 'title' | 'author'>
+  due_date: string | null
+  workflow_status: WorkflowStatus
+  approved_days: number | null
+  book: Pick<Book, 'id' | 'title' | 'author' | 'cover_url'>
   otherParty: Pick<Profile, 'id' | 'name'>
+  pendingExtension?: {
+    id: string
+    requested_days: number
+    requester_note: string | null
+  }
+  pendingRecall?: {
+    id: string
+    reason: string | null
+  }
+}
+
+export type LoanExtension = {
+  id: string
+  loan_id: string
+  requested_by: string
+  requested_days: number
+  status: 'pending' | 'approved' | 'declined'
+  requester_note: string | null
+  owner_note: string | null
+  created_at: string
+  responded_at: string | null
+}
+
+export type LoanRecall = {
+  id: string
+  loan_id: string
+  requested_by: string
+  reason: string | null
+  status: 'pending' | 'acknowledged'
+  created_at: string
 }
 
 export type Message = {
@@ -85,6 +128,7 @@ export type BorrowRequest = {
   status: 'pending' | 'approved' | 'rejected'
   requester_message: string | null
   owner_message: string | null
+  requested_days: number | null
   created_at: string
   updated_at: string
   book: Pick<Book, 'id' | 'title' | 'author' | 'cover_url'>
@@ -122,6 +166,7 @@ export type SentRequest = {
   status: 'pending' | 'approved' | 'rejected'
   requester_message: string | null
   owner_message: string | null
+  requested_days: number | null
   created_at: string
   updated_at: string
   book: Pick<Book, 'id' | 'title' | 'author' | 'cover_url'>

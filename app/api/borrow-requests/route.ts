@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
-import { borrowRequestEmail, borrowRequestApprovedEmail } from '@/lib/email-templates'
+import { borrowRequestEmail, borrowRequestApprovedEmail, lenderHandoffReminderEmail } from '@/lib/email-templates'
 
 export async function GET() {
   const supabase = await createClient()
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   const body = await request.json()
-  const { bookId, ownerId, message } = body
+  const { bookId, ownerId, message, requestedDays } = body
   if (!bookId || !ownerId) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       requester_id: user.id,
       owner_id: ownerId,
       requester_message: message?.trim() || null,
+      requested_days: requestedDays ?? null,
     })
     .select('id')
     .single()
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
     book_author: book?.author ?? '',
     book_cover_url: book?.cover_url ?? null,
     requester_message: message?.trim() || null,
+    requested_days: requestedDays ?? null,
   })
 
   await supabaseAdmin.from('messages').insert({
@@ -116,7 +118,7 @@ export async function PATCH(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
   const body = await request.json()
-  const { id, action, message } = body
+  const { id, action, message, approvedDays } = body
   if (!id || !action) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
   // Fetch and verify ownership
@@ -153,6 +155,8 @@ export async function PATCH(request: NextRequest) {
       book_id: req.book_id,
       lender_id: user.id,
       borrower_id: req.requester_id,
+      approved_days: approvedDays ?? null,
+      workflow_status: 'pending_handoff',
     })
     await supabaseAdmin
       .from('books')
@@ -185,22 +189,36 @@ export async function PATCH(request: NextRequest) {
     book_id: req.book_id,
   })
 
-  // Fire-and-forget approval email to the requester
+  // Fire-and-forget emails for approval
   if (action === 'approve') {
     ;(async () => {
-      const [requesterProfile, requesterAuth, ownerProfile] = await Promise.all([
-        supabaseAdmin.from('profiles').select('first_name').eq('id', req.requester_id).single(),
+      const [requesterProfile, requesterAuth, ownerProfile, ownerAuth] = await Promise.all([
+        supabaseAdmin.from('profiles').select('first_name, name').eq('id', req.requester_id).single(),
         supabaseAdmin.auth.admin.getUserById(req.requester_id),
-        supabaseAdmin.from('profiles').select('name').eq('id', user.id).single(),
+        supabaseAdmin.from('profiles').select('name, first_name').eq('id', user.id).single(),
+        supabaseAdmin.auth.admin.getUserById(user.id),
       ])
       const requesterEmail = requesterAuth.data?.user?.email
-      if (!requesterEmail) return
-      const { subject, html } = borrowRequestApprovedEmail(
-        requesterProfile.data?.first_name ?? 'there',
-        ownerProfile.data?.name ?? 'Your friend',
-        bookTitle,
-      )
-      await sendEmail({ to: requesterEmail, subject, html })
+      const ownerEmail = ownerAuth.data?.user?.email
+      // Email requester: approval notification
+      if (requesterEmail) {
+        const { subject, html } = borrowRequestApprovedEmail(
+          requesterProfile.data?.first_name ?? 'there',
+          ownerProfile.data?.name ?? 'Your friend',
+          bookTitle,
+        )
+        await sendEmail({ to: requesterEmail, subject, html })
+      }
+      // Email lender: reminder to hand off
+      if (ownerEmail) {
+        const { subject, html } = lenderHandoffReminderEmail(
+          ownerProfile.data?.first_name ?? 'there',
+          requesterProfile.data?.name ?? 'Your borrower',
+          bookTitle,
+          approvedDays ?? null,
+        )
+        await sendEmail({ to: ownerEmail, subject, html })
+      }
     })().catch(console.error)
   }
 

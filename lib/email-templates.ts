@@ -281,6 +281,272 @@ export function dailyInsightEmail(
   return { subject, html }
 }
 
+export function lenderHandoffReminderEmail(
+  firstName: string,
+  borrowerName: string,
+  bookTitle: string,
+  approvedDays: number | null,
+): { subject: string; html: string } {
+  const subject = `Time to hand off "${bookTitle}" to ${borrowerName}`
+  const safeBorrower = borrowerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const daysNote = approvedDays ? `<p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+    The loan is approved for <strong>${approvedDays} days</strong>. Once ${safeBorrower} confirms receipt, the clock starts.
+  </p>` : ''
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Hand off "${safeTitle}" to ${safeBorrower}</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          You approved ${safeBorrower}'s request to borrow <strong>"${safeTitle}"</strong>. Once you've handed it off, confirm the handoff in the app.
+        </p>
+        ${daysNote}
+        ${ctaButton('Go to Loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function borrowerReceiptConfirmEmail(
+  firstName: string,
+  lenderName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `${lenderName} says they've handed you "${bookTitle}"`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Did you receive "${safeTitle}"?</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeLender} has confirmed they handed off <strong>"${safeTitle}"</strong>. Once you have the book, confirm receipt in the app to start the loan.
+        </p>
+        ${ctaButton('Confirm receipt →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function loanStartedEmail(
+  firstName: string,
+  lenderName: string,
+  bookTitle: string,
+  dueDate: string | null,
+): { subject: string; html: string } {
+  const subject = `Your loan of "${bookTitle}" has started`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const dueLine = dueDate
+    ? `<p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+        Please return it by <strong>${new Date(dueDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</strong>.
+      </p>`
+    : '<p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">No specific due date — please return it when you\'re done.</p>'
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Enjoy "${safeTitle}"!</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          Your loan of <strong>"${safeTitle}"</strong> from ${safeLender} has officially started.
+        </p>
+        ${dueLine}
+        ${ctaButton('View my loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function loanOverdueEmail(
+  firstName: string,
+  bookTitle: string,
+  lenderName: string,
+  dueDateStr: string,
+): { subject: string; html: string } {
+  const subject = `"${bookTitle}" is overdue — please return it`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">"${safeTitle}" is overdue</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          Your loan of <strong>"${safeTitle}"</strong> from ${safeLender} was due on <strong>${dueDateStr}</strong>.
+          Please return it as soon as possible.
+        </p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          If you need more time, you can request an extension from your loans page.
+        </p>
+        ${ctaButton('Go to Loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function extensionRequestEmail(
+  firstName: string,
+  borrowerName: string,
+  bookTitle: string,
+  requestedDays: number,
+  requesterNote?: string | null,
+): { subject: string; html: string } {
+  const subject = `${borrowerName} is requesting a ${requestedDays}-day extension for "${bookTitle}"`
+  const safeBorrower = borrowerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const noteBlock = requesterNote
+    ? `<p style="margin:0 0 24px;font-size:14px;color:#78716c;line-height:1.6;">
+        Note: <em>"${requesterNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</em>
+       </p>`
+    : ''
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Extension request for "${safeTitle}"</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeBorrower} is requesting a <strong>${requestedDays}-day extension</strong> on their loan of <strong>"${safeTitle}"</strong>.
+        </p>
+        ${noteBlock}
+        ${ctaButton('Review extension →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function extensionApprovedEmail(
+  firstName: string,
+  lenderName: string,
+  bookTitle: string,
+  newDueDateStr: string,
+): { subject: string; html: string } {
+  const subject = `Extension approved — "${bookTitle}" now due ${newDueDateStr}`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Extension approved!</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeLender} approved your extension request for <strong>"${safeTitle}"</strong>.
+          Your new due date is <strong>${newDueDateStr}</strong>.
+        </p>
+        ${ctaButton('View my loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function extensionDeclinedEmail(
+  firstName: string,
+  lenderName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `Extension declined for "${bookTitle}"`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Extension request declined</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeLender} was unable to approve the extension for <strong>"${safeTitle}"</strong>.
+          Please return the book by the original due date.
+        </p>
+        ${ctaButton('View my loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function recallRequestEmail(
+  firstName: string,
+  lenderName: string,
+  bookTitle: string,
+  reason?: string | null,
+): { subject: string; html: string } {
+  const subject = `${lenderName} needs "${bookTitle}" back`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const reasonBlock = reason
+    ? `<p style="margin:0 0 24px;font-size:14px;color:#78716c;line-height:1.6;">
+        Reason: <em>"${reason.replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</em>
+       </p>`
+    : '<p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">Please return it as soon as you can.</p>'
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">${safeLender} wants "${safeTitle}" back</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeLender} has requested the return of <strong>"${safeTitle}"</strong>.
+        </p>
+        ${reasonBlock}
+        ${ctaButton('Go to Loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function returnInitiatedEmail(
+  firstName: string,
+  borrowerName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `${borrowerName} says they've returned "${bookTitle}"`
+  const safeBorrower = borrowerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Book return initiated</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeBorrower} says they've returned <strong>"${safeTitle}"</strong>.
+          Once you have the book back, confirm the return in the app.
+        </p>
+        ${ctaButton('Confirm return →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function returnConfirmedEmail(
+  firstName: string,
+  lenderName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `Return confirmed — "${bookTitle}" is back home`
+  const safeLender = lenderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Loan completed!</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeLender} confirmed receipt of <strong>"${safeTitle}"</strong>. The loan is now complete. Thanks for returning it!
+        </p>
+        ${ctaButton('See all loans →', `${BASE_URL}/loans`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
 export function borrowRequestEmail(
   requesterName: string,
   bookTitle: string,

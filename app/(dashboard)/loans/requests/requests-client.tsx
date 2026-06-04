@@ -19,14 +19,19 @@ export default function RequestsClient({ requests: initialRequests }: { requests
   const tc = useTranslations('common')
   const [requests, setRequests] = useState(initialRequests)
   const [loading, setLoading] = useState<string | null>(null)
+  const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [approvedDaysMap, setApprovedDaysMap] = useState<Record<string, string>>({})
 
   async function handleAction(id: string, action: 'approve' | 'reject') {
     setLoading(id)
     try {
+      const approvedDaysRaw = approvedDaysMap[id]
+      const approvedDays = action === 'approve' && approvedDaysRaw ? parseInt(approvedDaysRaw) || null : null
+
       const res = await fetch('/api/borrow-requests', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, action }),
+        body: JSON.stringify({ id, action, approvedDays }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -34,6 +39,7 @@ export default function RequestsClient({ requests: initialRequests }: { requests
         return
       }
       setRequests(prev => prev.filter(r => r.id !== id))
+      setApprovingId(null)
       toast.success(action === 'approve' ? t('requestApproved') : t('requestDeclined'))
     } catch {
       toast.error(tc('somethingWentWrong'))
@@ -78,29 +84,76 @@ export default function RequestsClient({ requests: initialRequests }: { requests
               </span>
             </div>
 
+            {req.requested_days && (
+              <p className="text-xs text-stone-500 mt-1">
+                {t('requestedDaysLabel', { days: req.requested_days })}
+              </p>
+            )}
+
             {req.requester_message && (
               <p className="text-xs text-stone-500 mt-1.5 italic">"{req.requester_message}"</p>
             )}
 
-            <div className="flex items-center gap-2 mt-3">
-              <Button
-                size="sm"
-                disabled={loading === req.id}
-                onClick={() => handleAction(req.id, 'approve')}
-                className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs"
-              >
-                {t('approve')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={loading === req.id}
-                onClick={() => handleAction(req.id, 'reject')}
-                className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs"
-              >
-                {t('decline')}
-              </Button>
-            </div>
+            {approvingId === req.id ? (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-stone-600 font-medium">{t('approveForDays')}</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={approvedDaysMap[req.id] ?? (req.requested_days ? String(req.requested_days) : '')}
+                    onChange={e => setApprovedDaysMap(prev => ({ ...prev, [req.id]: e.target.value }))}
+                    placeholder={t('daysPlaceholder')}
+                    className="w-20 rounded-lg border border-stone-200 px-2.5 py-1 text-xs text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-300"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    disabled={loading === req.id}
+                    onClick={() => handleAction(req.id, 'approve')}
+                    className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs"
+                  >
+                    {t('confirm')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={loading === req.id}
+                    onClick={() => setApprovingId(null)}
+                    className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs"
+                  >
+                    {tc('cancel')}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-3">
+                <Button
+                  size="sm"
+                  disabled={loading === req.id}
+                  onClick={() => {
+                    setApprovingId(req.id)
+                    if (req.requested_days) {
+                      setApprovedDaysMap(prev => ({ ...prev, [req.id]: String(req.requested_days) }))
+                    }
+                  }}
+                  className="bg-stone-800 text-white hover:bg-stone-700 h-8 px-3 text-xs"
+                >
+                  {t('approve')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={loading === req.id}
+                  onClick={() => handleAction(req.id, 'reject')}
+                  className="border-stone-200 text-stone-600 hover:bg-stone-50 h-8 px-3 text-xs"
+                >
+                  {t('decline')}
+                </Button>
+              </div>
+            )}
           </div>
         </li>
       ))}

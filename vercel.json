@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/message-digest",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/overdue-loans",
+      "schedule": "0 9 * * *"
     }
   ]
 }
