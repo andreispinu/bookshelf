@@ -42,6 +42,7 @@ npm run build     # production build (webpack, generates service worker)
     /books              → My books list + lend dialog
     /books/add          → Add a book form
     /books/[id]         → Book detail page
+    /books/read-with-ai → Read with AI — daily AI-generated insights
     /friends            → Friend search, requests, friends list
     /loans              → Active loans (lent out / borrowed tabs)
     /profile            → Account info, subscription status, plan selection
@@ -58,6 +59,10 @@ npm run build     # production build (webpack, generates service worker)
   /api/username/check   → GET ?username=xxx → { available: boolean } (uses supabaseAdmin)
   /api/notifications    → GET last 20 notifications | PATCH mark read
   /api/upload-book-cover → POST multipart image → resize 600px → Supabase Storage → { cover_url }
+  /api/read-with-ai/generate → POST { readingId, bookId } → Claude generates 10-20 insights
+  /api/cron/deliver-insights → GET (cron, 08:00 UTC) — delivers one insight/day per active reading
+  /api/cron/message-digest   → GET (cron, 18:00 UTC) — sends daily unread message digest emails
+  /api/cron/trial-emails     → GET (cron, 09:00 UTC) — 5-day, 1-day, expired trial reminder emails
 /components/ui          → shadcn/ui components
 /lib
   supabase.ts           → Browser client (Client Components)
@@ -92,6 +97,8 @@ username             text UNIQUE  -- ^[a-z0-9-]{3,30}$
 profile_visibility   text DEFAULT 'private'  -- 'private' | 'public_minimal' | 'public_full'
 country              text  -- nullable, clean country name from lib/countries.ts
 city                 text  -- nullable, free-text city name
+reading_ai_email_notifications  boolean DEFAULT true  -- daily insight email opt-out
+message_digest_enabled          boolean DEFAULT true  -- daily message digest email opt-out
 ```
 
 ### `books`
@@ -124,6 +131,33 @@ lender_id    uuid  NOT NULL REFERENCES profiles(id)
 borrower_id  uuid  NOT NULL REFERENCES profiles(id)
 loaned_at    timestamptz DEFAULT now()
 returned_at  timestamptz  -- NULL until returned
+```
+
+### `reading_ai_books`
+```sql
+id            uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+user_id       uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+book_id       uuid        NOT NULL REFERENCES books(id) ON DELETE CASCADE
+status        text        NOT NULL DEFAULT 'pending'  -- 'pending' | 'generating' | 'active' | 'completed'
+added_at      timestamptz DEFAULT now()
+started_at    timestamptz
+completed_at  timestamptz
+UNIQUE(user_id, book_id)
+```
+
+### `reading_ai_insights`
+```sql
+id           uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+reading_id   uuid        NOT NULL REFERENCES reading_ai_books(id) ON DELETE CASCADE
+user_id      uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+book_id      uuid        NOT NULL REFERENCES books(id) ON DELETE CASCADE
+position     int         NOT NULL
+title        text        NOT NULL
+insight      text        NOT NULL
+extract      text        NOT NULL
+delivered_at timestamptz           -- null = not yet delivered by cron
+read_at      timestamptz           -- null = unread by user
+created_at   timestamptz DEFAULT now()
 ```
 
 ## Coding conventions
@@ -701,7 +735,7 @@ RLS: participant read, requester insert, owner update.
 
 **Notification types added:** `borrow_request` (→ `/loans/requests`), `borrow_approved` (→ `/loans?tab=requests`), `borrow_rejected` (→ `/loans?tab=requests`), `new_message` (→ `/messages?with={actorId}`)
 
-**API route:** `app/api/borrow-requests/route.ts` — GET pending incoming, POST create, PATCH approve/reject. Uses `supabaseAdmin` for all DB operations. POST always inserts a `borrow_request` JSON card into `messages`; PATCH always inserts a `borrow_response` JSON card.
+**API route:** `app/api/borrow-requests/route.ts` — GET pending incoming, POST create, PATCH approve/reject. Uses `supabaseAdmin` for all DB operations. POST always inserts a `borrow_request` JSON card into `messages`; PATCH always inserts a `borrow_response` JSON card. PATCH with `action = 'approve'` also sends a fire-and-forget approval email to the requester (see Email notifications).
 
 **Files:**
 - `app/(dashboard)/friends/[id]/borrow-button.tsx` — modal with book props (bookId, bookTitle, ownerId)
@@ -714,22 +748,53 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 
 **Files:**
 - `lib/email.ts` — `sendEmail({ to, subject, html })` wrapper around the Resend SDK
-- `lib/email-templates.ts` — three template functions returning `{ subject, html }`:
+- `lib/email-templates.ts` — template functions returning `{ subject, html }`:
   - `friendRequestEmail(senderName)`
   - `newMessageEmail(senderName, preview)`
   - `borrowRequestEmail(requesterName, bookTitle, message?)`
+  - `borrowRequestApprovedEmail(firstName, ownerName, bookTitle)` — sent to requester when owner approves
+  - `messageDigestEmail(firstName, conversations[])` — daily digest (see Daily message digest below)
+  - `dailyInsightEmail(firstName, bookTitle, bookAuthor, insightTitle, insightText, extract, position, total)` — sent by deliver-insights cron
+  - `invitationEmail(inviterName, token)`
+  - `trialReminder5DayEmail(firstName, trialEndsAt)`
+  - `trialReminder1DayEmail(firstName, trialEndsAt)`
+  - `trialExpiredEmail(firstName)`
 - Templates use inline HTML/CSS with the BookShelf stone brand (Georgia serif, stone-800 background CTA button, warm grey palette)
 - Recipient email fetched via `supabaseAdmin.auth.admin.getUserById(userId)` (only auth.users has email)
 
-**Three triggers:**
+**Transactional triggers (fire-and-forget):**
 
 | Event | File | Recipient | Debounce |
 |-------|------|-----------|----------|
 | Friend request sent | `app/(dashboard)/friends/actions.ts` → `sendFriendRequest()` | Addressee | None |
 | Message sent | `app/api/messages/route.ts` → POST | Receiver | Skip if unread `new_message` notification from same sender already exists |
 | Borrow request created | `app/api/borrow-requests/route.ts` → POST | Book owner | None |
+| Borrow request approved | `app/api/borrow-requests/route.ts` → PATCH (approve) | Requester | None |
 
 **Message email debounce:** Before sending, checks if a `new_message` notification already exists (`read = false`, same `actor_id`) — if so, user is likely actively chatting and email is skipped. Also skips JSON borrow card messages (content starts with `{`).
+
+### Daily message digest
+A daily cron collects unread messages and sends one digest email per user instead of spamming per-message notifications.
+
+**Cron schedule** (`vercel.json`): `0 18 * * *` — runs every day at 18:00 UTC.
+
+**Cron route:** `GET /api/cron/message-digest`
+- Secured by `Authorization: Bearer {CRON_SECRET}` header
+- Finds all `receiver_id`s with unread, non-borrow-card messages (`content NOT LIKE '{%'`) in the past 24 hours
+- Filters to users with `message_digest_enabled = true`
+- For each recipient: groups messages by sender, fetches sender names, sends one digest email
+- Non-overlapping windows: cron runs at the same time daily so each message is covered by exactly one 24h window — no dedup logic needed
+- Returns `{ ok: true, sent, errors }`
+
+**Opt-out:**
+- `profiles.message_digest_enabled` — boolean DEFAULT true (run `supabase/add-message-digest-field.sql`)
+- Toggle on `/profile` → Notifications section (`app/(dashboard)/profile/notifications-section.tsx`)
+- Server action: `updateMessageDigestEnabled(enabled)` in `profile/actions.ts`
+
+**Files:**
+- `app/api/cron/message-digest/route.ts` — cron handler
+- `app/(dashboard)/profile/notifications-section.tsx` — toggle UI
+- `supabase/add-message-digest-field.sql` — migration
 
 ### Bookstore (Wishlist)
 Users can maintain a wishlist of books they want to read or buy. When adding a book, the app immediately checks if any accepted friend owns it.
@@ -786,6 +851,52 @@ RLS: user can read/insert/update/delete only their own rows.
 - `app/(dashboard)/bookstore/add/page.tsx` — add page wrapper (Suspense)
 - `app/(dashboard)/bookstore/add/add-wishlist-form.tsx` — add form with Fill with AI, friend availability modal
 - `app/(dashboard)/books/photo-modal.tsx` — added `redirectTo?: string` prop (defaults to `/books/add`)
+
+### Read with AI
+Users can add up to 3 books to a daily AI reading program. Claude generates 10–20 insights per book; a daily cron delivers one insight per day per book. Users can mark insights as read and opt out of email notifications.
+
+**Flow:**
+1. From the ⋯ menu on any book → "Add to Read with AI" (calls `addToReadWithAI(bookId)`)
+2. An amber "Reading" badge appears on the book row
+3. Navigate to `/books/read-with-ai` — shows up to 3 book slots
+4. Click "Start Reading" on a pending book → `POST /api/read-with-ai/generate` calls Claude, inserts 10–20 insights, marks first as delivered, sets status → `active`
+5. Daily cron (08:00 UTC) delivers the next undelivered insight for each active reading
+6. User sees the latest delivered insight on the read-with-ai page; can click "Mark as read"
+7. Once all insights are delivered, reading status → `completed`
+8. Email notification per insight if `reading_ai_email_notifications = true`
+
+**Generation (`POST /api/read-with-ai/generate`):**
+- Verifies ownership + status = `pending` before calling Claude
+- Sets status → `generating`, calls `claude-opus-4-5` with prompt for 10–20 JSON insights
+- Each insight: `{ title, insight, extract }` — title 5–8 words, insight 2–4 sentences, extract a relevant quote
+- First insight gets `delivered_at = now()` immediately (no wait for cron)
+- On error: reverts status → `pending`; `maxDuration = 120`
+
+**Cron (`GET /api/cron/deliver-insights`, 08:00 UTC):**
+- Fetches all `status = 'active'` readings with joined book + profile
+- For each reading: finds next insight with `delivered_at IS NULL` ordered by position
+- If none: marks reading `completed`
+- If found: sets `delivered_at = now()`, sends `dailyInsightEmail` if `reading_ai_email_notifications = true`
+- Secured by `CRON_SECRET`; `maxDuration = 60`
+
+**Database** (run `supabase/add-reading-ai.sql`):
+- `reading_ai_books` — one row per user+book, tracks status and timestamps
+- `reading_ai_insights` — one row per insight, `delivered_at` and `read_at` timestamps
+- `profiles.reading_ai_email_notifications` — boolean DEFAULT true
+
+**Books page integration:**
+- `⋯` menu: "Add to Read with AI" / "Remove from Read with AI" (toggles based on current state)
+- Amber "Reading" badge on books that are in Read with AI
+- Subtitle link "Read with AI (N)" when there are active readings
+
+**Files:**
+- `supabase/add-reading-ai.sql` — migration
+- `app/(dashboard)/books/read-with-ai/actions.ts` — `addToReadWithAI`, `removeFromReadWithAI`, `markInsightRead`, `updateReadingAiNotifications`
+- `app/(dashboard)/books/read-with-ai/page.tsx` — server page, fetches readings + delivered insights
+- `app/(dashboard)/books/read-with-ai/reading-client.tsx` — client UI: book cards, start/generating/active/completed states, notification toggle
+- `app/api/read-with-ai/generate/route.ts` — Claude generation endpoint
+- `app/api/cron/deliver-insights/route.ts` — daily delivery cron
+- `lib/email-templates.ts` → `dailyInsightEmail()`
 
 ## Build order (phases)
 
