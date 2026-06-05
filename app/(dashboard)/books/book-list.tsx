@@ -74,7 +74,7 @@ function BookMenu({
         ⋯
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 rounded-lg border border-stone-200 bg-white shadow-md py-1 z-10">
+        <div className="absolute right-0 bottom-full mb-1 w-40 rounded-lg border border-stone-200 bg-white shadow-md py-1 z-50">
           <button
             className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={book.status === 'lent_out'}
@@ -421,10 +421,10 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {paginatedBooks.map(book => (
-            <div key={book.id} className="flex flex-col rounded-xl border border-stone-200 bg-white overflow-hidden">
+            <div key={book.id} className="flex flex-col rounded-xl border border-stone-200 bg-white">
               <button
                 onClick={() => router.push(`/books/${book.id}`)}
-                className="relative w-full aspect-[3/4] bg-stone-100 overflow-hidden hover:opacity-90 transition-opacity"
+                className="relative w-full aspect-[3/4] bg-stone-100 overflow-hidden rounded-t-xl hover:opacity-90 transition-opacity"
               >
                 {book.cover_url
                   ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
