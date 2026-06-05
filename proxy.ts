@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { detectLocaleFromHeaders } from '@/lib/locale-detection'
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -28,6 +29,18 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
+
+  // Auto-detect locale on first visit — only runs when NEXT_LOCALE cookie is absent
+  if (!request.cookies.get('NEXT_LOCALE')?.value) {
+    const countryCode = request.headers.get('x-vercel-ip-country')
+    const acceptLanguage = request.headers.get('accept-language')
+    const detected = detectLocaleFromHeaders(countryCode, acceptLanguage)
+    supabaseResponse.cookies.set('NEXT_LOCALE', detected, {
+      maxAge: 365 * 24 * 60 * 60,
+      path: '/',
+      sameSite: 'lax',
+    })
+  }
 
   // Admin routes — restricted to sp_andrei@yahoo.com
   if (pathname.startsWith('/admin')) {

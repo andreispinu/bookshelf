@@ -8,6 +8,52 @@ BookShelf is a personal book library app. Users can:
 - Add friends (other users)
 - Share and lend books between friends
 
+## Language auto-detection
+
+The app automatically detects the user's preferred language on first visit and persists it.
+
+**Detection priority (highest to lowest):**
+1. User's `ui_language` in their profile — always takes precedence; synced to cookie at login
+2. `NEXT_LOCALE` cookie — set by manual language switch or auto-detection; persists 1 year
+3. `x-vercel-ip-country` header — Vercel geo-detection, mapped via `COUNTRY_TO_LOCALE`
+4. `Accept-Language` request header — primary language tag extracted and matched
+5. Default: `'en'`
+
+**Country → locale mapping** (`lib/locale-detection.ts`):
+- `ro`: RO (Romania), MD (Moldova)
+- `ru`: RU, BY, KZ, UA, KG, TJ, TM, UZ, AM, AZ, GE
+- All other countries → `en`
+
+**Auto-detection flow** (`proxy.ts`):
+- Runs on every request before auth checks
+- Only sets the cookie when `NEXT_LOCALE` is **absent** — never overwrites a user's manual choice
+- Detects from `x-vercel-ip-country`, falls back to `Accept-Language`, defaults to `en`
+
+**Login sync** (`app/(auth)/actions.ts`):
+- If profile has `ui_language`: sets `NEXT_LOCALE` cookie to match (profile wins)
+- If profile has no `ui_language`: saves current `NEXT_LOCALE` cookie to profile
+
+**Signup** (`app/(auth)/actions.ts`):
+- Reads `NEXT_LOCALE` cookie and saves it as `ui_language` on the new profile row
+
+**Dashboard runtime sync** (`app/(dashboard)/locale-sync.tsx` + `locale-actions.ts`):
+- `LocaleSync` client component renders in the dashboard layout
+- If `ui_language` set but doesn't match cookie → calls `syncLocaleFromProfile()` + `router.refresh()`
+- If `ui_language` null → calls `syncLocaleToProfile()` (saves cookie to profile once)
+- Client-side cookie read avoids unnecessary server round-trips when already in sync
+
+**Manual language switch** (`landing-nav.tsx`, `profile/language-section.tsx`):
+- Calls `setLocale()` / `updateUiLanguage()` which update both cookie and profile
+- Shows a subtle note "Language set to X — overrides auto-detection" after switching
+
+**Files:**
+- `lib/locale-detection.ts` — `COUNTRY_TO_LOCALE` map + `detectLocaleFromHeaders()`
+- `proxy.ts` — auto-detect on first visit
+- `app/(auth)/actions.ts` — login sync + signup lang save
+- `app/(dashboard)/locale-actions.ts` — `syncLocaleFromProfile()`, `syncLocaleToProfile()`
+- `app/(dashboard)/locale-sync.tsx` — client component, runs on dashboard mount
+- `app/(dashboard)/layout.tsx` — fetches `ui_language`, renders `LocaleSync`
+
 ## Admin dashboard
 
 Route: `/admin` — server-side only, no client-side access.

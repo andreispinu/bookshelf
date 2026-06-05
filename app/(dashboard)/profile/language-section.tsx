@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { updateUiLanguage } from './actions'
@@ -13,12 +14,16 @@ const LANGUAGES = [
 export default function LanguageSection({ currentLanguage }: { currentLanguage: string }) {
   const t = useTranslations('profile')
   const router = useRouter()
+  const [justSet, setJustSet] = useState<string | null>(null)
 
   async function handleSelect(code: string) {
     if (code === currentLanguage) return
     await updateUiLanguage(code)
+    setJustSet(code)
     router.refresh()
   }
+
+  const justSetLabel = justSet ? LANGUAGES.find(l => l.code === justSet)?.label : null
 
   return (
     <section>
@@ -41,6 +46,11 @@ export default function LanguageSection({ currentLanguage }: { currentLanguage: 
             </button>
           ))}
         </div>
+        {justSetLabel && (
+          <p className="text-xs text-stone-400 mt-3">
+            {justSetLabel} set — overrides auto-detection.
+          </p>
+        )}
       </div>
     </section>
   )

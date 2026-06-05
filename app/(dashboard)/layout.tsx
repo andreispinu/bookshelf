@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import Nav from './nav'
 import MobileBottomNav from './mobile-bottom-nav'
+import LocaleSync from './locale-sync'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -12,7 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, avatar_url, subscription_status, trial_ends_at, first_name, last_name, username, country, city')
+    .select('name, avatar_url, subscription_status, trial_ends_at, first_name, last_name, username, country, city, ui_language')
     .eq('id', user.id)
     .single()
 
@@ -42,6 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen bg-stone-50">
+      <LocaleSync uiLanguage={profile?.ui_language ?? null} />
       <Nav userName={profile?.name ?? user.email ?? ''} avatarUrl={profile?.avatar_url ?? null} missingCount={missingCount} />
       {showBanner && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-800">

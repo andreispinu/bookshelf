@@ -13,6 +13,8 @@ const LANGUAGES = [
   { code: 'ru', label: 'RU' },
 ]
 
+const LANG_NAMES: Record<string, string> = { en: 'English', ro: 'Română', ru: 'Русский' }
+
 export default function LandingNav({
   isLoggedIn,
   currentLocale,
@@ -24,6 +26,7 @@ export default function LandingNav({
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [justSet, setJustSet] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const navLinks = [
@@ -49,6 +52,7 @@ export default function LandingNav({
     if (code === currentLocale || isPending) return
     startTransition(async () => {
       await setLocale(code)
+      setJustSet(code)
       router.refresh()
     })
   }
@@ -77,21 +81,28 @@ export default function LandingNav({
 
         {/* Desktop right: lang switcher + CTAs */}
         <div className="hidden md:flex items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 p-0.5">
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.code}
-                onClick={() => handleLocale(lang.code)}
-                disabled={isPending}
-                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                  currentLocale === lang.code
-                    ? 'bg-stone-800 text-white'
-                    : 'text-stone-500 hover:text-stone-800 disabled:opacity-50'
-                }`}
-              >
-                {lang.label}
-              </button>
-            ))}
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 p-0.5">
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => handleLocale(lang.code)}
+                  disabled={isPending}
+                  className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                    currentLocale === lang.code
+                      ? 'bg-stone-800 text-white'
+                      : 'text-stone-500 hover:text-stone-800 disabled:opacity-50'
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+            {justSet && !isPending && (
+              <p className="text-xs text-stone-400 whitespace-nowrap">
+                {LANG_NAMES[justSet]} set — overrides auto-detection
+              </p>
+            )}
           </div>
           {isLoggedIn ? (
             <Link
