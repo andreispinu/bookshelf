@@ -141,7 +141,13 @@
     "yourDailyInsight": "Perspectiva ta zilnică",
     "aiReadingBadge": "Citire",
     "tooManyReadingBooks": "Poți avea până la 3 cărți în Citire cu AI odată",
-    "analyzingBook": "Analizăm cartea și creăm perspective..."
+    "analyzingBook": "Analizăm cartea și creăm perspective...",
+    "showingRange": "Se afișează {from}–{to} din {total}",
+    "prevPage": "Anterior",
+    "nextPage": "Următor",
+    "listView": "Vizualizare listă",
+    "gridView": "Vizualizare grilă",
+    "pageOfTotal": "Pagina {page} din {total}"
   },
   "friends": {
     "title": "Prieteni",

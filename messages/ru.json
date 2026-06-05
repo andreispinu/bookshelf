@@ -141,7 +141,13 @@
     "yourDailyInsight": "Ваша ежедневная идея",
     "aiReadingBadge": "Чтение",
     "tooManyReadingBooks": "Можно добавить не более 3 книг в «Читать с ИИ»",
-    "analyzingBook": "Анализируем книгу и создаём идеи..."
+    "analyzingBook": "Анализируем книгу и создаём идеи...",
+    "showingRange": "Показано {from}–{to} из {total}",
+    "prevPage": "Назад",
+    "nextPage": "Далее",
+    "listView": "Список",
+    "gridView": "Сетка",
+    "pageOfTotal": "Страница {page} из {total}"
   },
   "friends": {
     "title": "Друзья",

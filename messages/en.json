@@ -141,7 +141,13 @@
     "yourDailyInsight": "Your daily insight",
     "aiReadingBadge": "Reading",
     "tooManyReadingBooks": "You can have up to 3 books in Read with AI at a time",
-    "analyzingBook": "Analyzing your book and creating insights..."
+    "analyzingBook": "Analyzing your book and creating insights...",
+    "showingRange": "Showing {from}–{to} of {total}",
+    "prevPage": "Previous",
+    "nextPage": "Next",
+    "listView": "List view",
+    "gridView": "Grid view",
+    "pageOfTotal": "Page {page} of {total}"
   },
   "friends": {
     "title": "Friends",

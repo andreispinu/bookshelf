@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -24,6 +24,8 @@ import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
 import { translateCategory } from '@/lib/translate-category'
+import ViewToggle, { useViewMode } from './view-toggle'
+import Pagination from '../components/pagination'
 
 type FillSuggestion = {
   field: keyof Pick<Book, 'isbn' | 'publisher' | 'year' | 'category' | 'language' | 'description' | 'cover_url'>
@@ -153,6 +155,24 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
 
   const [localReadingAIMap, setLocalReadingAIMap] = useState(readingAIMap)
   const acceptedFriends = friends.filter(f => f.status === 'accepted')
+  const [viewMode, setViewMode] = useViewMode()
+  const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const p = parseInt(params.get('page') ?? '1', 10)
+    if (!isNaN(p) && p > 0) setPage(p)
+  }, [])
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage)
+    const params = new URLSearchParams(window.location.search)
+    if (newPage === 1) params.delete('page')
+    else params.set('page', String(newPage))
+    const qs = params.toString()
+    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   const uniqueCategories = [...new Set(
     books.filter(b => b.category).map(b => b.category as string)
@@ -164,6 +184,10 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
   }, {})
 
   const filteredBooks = activeCategory ? books.filter(b => b.category === activeCategory) : books
+
+  const PAGE_SIZE = 10
+  const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE)
+  const paginatedBooks = filteredBooks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handleAddToAI(bookId: string) {
     const result = await addToReadWithAI(bookId)
@@ -363,35 +387,89 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
 
   return (
     <>
-      {uniqueCategories.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-5">
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-            }`}
-          >
-            {tc('all')} <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({books.length})</span>
-          </button>
-          {uniqueCategories.map(cat => (
+      <div className="flex items-start justify-between gap-3 mb-5">
+        {uniqueCategories.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
             <button
-              key={cat}
-              onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+              onClick={() => { setActiveCategory(null); handlePageChange(1) }}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              {translateCategory(cat, tCat)} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
+              {tc('all')} <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({books.length})</span>
             </button>
-          ))}
+            {uniqueCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); handlePageChange(1) }}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                {translateCategory(cat, tCat)} <span className={activeCategory === cat ? 'opacity-75' : 'text-stone-400'}>({categoryCounts[cat] ?? 0})</span>
+              </button>
+            ))}
+          </div>
+        ) : <div />}
+        <div className="shrink-0">
+          <ViewToggle mode={viewMode} onChange={setViewMode} />
         </div>
-      )}
+      </div>
 
       {filteredBooks.length === 0 ? (
         <div className="text-center py-12 text-stone-400 text-sm">{t('noBooksInCategory')}</div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {paginatedBooks.map(book => (
+            <div key={book.id} className="flex flex-col rounded-xl border border-stone-200 bg-white overflow-hidden">
+              <button
+                onClick={() => router.push(`/books/${book.id}`)}
+                className="relative w-full aspect-[3/4] bg-stone-100 overflow-hidden hover:opacity-90 transition-opacity"
+              >
+                {book.cover_url
+                  ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+                  : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
+                }
+                {localReadingAIMap[book.id] && (
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-medium leading-none">
+                    {t('aiReadingBadge')}
+                  </span>
+                )}
+              </button>
+              <div className="p-2.5 flex flex-col gap-1 flex-1">
+                <p className="text-xs font-semibold text-stone-800 leading-snug line-clamp-2">{book.title}</p>
+                <p className="text-[11px] text-stone-500 truncate">{book.author}</p>
+                {book.category && <p className="text-[10px] text-stone-400">{translateCategory(book.category, tCat)}</p>}
+                <div className="flex items-center justify-between mt-auto pt-1.5">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 h-4 ${
+                      book.status === 'available'
+                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                        : 'border-amber-200 text-amber-700 bg-amber-50'
+                    }`}
+                  >
+                    {book.status === 'available' ? t('available') : t('lentOut')}
+                  </Badge>
+                  <BookMenu
+                    book={book}
+                    isDeleting={deletingId === book.id}
+                    isInReadingAI={!!localReadingAIMap[book.id]}
+                    onLend={() => { setLending(book); setLendError(null) }}
+                    onEdit={() => { setEditing(book); setEditError(null); setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(false) }}
+                    onFill={() => handleFillWithAI(book)}
+                    onAddToAI={() => handleAddToAI(book.id)}
+                    onRemoveFromAI={() => handleRemoveFromAI(localReadingAIMap[book.id]!, book.id)}
+                    onDelete={() => handleDelete(book.id)}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <ul className="divide-y divide-stone-100">
-          {filteredBooks.map(book => (
+          {paginatedBooks.map(book => (
             <li key={book.id} className="flex items-center gap-4 py-4">
               <div className="shrink-0 w-10 h-14 rounded bg-stone-200 overflow-hidden flex items-center justify-center">
                 {book.cover_url
@@ -448,6 +526,14 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
           ))}
         </ul>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={filteredBooks.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={handlePageChange}
+      />
 
       {/* Lend dialog */}
       <Dialog open={!!lending} onOpenChange={open => !open && setLending(null)}>

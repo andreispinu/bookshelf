@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { translateCategory } from '@/lib/translate-category'
+import ViewToggle, { useViewMode } from '../../books/view-toggle'
+import Pagination from '../../components/pagination'
 
 export type FriendInfo = {
   id: string
@@ -48,6 +50,7 @@ function FriendAvatar({ friend, size = 5 }: { friend: FriendInfo; size?: number 
 }
 
 function StatusBadge({ status }: { status: 'available' | 'lent_out' }) {
+  const t = useTranslations('books')
   return (
     <Badge
       variant="outline"
@@ -57,7 +60,7 @@ function StatusBadge({ status }: { status: 'available' | 'lent_out' }) {
           : 'border-amber-200 text-amber-700 bg-amber-50'
       }`}
     >
-      {status === 'available' ? 'Available' : 'Lent out'}
+      {status === 'available' ? t('available') : t('lentOut')}
     </Badge>
   )
 }
@@ -112,7 +115,7 @@ function BookGroupRow({ group }: { group: BookGroup }) {
                   ))}
                 </div>
                 <span className="text-xs text-stone-500 group-hover:text-stone-700 transition-colors">
-                  {group.copies.length} friends have this
+                  {group.copies.length} {group.copies.length === 1 ? 'friend' : 'friends'} have this
                   <span className="ml-1 text-stone-400">{expanded ? '▴' : '▾'}</span>
                 </span>
               </button>
@@ -146,7 +149,7 @@ function BookGroupRow({ group }: { group: BookGroup }) {
             href={`/friends/${firstCopy.friend.id}/books/${firstCopy.bookId}`}
             className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-stone-200 text-xs font-medium text-stone-600 hover:bg-stone-50 transition-colors"
           >
-            View
+            View →
           </Link>
         </div>
       )}
@@ -154,11 +157,111 @@ function BookGroupRow({ group }: { group: BookGroup }) {
   )
 }
 
+function BookGroupCard({ group }: { group: BookGroup }) {
+  const tCat = useTranslations('categories')
+  const t = useTranslations('books')
+  const [expanded, setExpanded] = useState(false)
+  const firstCopy = group.copies[0]
+  const isMulti = group.copies.length > 1
+
+  return (
+    <div className="flex flex-col rounded-xl border border-stone-200 bg-white overflow-hidden">
+      <div className="relative w-full aspect-[3/4] bg-stone-100 overflow-hidden">
+        {isMulti ? (
+          <button onClick={() => setExpanded(v => !v)} className="w-full h-full hover:opacity-90 transition-opacity">
+            {group.cover_url
+              ? <img src={group.cover_url} alt={group.title} className="w-full h-full object-cover" />
+              : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
+            }
+          </button>
+        ) : (
+          <Link href={`/friends/${firstCopy.friend.id}/books/${firstCopy.bookId}`} className="block w-full h-full hover:opacity-90 transition-opacity">
+            {group.cover_url
+              ? <img src={group.cover_url} alt={group.title} className="w-full h-full object-cover" />
+              : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
+            }
+          </Link>
+        )}
+      </div>
+      <div className="p-2.5 flex flex-col gap-1 flex-1">
+        <p className="text-xs font-semibold text-stone-800 leading-snug line-clamp-2">{group.title}</p>
+        <p className="text-[11px] text-stone-500 truncate">{group.author}</p>
+        {group.category && <p className="text-[10px] text-stone-400">{translateCategory(group.category, tCat)}</p>}
+        <div className="mt-auto pt-1.5">
+          {!isMulti ? (
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1 min-w-0">
+                <FriendAvatar friend={firstCopy.friend} />
+                <StatusBadge status={firstCopy.status} />
+              </div>
+              <Link
+                href={`/friends/${firstCopy.friend.id}/books/${firstCopy.bookId}`}
+                className="shrink-0 text-[10px] text-stone-400 hover:text-stone-700 transition-colors"
+              >
+                {t('view')} →
+              </Link>
+            </div>
+          ) : (
+            <div>
+              <button onClick={() => setExpanded(v => !v)} className="flex items-center gap-1.5 group">
+                <div className="flex -space-x-1">
+                  {group.copies.slice(0, 3).map(copy => (
+                    <div key={copy.bookId} className="h-4 w-4 rounded-full bg-stone-300 ring-1 ring-white overflow-hidden flex items-center justify-center text-[8px] font-medium text-stone-600">
+                      {copy.friend.avatar_url
+                        ? <img src={copy.friend.avatar_url} alt={copy.friend.name} className="h-full w-full object-cover" />
+                        : initials(copy.friend.name)
+                      }
+                    </div>
+                  ))}
+                </div>
+                <span className="text-[10px] text-stone-500 group-hover:text-stone-700 transition-colors">
+                  {group.copies.length} <span className="text-stone-400">{expanded ? '▴' : '▾'}</span>
+                </span>
+              </button>
+              {expanded && (
+                <ul className="mt-1.5 space-y-1">
+                  {group.copies.map(copy => (
+                    <li key={copy.bookId} className="flex items-center gap-1.5">
+                      <FriendAvatar friend={copy.friend} size={4} />
+                      <span className="text-[10px] text-stone-600 truncate flex-1">{copy.friend.name}</span>
+                      <StatusBadge status={copy.status} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
   const tCat = useTranslations('categories')
+  const t = useTranslations('books')
+  const tc = useTranslations('common')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'recent' | 'title' | 'popular'>('recent')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useViewMode()
+  const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const p = parseInt(params.get('page') ?? '1', 10)
+    if (!isNaN(p) && p > 0) setPage(p)
+  }, [])
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage)
+    const params = new URLSearchParams(window.location.search)
+    if (newPage === 1) params.delete('page')
+    else params.set('page', String(newPage))
+    const qs = params.toString()
+    window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   const uniqueCategories = useMemo(() =>
     [...new Set(groups.filter(g => g.category).map(g => g.category as string))].sort(),
@@ -188,7 +291,11 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
     }
 
     return result
-  }, [groups, query, sort])
+  }, [groups, query, sort, activeCategory])
+
+  const PAGE_SIZE = 10
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginatedGroups = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div>
@@ -196,34 +303,37 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
         <Input
           placeholder="Search by title or author…"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={e => { setQuery(e.target.value); handlePageChange(1) }}
           className="border-stone-200 focus-visible:ring-stone-400 max-w-xs"
         />
         <select
           value={sort}
-          onChange={e => setSort(e.target.value as 'recent' | 'title' | 'popular')}
+          onChange={e => { setSort(e.target.value as 'recent' | 'title' | 'popular'); handlePageChange(1) }}
           className="h-9 rounded-md border border-stone-200 bg-white px-3 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-400"
         >
           <option value="recent">Recently added</option>
           <option value="title">Title A–Z</option>
           <option value="popular">Most popular</option>
         </select>
+        <div className="ml-auto">
+          <ViewToggle mode={viewMode} onChange={setViewMode} />
+        </div>
       </div>
 
       {uniqueCategories.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-5">
           <button
-            onClick={() => setActiveCategory(null)}
+            onClick={() => { setActiveCategory(null); handlePageChange(1) }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            All <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({groups.length})</span>
+            {tc('all')} <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({groups.length})</span>
           </button>
           {uniqueCategories.map(cat => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+              onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); handlePageChange(1) }}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
@@ -238,13 +348,27 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
         <div className="text-center py-16 text-stone-400">
           <p>No books match your search.</p>
         </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {paginatedGroups.map(group => (
+            <BookGroupCard key={group.key} group={group} />
+          ))}
+        </div>
       ) : (
         <ul className="divide-y divide-stone-100">
-          {filtered.map(group => (
+          {paginatedGroups.map(group => (
             <BookGroupRow key={group.key} group={group} />
           ))}
         </ul>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={filtered.length}
+        pageSize={PAGE_SIZE}
+        onPageChange={handlePageChange}
+      />
     </div>
   )
 }
