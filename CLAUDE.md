@@ -1100,11 +1100,29 @@ Users can add up to 3 books to a daily AI reading program. Claude generates 10�
 8. Email notification per insight if `reading_ai_email_notifications = true`
 
 **Generation (`POST /api/read-with-ai/generate`):**
-- Verifies ownership + status = `pending` before calling Claude
+- Verifies ownership + status = `pending` OR `generating` (retry from stale) before calling Claude
+- If retrying from `generating`: deletes any partial insights first (cleanup)
 - Sets status → `generating`, calls `claude-opus-4-5` with prompt for 10–20 JSON insights
 - Each insight: `{ title, insight, extract }` — title 5–8 words, insight 2–4 sentences, extract a relevant quote
 - First insight gets `delivered_at = now()` immediately (no wait for cron)
 - On error: reverts status → `pending`; `maxDuration = 120`
+
+**Real-time generation status (`GET /api/read-with-ai/status?readingId={id}`):**
+- Returns `{ status, insightsCount, latestInsight }` for the given reading
+- Protected: verifies reading belongs to the current user
+- `latestInsight` — the highest-position delivered insight (ORDER BY position DESC LIMIT 1); only included when status is `active` or `completed`
+- Used by the client for polling during generation; also called after generate returns to get the first insight
+
+**Client-side generation UX (`reading-client.tsx` → `ReadingBookCard` component):**
+- Each book card is a self-contained component managing its own generation state
+- **Polling**: `useEffect` starts a `setInterval` (every 3s) whenever `status === 'generating'`; stops when status changes or 10 consecutive failures → shows "Something went wrong" error
+- **Stale detection**: if the page loads with a book already in `generating` state (previous session crashed), `generatingStartedAt` is set to `Date.now() - 5min` so `isStale = true` immediately → shows "Retry" button
+- **Timeout**: after 30s in a fresh generation session, shows "Taking longer than expected" message
+- **Animated progress bar**: indeterminate shimmer animation (`rw-shimmer` CSS keyframe) in amber while generating
+- **Cycling messages**: 4 messages cycle every 2s (Analyzing → Extracting → Quotes → Preparing)
+- **Completion animation**: when polling/fetch detects `active`, fills progress bar to 100% (emerald), shows "✓ N insights ready!", then reveals insight card after 1s
+- **Retry flow**: clicking Retry resets `generatingStartedAt` to `Date.now()` (clears stale flag), calls generate endpoint again
+- **Race guard**: `transitioned` ref prevents double-call to `transitionToActive` if both polling and the generate fetch complete at the same time
 
 **Cron (`GET /api/cron/deliver-insights`, 08:00 UTC):**
 - Fetches all `status = 'active'` readings with joined book + profile
@@ -1128,7 +1146,8 @@ Users can add up to 3 books to a daily AI reading program. Claude generates 10�
 - `app/(dashboard)/books/read-with-ai/actions.ts` — `addToReadWithAI`, `removeFromReadWithAI`, `markInsightRead`, `updateReadingAiNotifications`
 - `app/(dashboard)/books/read-with-ai/page.tsx` — server page, fetches readings + delivered insights
 - `app/(dashboard)/books/read-with-ai/reading-client.tsx` — client UI: book cards, start/generating/active/completed states, notification toggle
-- `app/api/read-with-ai/generate/route.ts` — Claude generation endpoint
+- `app/api/read-with-ai/generate/route.ts` — Claude generation endpoint (also handles retry from `generating` state)
+- `app/api/read-with-ai/status/route.ts` — GET polling endpoint; returns `{ status, insightsCount, latestInsight }`
 - `app/api/cron/deliver-insights/route.ts` — daily delivery cron
 - `lib/email-templates.ts` → `dailyInsightEmail()`
 

@@ -147,7 +147,16 @@
     "nextPage": "Далее",
     "listView": "Список",
     "gridView": "Сетка",
-    "pageOfTotal": "Страница {page} из {total}"
+    "pageOfTotal": "Страница {page} из {total}",
+    "generatingStep1": "Анализируем «{title}»...",
+    "generatingStep2": "Извлекаем ключевые идеи...",
+    "generatingStep3": "Ищем запоминающиеся цитаты...",
+    "generatingStep4": "Готовим ваше путешествие в книгу...",
+    "generatingEstimate": "Обычно занимает 10–20 секунд",
+    "insightsReady": "✓ {count} идей готово!",
+    "generationError": "Что-то пошло не так — обновите страницу",
+    "generationTimeout": "Занимает больше времени, чем обычно. Ваши идеи скоро будут готовы — можете уйти и вернуться.",
+    "generationRetry": "Повторить генерацию"
   },
   "friends": {
     "title": "Друзья",

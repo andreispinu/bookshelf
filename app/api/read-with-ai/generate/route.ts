@@ -27,8 +27,13 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!reading) return NextResponse.json({ error: 'Reading not found' }, { status: 404 })
-  if (reading.status !== 'pending') {
+  if (reading.status !== 'pending' && reading.status !== 'generating') {
     return NextResponse.json({ error: 'Insights already generated' }, { status: 400 })
+  }
+
+  // Clean up any partial insights from a previous failed attempt
+  if (reading.status === 'generating') {
+    await supabaseAdmin.from('reading_ai_insights').delete().eq('reading_id', readingId)
   }
 
   // Fetch book details

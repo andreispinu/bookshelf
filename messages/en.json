@@ -147,7 +147,16 @@
     "nextPage": "Next",
     "listView": "List view",
     "gridView": "Grid view",
-    "pageOfTotal": "Page {page} of {total}"
+    "pageOfTotal": "Page {page} of {total}",
+    "generatingStep1": "Analyzing \"{title}\"...",
+    "generatingStep2": "Extracting key insights...",
+    "generatingStep3": "Finding memorable quotes...",
+    "generatingStep4": "Preparing your reading journey...",
+    "generatingEstimate": "Usually takes 10–20 seconds",
+    "insightsReady": "✓ {count} insights ready!",
+    "generationError": "Something went wrong — refresh the page",
+    "generationTimeout": "Taking longer than expected. Your insights will be ready soon — you can leave this page and come back.",
+    "generationRetry": "Retry generation"
   },
   "friends": {
     "title": "Friends",

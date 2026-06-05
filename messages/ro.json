@@ -147,7 +147,16 @@
     "nextPage": "Următor",
     "listView": "Vizualizare listă",
     "gridView": "Vizualizare grilă",
-    "pageOfTotal": "Pagina {page} din {total}"
+    "pageOfTotal": "Pagina {page} din {total}",
+    "generatingStep1": "Analizăm „{title}"...",
+    "generatingStep2": "Extragem idei cheie...",
+    "generatingStep3": "Găsim citate memorabile...",
+    "generatingStep4": "Pregătim parcursul tău de lectură...",
+    "generatingEstimate": "De obicei durează 10–20 secunde",
+    "insightsReady": "✓ {count} idei gata!",
+    "generationError": "Ceva a mers greșit — actualizează pagina",
+    "generationTimeout": "Durează mai mult decât de obicei. Perspectivele tale vor fi gata în curând — poți pleca și reveni.",
+    "generationRetry": "Încearcă din nou"
   },
   "friends": {
     "title": "Prieteni",
