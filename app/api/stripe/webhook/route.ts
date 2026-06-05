@@ -55,6 +55,13 @@ export async function POST(request: NextRequest) {
 
       if (error) console.error('[webhook] supabase update error:', error)
       else console.log('[webhook] profile updated successfully')
+
+      // Set subscribed_at on first activation only
+      await supabaseAdmin.from('profiles')
+        .update({ subscribed_at: new Date().toISOString() })
+        .eq('id', userId)
+        .is('subscribed_at', null)
+
       break
     }
 

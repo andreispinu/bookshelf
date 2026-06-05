@@ -29,6 +29,12 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
+  // Admin routes — restricted to sp_andrei@yahoo.com
+  if (pathname.startsWith('/admin')) {
+    if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    if (user.email !== 'sp_andrei@yahoo.com') return NextResponse.redirect(new URL('/books', request.url))
+  }
+
   // Redirect unauthenticated users away from protected routes
   const protectedPrefixes = ['/books', '/friends', '/loans', '/subscribe']
   if (!user && protectedPrefixes.some(p => pathname.startsWith(p))) {

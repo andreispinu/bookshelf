@@ -8,6 +8,46 @@ BookShelf is a personal book library app. Users can:
 - Add friends (other users)
 - Share and lend books between friends
 
+## Admin dashboard
+
+Route: `/admin` — server-side only, no client-side access.
+
+**Access control** (`proxy.ts`):
+- Path starts with `/admin` → check `user.email`
+- Not logged in → redirect to `/login`
+- Email ≠ `sp_andrei@yahoo.com` → redirect to `/books`
+- No other users can access this route under any circumstances
+
+**Layout** (`app/admin/layout.tsx`): Clean white utility layout — "BookShelf Admin" wordmark + "← Back to app" link. No main app nav.
+
+**Page** (`app/admin/page.tsx`): `export const revalidate = 300`. All data fetched server-side via `supabaseAdmin`. "Refresh data" button calls `router.refresh()`.
+
+**Tab navigation** (`app/admin/admin-tabs.tsx`): Sticky tabs — Overview | Users | Revenue | Activity — with IntersectionObserver active-section highlighting.
+
+**Sections:**
+
+| Section | Key metrics |
+|---------|-------------|
+| Overview | Total users, paid, MRR, ARR, trial→paid rate, new today/week/month |
+| Users | Subscription breakdown, growth, conversion & churn, recent registrations table (10), signups feed (20) |
+| Revenue | MRR, ARR, monthly/annual subscriber counts, new subs this month, est. total revenue |
+| Activity | Books, Friends & Social, Lending, Messaging, Reading & Wishlist |
+
+**Revenue calculations** (from Supabase profiles table — NOT Stripe API):
+- MRR = (monthly_active × $1) + (annual_active × $10 ÷ 12)
+- ARR = MRR × 12
+- Est. total revenue = (monthly_ever_paid × $1) + (annual_ever_paid × $10), where "ever paid" uses `subscribed_at IS NOT NULL`
+- `subscribed_at` column: set by Stripe webhook (`checkout.session.completed`) on first activation only (`.is('subscribed_at', null)` guard). Existing actives backfilled via `supabase/add-subscribed-at.sql`.
+
+**Files:**
+- `proxy.ts` — admin route guard (email whitelist)
+- `supabase/add-subscribed-at.sql` — migration + backfill
+- `app/api/stripe/webhook/route.ts` — sets `subscribed_at` on first checkout
+- `app/admin/layout.tsx` — minimal admin layout
+- `app/admin/admin-tabs.tsx` — sticky tab nav (client component)
+- `app/admin/admin-refresh.tsx` — refresh button (client component)
+- `app/admin/page.tsx` — full dashboard (server component, revalidate=300)
+
 ## Tech stack
 
 | Layer | Tool |
