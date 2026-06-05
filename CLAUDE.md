@@ -1370,3 +1370,45 @@ Three automated emails sent at key moments in the trial lifecycle. A single cron
 1. Run `supabase/add-trial-email-fields.sql` in Supabase SQL Editor
 2. Add `CRON_SECRET` to Vercel environment variables (generate with `openssl rand -hex 32`)
 3. Add same `CRON_SECRET` to `.env.local` for local testing
+
+### In-app support system
+Users can contact support via a floating button present on every dashboard page. Conversations are tracked in dedicated DB tables. Admin replies from the admin panel.
+
+**Support bot:** Fixed UUID `00000000-0000-0000-0000-000000000001` — exists in both `auth.users` and `profiles` as "BookShelf Support".
+
+**Flow:**
+1. User clicks floating `?` button (bottom-right on all dashboard pages) → navigates to `/support`
+2. `/support` has two tabs: "New message" (type pills + subject + textarea) and "My messages" (ticket list + thread)
+3. Submitting a new ticket: creates `support_tickets` row + inserts initial message into `support_replies` + inserts `SUPPORT:{...}` stub into `messages` table for nav preview + sends admin email
+4. Admin opens `/admin/support` → sees all tickets with status badges
+5. Admin clicks ticket → `/admin/support/[id]` → replies via `POST /api/admin/support/[id]`
+6. Admin reply: inserts into `support_replies`, inserts `SUPPORT_REPLY:[ticketId]` stub into `messages` (for unread badge), creates `support_reply` notification, sends email to user
+7. Admin can change ticket status: `open` → `in_progress` → `resolved` (sends email on resolve)
+8. User's messages page shows the support bot conversation with special card rendering for SUPPORT:/SUPPORT_REPLY: messages + "Go to Support to reply →" instead of input
+
+**Message format in `messages` table:**
+- User creates ticket: `SUPPORT:{"ticketId":"...","type":"...","subject":"..."}\n[preview text]`
+- Admin reply: `SUPPORT_REPLY:[ticketId]\n[reply preview text]`
+- These are stubs only — actual thread lives in `support_replies` table
+
+**Unread badge:**
+- Floating support button: polls `/api/nav-counts` → `unreadSupportReplies` (from_admin replies with read_at IS NULL)
+- `read_at` is set when user opens the ticket thread (`GET /api/support/[id]`)
+
+**Database tables** (run `supabase/add-support.sql`):
+- `support_tickets`: id, user_id, type, subject, status (open/in_progress/resolved), created_at, updated_at
+- `support_replies`: id, ticket_id, from_admin, content, read_at, created_at
+
+**Files:**
+- `supabase/add-support.sql` — migration + bot profile creation
+- `app/api/support/route.ts` — GET list, POST create ticket
+- `app/api/support/[id]/route.ts` — GET thread (marks admin replies read), POST user reply
+- `app/api/admin/support/route.ts` — GET all tickets (admin only)
+- `app/api/admin/support/[id]/route.ts` — GET ticket, PATCH status, POST admin reply
+- `app/(dashboard)/support/page.tsx` — server page, fetches tickets
+- `app/(dashboard)/support/support-client.tsx` — tabbed UI (new message + ticket list + thread)
+- `app/(dashboard)/support-button.tsx` — floating button with unread dot, polls nav-counts
+- `app/admin/support/page.tsx` — admin ticket list
+- `app/admin/support/[id]/page.tsx` — admin ticket detail (server)
+- `app/admin/support/[id]/admin-support-client.tsx` — admin reply + status management (client)
+- `lib/email-templates.ts` — `newTicketAdminEmail`, `adminReplyEmail`, `ticketSolvedEmail`

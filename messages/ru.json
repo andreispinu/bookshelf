@@ -23,7 +23,8 @@
     "loans": "Займы",
     "profile": "Профиль",
     "signOut": "Выйти",
-    "bookstore": "Магазин"
+    "bookstore": "Магазин",
+    "support": "Поддержка"
   },
   "auth": {
     "signIn": "Войти",
@@ -386,7 +387,8 @@
     "borrowRequest": "{name} хочет взять {title}",
     "borrowApproved": "{name} одобрил ваш запрос на {title}",
     "borrowRejected": "{name} отклонил ваш запрос на {title}",
-    "newMessage": "{name} отправил вам сообщение"
+    "newMessage": "{name} отправил вам сообщение",
+    "supportReply": "Служба поддержки BookShelf ответила на ваш запрос"
   },
   "landing": {
     "navBooks": "Книги",
@@ -578,5 +580,33 @@
     "Cooking": "Кулинария",
     "Governance & Politics": "Управление & Политика",
     "School Books": "Учебники"
+  },
+  "support": {
+    "title": "Поддержка",
+    "newMessage": "Новое сообщение",
+    "myMessages": "Мои сообщения",
+    "typeLabel": "О чём ваш запрос?",
+    "typeBug": "Сообщение об ошибке",
+    "typeQuestion": "Вопрос",
+    "typeFeature": "Запрос функции",
+    "typeBilling": "Оплата",
+    "typeOther": "Другое",
+    "subjectPlaceholder": "Краткое описание проблемы",
+    "messagePlaceholder": "Опишите проблему подробнее…",
+    "submit": "Отправить сообщение",
+    "submitting": "Отправляем…",
+    "successTitle": "Сообщение отправлено!",
+    "successText": "Мы ответим вам как можно скорее.",
+    "noTickets": "Пока нет сообщений в поддержку.",
+    "statusOpen": "Открыт",
+    "statusInProgress": "В работе",
+    "statusResolved": "Решён",
+    "replyPlaceholder": "Написать ответ…",
+    "sendReply": "Отправить ответ",
+    "supportBotName": "Поддержка BookShelf",
+    "ticketCreated": "Обращение в поддержку: {subject}",
+    "adminReplied": "Команда поддержки ответила",
+    "viewInSupport": "Смотреть в поддержке",
+    "support": "Поддержка"
   }
 }

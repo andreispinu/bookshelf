@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Send, ArrowLeft, SquarePen, X, Search } from 'lucide-react'
+import { Send, ArrowLeft, SquarePen, X, Search, MessageCircle } from 'lucide-react'
 import type { ConvItem, Message } from '@/types'
 import { COUNTRY_FLAGS } from '@/lib/countries'
 import { parseBorrowPayload, BorrowRequestCard, BorrowResponseCard } from './borrow-card'
@@ -23,8 +23,31 @@ function initials(name: string) {
   return name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
+const SUPPORT_BOT_ID = '00000000-0000-0000-0000-000000000001'
+
+function parseSupportHeader(content: string): { ticketId: string; type: string; subject: string } | null {
+  if (!content.startsWith('SUPPORT:')) return null
+  const rest = content.slice('SUPPORT:'.length)
+  const nl = rest.indexOf('\n')
+  const json = nl >= 0 ? rest.slice(0, nl) : rest
+  try { return JSON.parse(json) } catch { return null }
+}
+
+function parseSupportReply(content: string): { ticketId: string; body: string } | null {
+  if (!content.startsWith('SUPPORT_REPLY:')) return null
+  const rest = content.slice('SUPPORT_REPLY:'.length)
+  const nl = rest.indexOf('\n')
+  const ticketId = nl >= 0 ? rest.slice(0, nl) : rest
+  const body = nl >= 0 ? rest.slice(nl + 1) : ''
+  return { ticketId, body }
+}
+
 function formatPreview(content: string): string {
   if (content.startsWith('SYSTEM:')) return content.slice(7).trim()
+  const support = parseSupportHeader(content)
+  if (support) return `Support ticket: ${support.subject}`
+  const reply = parseSupportReply(content)
+  if (reply) return 'Support team replied'
   const payload = parseBorrowPayload(content)
   if (!payload) return content
   if (payload.type === 'borrow_request') return `Borrow request: ${payload.book_title}`
@@ -379,6 +402,42 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
                     )
                   }
 
+                  // Support ticket stub
+                  const supportHeader = parseSupportHeader(msg.content)
+                  if (supportHeader) {
+                    return (
+                      <div key={msg.id} className="flex justify-end">
+                        <div className="max-w-[80%] bg-stone-100 border border-stone-200 rounded-2xl rounded-br-sm px-3.5 py-2.5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <MessageCircle className="h-3.5 w-3.5 text-stone-500 shrink-0" />
+                            <span className="text-xs font-medium text-stone-500 uppercase tracking-wide">Support ticket</span>
+                          </div>
+                          <p className="text-sm font-medium text-stone-800">{supportHeader.subject}</p>
+                          <a href="/support" className="text-xs text-stone-400 hover:text-stone-600 underline mt-1 inline-block">View in Support →</a>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // Support reply stub
+                  const supportReply = parseSupportReply(msg.content)
+                  if (supportReply) {
+                    return (
+                      <div key={msg.id} className="flex justify-start">
+                        <div className="max-w-[80%] bg-amber-50 border border-amber-100 rounded-2xl rounded-bl-sm px-3.5 py-2.5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <MessageCircle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                            <span className="text-xs font-medium text-amber-700">BookShelf Support replied</span>
+                          </div>
+                          {supportReply.body && (
+                            <p className="text-sm text-stone-700 mb-1">{supportReply.body}</p>
+                          )}
+                          <a href="/support" className="text-xs text-stone-400 hover:text-stone-600 underline inline-block">View in Support →</a>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const borrowPayload = parseBorrowPayload(msg.content)
 
                   if (borrowPayload) {
@@ -416,27 +475,38 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-3 border-t border-stone-100 flex items-end gap-2 shrink-0">
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={e => setContent(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('placeholder')}
-                rows={1}
-                className="flex-1 resize-none rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-transparent"
-                style={{ maxHeight: '120px', overflowY: 'auto' }}
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!content.trim() || sending}
-                className="p-2.5 rounded-xl bg-stone-800 text-white hover:bg-stone-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                aria-label={t('send')}
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
+            {/* Input — hidden for support bot conversations */}
+            {activeConvId !== SUPPORT_BOT_ID ? (
+              <div className="p-3 border-t border-stone-100 flex items-end gap-2 shrink-0">
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t('placeholder')}
+                  rows={1}
+                  className="flex-1 resize-none rounded-xl border border-stone-200 px-3 py-2.5 text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 focus:border-transparent"
+                  style={{ maxHeight: '120px', overflowY: 'auto' }}
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!content.trim() || sending}
+                  className="p-2.5 rounded-xl bg-stone-800 text-white hover:bg-stone-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                  aria-label={t('send')}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="p-3 border-t border-stone-100 shrink-0">
+                <a
+                  href="/support"
+                  className="block text-center text-sm text-stone-500 hover:text-stone-800 underline underline-offset-2 transition-colors"
+                >
+                  Go to Support to reply →
+                </a>
+              </div>
+            )}
           </>
         )}
       </div>

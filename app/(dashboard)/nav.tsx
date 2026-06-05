@@ -147,6 +147,13 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
                     <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
                   )}
                 </Link>
+                <Link
+                  href="/support"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+                >
+                  {t('support')}
+                </Link>
                 <div className="my-1 border-t border-stone-100" />
                 <button
                   onClick={() => { setMenuOpen(false); handleSignOut() }}

@@ -23,7 +23,8 @@
     "loans": "Împrumuturi",
     "profile": "Profil",
     "signOut": "Deconectare",
-    "bookstore": "Librărie"
+    "bookstore": "Librărie",
+    "support": "Suport"
   },
   "auth": {
     "signIn": "Conectare",
@@ -148,7 +149,7 @@
     "listView": "Vizualizare listă",
     "gridView": "Vizualizare grilă",
     "pageOfTotal": "Pagina {page} din {total}",
-    "generatingStep1": "Analizăm „{title}"...",
+    "generatingStep1": "Analizăm \"{title}\"...",
     "generatingStep2": "Extragem idei cheie...",
     "generatingStep3": "Găsim citate memorabile...",
     "generatingStep4": "Pregătim parcursul tău de lectură...",
@@ -386,7 +387,8 @@
     "borrowRequest": "{name} vrea să împrumute {title}",
     "borrowApproved": "{name} a aprobat cererea ta pentru {title}",
     "borrowRejected": "{name} a refuzat cererea ta pentru {title}",
-    "newMessage": "{name} ți-a trimis un mesaj"
+    "newMessage": "{name} ți-a trimis un mesaj",
+    "supportReply": "Echipa BookShelf Support a răspuns la tichetul tău"
   },
   "landing": {
     "navBooks": "Cărți",
@@ -578,5 +580,33 @@
     "Cooking": "Gătit",
     "Governance & Politics": "Guvernanță & Politică",
     "School Books": "Manuale școlare"
+  },
+  "support": {
+    "title": "Suport",
+    "newMessage": "Mesaj nou",
+    "myMessages": "Mesajele mele",
+    "typeLabel": "Despre ce este vorba?",
+    "typeBug": "Raport de eroare",
+    "typeQuestion": "Întrebare",
+    "typeFeature": "Cerere de funcționalitate",
+    "typeBilling": "Facturare",
+    "typeOther": "Altele",
+    "subjectPlaceholder": "Scurt rezumat al problemei",
+    "messagePlaceholder": "Descrie problema în detaliu…",
+    "submit": "Trimite mesaj",
+    "submitting": "Se trimite…",
+    "successTitle": "Mesaj trimis!",
+    "successText": "Îți vom răspunde cât mai curând posibil.",
+    "noTickets": "Niciun mesaj de suport încă.",
+    "statusOpen": "Deschis",
+    "statusInProgress": "În curs",
+    "statusResolved": "Rezolvat",
+    "replyPlaceholder": "Scrie un răspuns…",
+    "sendReply": "Trimite răspuns",
+    "supportBotName": "Suport BookShelf",
+    "ticketCreated": "Ticket de suport: {subject}",
+    "adminReplied": "Echipa de suport a răspuns",
+    "viewInSupport": "Vezi în suport",
+    "support": "Suport"
   }
 }

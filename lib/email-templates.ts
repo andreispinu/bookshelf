@@ -574,3 +574,81 @@ export function borrowRequestEmail(
   `)
   return { subject, html }
 }
+
+export function newTicketAdminEmail(
+  userName: string,
+  userEmail: string,
+  type: string,
+  subject: string,
+  message: string,
+  ticketId: string,
+): { subject: string; html: string } {
+  const emailSubject = `[Support] ${subject}`
+  const safeUser = userName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeSubject = subject.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">New support ticket</p>
+        <p style="margin:0 0 8px;font-size:14px;color:#57534e;"><strong>From:</strong> ${safeUser} (${userEmail})</p>
+        <p style="margin:0 0 8px;font-size:14px;color:#57534e;"><strong>Type:</strong> ${type}</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;"><strong>Subject:</strong> ${safeSubject}</p>
+        <blockquote style="margin:0 0 24px;padding:12px 16px;background:#fafaf9;border-left:3px solid #d6d3d1;border-radius:0 6px 6px 0;font-size:14px;color:#78716c;line-height:1.6;">
+          ${safeMessage}
+        </blockquote>
+        ${ctaButton('Reply to ticket →', `${BASE_URL}/admin/support/${ticketId}`)}
+      </td>
+    </tr>
+  `)
+  return { subject: emailSubject, html }
+}
+
+export function adminReplyEmail(
+  firstName: string,
+  replyText: string,
+  ticketSubject: string,
+): { subject: string; html: string } {
+  const subject = `Re: ${ticketSubject} — BookShelf Support`
+  const safeName = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeReply = replyText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">BookShelf Support replied</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${safeName},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          Our support team has replied to your message:
+        </p>
+        <blockquote style="margin:0 0 24px;padding:12px 16px;background:#fafaf9;border-left:3px solid #d6d3d1;border-radius:0 6px 6px 0;font-size:14px;color:#78716c;line-height:1.6;">
+          ${safeReply}
+        </blockquote>
+        ${ctaButton('View conversation →', `${BASE_URL}/support`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function ticketSolvedEmail(
+  firstName: string,
+  ticketSubject: string,
+): { subject: string; html: string } {
+  const subject = `Your support request has been resolved — BookShelf`
+  const safeName = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeSubject = ticketSubject.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Your ticket has been resolved</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${safeName},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          Your support ticket "<strong>${safeSubject}</strong>" has been marked as resolved.
+          If you need further help, you can always open a new ticket.
+        </p>
+        ${ctaButton('Open support →', `${BASE_URL}/support`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}

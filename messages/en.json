@@ -23,7 +23,8 @@
     "loans": "Loans",
     "profile": "Profile",
     "signOut": "Sign out",
-    "bookstore": "Bookstore"
+    "bookstore": "Bookstore",
+    "support": "Support"
   },
   "auth": {
     "signIn": "Sign in",
@@ -386,7 +387,8 @@
     "borrowRequest": "{name} wants to borrow {title}",
     "borrowApproved": "{name} approved your request to borrow {title}",
     "borrowRejected": "{name} declined your request to borrow {title}",
-    "newMessage": "{name} sent you a message"
+    "newMessage": "{name} sent you a message",
+    "supportReply": "BookShelf Support replied to your ticket"
   },
   "landing": {
     "navBooks": "Books",
@@ -578,5 +580,33 @@
     "Cooking": "Cooking",
     "Governance & Politics": "Governance & Politics",
     "School Books": "School Books"
+  },
+  "support": {
+    "title": "Support",
+    "newMessage": "New message",
+    "myMessages": "My messages",
+    "typeLabel": "What's this about?",
+    "typeBug": "Bug report",
+    "typeQuestion": "Question",
+    "typeFeature": "Feature request",
+    "typeBilling": "Billing",
+    "typeOther": "Other",
+    "subjectPlaceholder": "Brief summary of your issue",
+    "messagePlaceholder": "Describe your issue in detail…",
+    "submit": "Send message",
+    "submitting": "Sending…",
+    "successTitle": "Message sent!",
+    "successText": "We'll get back to you as soon as possible.",
+    "noTickets": "No support messages yet.",
+    "statusOpen": "Open",
+    "statusInProgress": "In progress",
+    "statusResolved": "Resolved",
+    "replyPlaceholder": "Write a reply…",
+    "sendReply": "Send reply",
+    "supportBotName": "BookShelf Support",
+    "ticketCreated": "Support ticket: {subject}",
+    "adminReplied": "Support team replied",
+    "viewInSupport": "View in support",
+    "support": "Support"
   }
 }

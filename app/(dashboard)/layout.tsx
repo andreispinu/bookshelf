@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-server'
 import Nav from './nav'
 import MobileBottomNav from './mobile-bottom-nav'
 import LocaleSync from './locale-sync'
+import SupportButton from './support-button'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -60,6 +61,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {children}
       </main>
       <MobileBottomNav />
+      <SupportButton />
     </div>
   )
 }
