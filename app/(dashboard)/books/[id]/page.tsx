@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { getActiveLoanForBook } from '@/lib/db/loans'
 import { Badge } from '@/components/ui/badge'
+import { PricePill } from '@/components/price-pill'
 import BookDetailActions from './book-detail-actions'
 import type { Book } from '@/types'
 
@@ -52,7 +53,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
         <div className="flex-1 min-w-0 pt-1">
           <h2 className="text-2xl font-semibold text-stone-800 leading-tight">{b.title}</h2>
           <p className="text-stone-500 mt-1">{b.author}</p>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Badge
               variant="outline"
               className={
@@ -63,6 +64,9 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
             >
               {b.status === 'available' ? 'Available' : 'Lent out'}
             </Badge>
+            {(b.availability_mode === 'sell_only' || b.availability_mode === 'lend_and_sell') && (
+              <PricePill price={b.sale_price} currency={b.sale_currency} />
+            )}
           </div>
           {loan && (
             <p className="text-sm text-stone-500 mt-2">

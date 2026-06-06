@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import BorrowButton from './borrow-button'
 import BuyButton from './buy-button'
 import { translateCategory } from '@/lib/translate-category'
+import { PricePill } from '@/components/price-pill'
 import type { Book } from '@/types'
 
 export default function FriendShelfClient({
@@ -86,16 +87,21 @@ export default function FriendShelfClient({
               {book.category && (
                 <p className="text-xs text-stone-400 mt-0.5 truncate">{translateCategory(book.category, tCat)}</p>
               )}
-              <Badge
-                variant="outline"
-                className={`mt-1.5 text-xs ${
-                  book.status === 'available'
-                    ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                    : 'border-amber-200 text-amber-700 bg-amber-50'
-                }`}
-              >
-                {book.status === 'available' ? availableLabel : lentOutLabel}
-              </Badge>
+              <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${
+                    book.status === 'available'
+                      ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                      : 'border-amber-200 text-amber-700 bg-amber-50'
+                  }`}
+                >
+                  {book.status === 'available' ? availableLabel : lentOutLabel}
+                </Badge>
+                {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
+                  <PricePill price={book.sale_price} currency={book.sale_currency} />
+                )}
+              </div>
             </div>
 
             <div className="sm:shrink-0 flex gap-2 flex-wrap">

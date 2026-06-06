@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { translateCategory } from '@/lib/translate-category'
-import { formatPrice } from '@/lib/format-currency'
+import { PricePill } from '@/components/price-pill'
 import ViewToggle, { useViewMode } from '../../books/view-toggle'
 import Pagination from '../../components/pagination'
 import BuyButton from '../[id]/buy-button'
@@ -101,6 +101,9 @@ function BookGroupRow({ group }: { group: BookGroup }) {
               <span className="text-xs text-stone-600">{group.copies[0].friend.name}</span>
               <StatusBadge status={group.copies[0].status} />
               {(group.copies[0].availabilityMode === 'sell_only' || group.copies[0].availabilityMode === 'lend_and_sell') && (
+                <PricePill price={group.copies[0].salePrice} currency={group.copies[0].saleCurrency} />
+              )}
+              {(group.copies[0].availabilityMode === 'sell_only' || group.copies[0].availabilityMode === 'lend_and_sell') && (
                 <BuyButton
                   bookId={group.copies[0].bookId}
                   bookTitle={group.title}
@@ -143,6 +146,9 @@ function BookGroupRow({ group }: { group: BookGroup }) {
                       <FriendAvatar friend={copy.friend} />
                       <span className="text-xs text-stone-600">{copy.friend.name}</span>
                       <StatusBadge status={copy.status} />
+                      {(copy.availabilityMode === 'sell_only' || copy.availabilityMode === 'lend_and_sell') && (
+                        <PricePill price={copy.salePrice} currency={copy.saleCurrency} />
+                      )}
                       <Link
                         href={`/friends/${copy.friend.id}/books/${copy.bookId}`}
                         className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
@@ -207,6 +213,11 @@ function BookGroupCard({ group }: { group: BookGroup }) {
               : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
             }
           </Link>
+        )}
+        {!isMulti && (firstCopy.availabilityMode === 'sell_only' || firstCopy.availabilityMode === 'lend_and_sell') && (
+          <span className="absolute bottom-1.5 right-1.5 pointer-events-none">
+            <PricePill price={firstCopy.salePrice} currency={firstCopy.saleCurrency} />
+          </span>
         )}
       </div>
       <div className="p-2.5 flex flex-col gap-1 flex-1">

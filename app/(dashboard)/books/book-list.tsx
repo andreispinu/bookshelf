@@ -24,7 +24,7 @@ import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
 import { translateCategory } from '@/lib/translate-category'
-import { formatPrice } from '@/lib/format-currency'
+import { PricePill } from '@/components/price-pill'
 import ViewToggle, { useViewMode } from './view-toggle'
 import Pagination from '../components/pagination'
 import AvailabilityModal from './availability-modal'
@@ -445,29 +445,27 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                     {t('aiReadingBadge')}
                   </span>
                 )}
+                {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
+                  <span className="absolute bottom-1.5 right-1.5">
+                    <PricePill price={book.sale_price} currency={book.sale_currency} />
+                  </span>
+                )}
               </button>
               <div className="p-2.5 flex flex-col gap-1 flex-1">
                 <p className="text-xs font-semibold text-stone-800 leading-snug line-clamp-2">{book.title}</p>
                 <p className="text-[11px] text-stone-500 truncate">{book.author}</p>
                 {book.category && <p className="text-[10px] text-stone-400">{translateCategory(book.category, tCat)}</p>}
                 <div className="flex items-center justify-between mt-auto pt-1.5">
-                  <div className="flex flex-col gap-0.5">
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] px-1.5 py-0 h-4 ${
-                        book.status === 'available'
-                          ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                          : 'border-amber-200 text-amber-700 bg-amber-50'
-                      }`}
-                    >
-                      {book.status === 'available' ? t('available') : t('lentOut')}
-                    </Badge>
-                    {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
-                      <span className="text-[9px] text-stone-500 font-medium">
-                        {formatPrice(book.sale_price, book.sale_currency)}
-                      </span>
-                    )}
-                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 h-4 ${
+                      book.status === 'available'
+                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                        : 'border-amber-200 text-amber-700 bg-amber-50'
+                    }`}
+                  >
+                    {book.status === 'available' ? t('available') : t('lentOut')}
+                  </Badge>
                   <BookMenu
                     book={book}
                     isDeleting={deletingId === book.id}
@@ -508,11 +506,6 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                   {t('aiReadingBadge')}
                 </Badge>
               )}
-              {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
-                <Badge variant="outline" className="border-stone-200 text-stone-500 bg-stone-50 text-xs shrink-0">
-                  {formatPrice(book.sale_price, book.sale_currency)}
-                </Badge>
-              )}
               <Badge
                 variant="outline"
                 className={
@@ -523,6 +516,9 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
               >
                 {book.status === 'available' ? t('available') : t('lentOut')}
               </Badge>
+              {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
+                <PricePill price={book.sale_price} currency={book.sale_currency} />
+              )}
 
               <div className="flex items-center gap-1 shrink-0">
                 <Button

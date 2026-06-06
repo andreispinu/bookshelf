@@ -4,7 +4,9 @@ import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { Badge } from '@/components/ui/badge'
+import { PricePill } from '@/components/price-pill'
 import BorrowButton from '../../borrow-button'
+import BuyButton from '../../buy-button'
 import { translateCategory } from '@/lib/translate-category'
 import type { Book } from '@/types'
 
@@ -69,7 +71,7 @@ export default async function FriendBookDetailPage({
         <div className="flex-1 min-w-0 pt-1">
           <h2 className="text-2xl font-semibold text-stone-800 leading-tight">{b.title}</h2>
           <p className="text-stone-500 mt-1">{b.author}</p>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Badge
               variant="outline"
               className={
@@ -80,6 +82,9 @@ export default async function FriendBookDetailPage({
             >
               {b.status === 'available' ? 'Available' : 'Lent out'}
             </Badge>
+            {(b.availability_mode === 'sell_only' || b.availability_mode === 'lend_and_sell') && (
+              <PricePill price={b.sale_price} currency={b.sale_currency} />
+            )}
           </div>
           {b.status === 'lent_out' && (
             <p className="text-sm text-stone-400 mt-2">Currently lent out</p>
@@ -87,12 +92,24 @@ export default async function FriendBookDetailPage({
         </div>
       </div>
 
-      {/* Borrow button */}
-      {b.status === 'available' && (
-        <div className="mt-6">
-          <BorrowButton bookId={b.id} bookTitle={b.title} ownerId={friendId} />
+      {/* Borrow / Buy buttons */}
+      {(b.status === 'available' && b.availability_mode !== 'sell_only') || (b.availability_mode === 'sell_only' || b.availability_mode === 'lend_and_sell') ? (
+        <div className="mt-6 flex gap-2 flex-wrap">
+          {b.status === 'available' && b.availability_mode !== 'sell_only' && (
+            <BorrowButton bookId={b.id} bookTitle={b.title} ownerId={friendId} />
+          )}
+          {(b.availability_mode === 'sell_only' || b.availability_mode === 'lend_and_sell') && (
+            <BuyButton
+              bookId={b.id}
+              bookTitle={b.title}
+              ownerId={friendId}
+              salePrice={b.sale_price ?? null}
+              saleCurrency={b.sale_currency ?? null}
+              conditionNote={b.condition_note ?? null}
+            />
+          )}
         </div>
-      )}
+      ) : null}
 
       {/* Metadata */}
       {(b.publisher || b.year || b.isbn || b.language || b.category) && (

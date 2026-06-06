@@ -42,11 +42,11 @@ export default async function PublicProfilePage({ params }: Props) {
   const visibility = profile.profile_visibility as 'public_minimal' | 'public_full'
 
   // Fetch books for public_full
-  let books: { id: string; title: string; author: string; cover_url: string | null; status: string; category: string | null }[] = []
+  let books: { id: string; title: string; author: string; cover_url: string | null; status: string; category: string | null; availability_mode: string | null; sale_price: number | null; sale_currency: string | null }[] = []
   if (visibility === 'public_full') {
     const { data } = await supabaseAdmin
       .from('books')
-      .select('id, title, author, cover_url, status, category')
+      .select('id, title, author, cover_url, status, category, availability_mode, sale_price, sale_currency')
       .eq('user_id', profile.id)
       .order('created_at', { ascending: false })
     books = data ?? []
