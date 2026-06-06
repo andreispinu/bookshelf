@@ -12,6 +12,10 @@ export type Book = {
   language: string | null
   status: 'available' | 'lent_out'
   created_at: string
+  sale_price: number | null
+  sale_currency: string | null
+  condition_note: string | null
+  availability_mode: 'lend_only' | 'sell_only' | 'lend_and_sell'
 }
 
 export type Profile = {
@@ -156,6 +160,22 @@ export type FriendMatch = {
   ownerName: string
   ownerAvatar: string | null
   status: 'available' | 'lent_out'
+}
+
+export type SaleRequest = {
+  id: string
+  book_id: string
+  buyer_id: string
+  seller_id: string
+  message: string | null
+  sale_price: number | null
+  sale_currency: string | null
+  status: 'pending' | 'accepted' | 'declined' | 'completed'
+  created_at: string
+  updated_at: string
+  book: Pick<Book, 'id' | 'title' | 'author' | 'cover_url'>
+  buyer: Pick<Profile, 'id' | 'name' | 'avatar_url'>
+  seller: Pick<Profile, 'id' | 'name' | 'avatar_url'>
 }
 
 export type SentRequest = {

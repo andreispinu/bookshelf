@@ -28,7 +28,7 @@ export default async function FriendsShelfPage() {
 
     const { data: books } = await supabase
       .from('books')
-      .select('id, user_id, title, author, isbn, cover_url, status, category, created_at')
+      .select('id, user_id, title, author, isbn, cover_url, status, category, created_at, availability_mode, sale_price, sale_currency, condition_note')
       .in('user_id', friendIds)
       .order('created_at', { ascending: false })
 
@@ -44,6 +44,10 @@ export default async function FriendsShelfPage() {
         friend: friendMap[book.user_id],
         status: book.status as 'available' | 'lent_out',
         created_at: book.created_at,
+        availabilityMode: (book as Record<string, unknown>).availability_mode as string | undefined,
+        salePrice: (book as Record<string, unknown>).sale_price as number | null | undefined,
+        saleCurrency: (book as Record<string, unknown>).sale_currency as string | null | undefined,
+        conditionNote: (book as Record<string, unknown>).condition_note as string | null | undefined,
       }
 
       const existing = groupMap.get(key)

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import BorrowButton from './borrow-button'
+import BuyButton from './buy-button'
 import { translateCategory } from '@/lib/translate-category'
 import type { Book } from '@/types'
 
@@ -104,8 +105,18 @@ export default function FriendShelfClient({
               >
                 View
               </Link>
-              {book.status === 'available' && (
+              {book.status === 'available' && book.availability_mode !== 'sell_only' && (
                 <BorrowButton bookId={book.id} bookTitle={book.title} ownerId={ownerId} />
+              )}
+              {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
+                <BuyButton
+                  bookId={book.id}
+                  bookTitle={book.title}
+                  ownerId={ownerId}
+                  salePrice={book.sale_price}
+                  saleCurrency={book.sale_currency}
+                  conditionNote={book.condition_note}
+                />
               )}
             </div>
           </li>

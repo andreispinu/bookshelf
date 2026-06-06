@@ -652,3 +652,108 @@ export function ticketSolvedEmail(
   `)
   return { subject, html }
 }
+
+export function buyRequestEmail(
+  sellerFirstName: string,
+  buyerName: string,
+  bookTitle: string,
+  message?: string | null,
+): { subject: string; html: string } {
+  const subject = `${buyerName} wants to buy "${bookTitle}"`
+  const safeSeller = sellerFirstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeBuyer = buyerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const noteBlock = message
+    ? `<p style="margin:0 0 24px;font-size:14px;color:#78716c;line-height:1.6;">
+        They added a note: <em>"${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</em>
+       </p>`
+    : ''
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Buy request for "${safeTitle}"</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${safeSeller},</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeBuyer} wants to buy your book <strong>"${safeTitle}"</strong>. Accept or decline in the app.
+        </p>
+        ${noteBlock}
+        ${ctaButton('View sale request →', `${BASE_URL}/messages`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function buyAcceptedEmail(
+  buyerFirstName: string,
+  sellerName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `${sellerName} accepted your offer to buy "${bookTitle}"`
+  const safeBuyer = buyerFirstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeSeller = sellerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Your purchase is accepted!</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${safeBuyer},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeSeller} accepted your request to buy <strong>"${safeTitle}"</strong>.
+          Coordinate the handoff directly in your messages.
+        </p>
+        ${ctaButton('Go to messages →', `${BASE_URL}/messages`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function buyDeclinedEmail(
+  buyerFirstName: string,
+  sellerName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `${sellerName} declined your offer to buy "${bookTitle}"`
+  const safeBuyer = buyerFirstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeSeller = sellerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Purchase request declined</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${safeBuyer},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeSeller} has declined your request to buy <strong>"${safeTitle}"</strong>.
+        </p>
+        ${ctaButton('Browse friends\' shelves →', `${BASE_URL}/friends/shelf`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function bookTransferredEmail(
+  buyerFirstName: string,
+  sellerName: string,
+  bookTitle: string,
+): { subject: string; html: string } {
+  const subject = `"${bookTitle}" is now on your shelf!`
+  const safeBuyer = buyerFirstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeSeller = sellerName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safeTitle = bookTitle.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Sale complete — book on your shelf!</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${safeBuyer},</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          ${safeSeller} confirmed the sale of <strong>"${safeTitle}"</strong>.
+          The book has been added to your shelf automatically.
+        </p>
+        ${ctaButton('View my books →', `${BASE_URL}/books`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}

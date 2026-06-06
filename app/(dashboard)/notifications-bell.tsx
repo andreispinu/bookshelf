@@ -7,7 +7,7 @@ import { Bell } from 'lucide-react'
 
 type Notification = {
   id: string
-  type: 'friend_request' | 'friend_accepted' | 'friend_new_book' | 'borrow_request' | 'borrow_approved' | 'borrow_rejected' | 'new_message' | 'support_reply'
+  type: 'friend_request' | 'friend_accepted' | 'friend_new_book' | 'borrow_request' | 'borrow_approved' | 'borrow_rejected' | 'new_message' | 'support_reply' | 'buy_request' | 'buy_accepted' | 'buy_declined' | 'book_transferred'
   read: boolean
   created_at: string
   actor: { id: string; name: string; avatar_url: string | null } | null
@@ -31,6 +31,9 @@ function notifHref(n: Notification): string {
   if (n.type === 'borrow_approved' || n.type === 'borrow_rejected') return '/loans?tab=requests'
   if (n.type === 'new_message' && n.actor?.id) return `/messages?with=${n.actor.id}`
   if (n.type === 'support_reply') return '/support'
+  if (n.type === 'buy_request') return '/loans?tab=sales'
+  if (n.type === 'buy_accepted' || n.type === 'buy_declined') return '/loans?tab=sales'
+  if (n.type === 'book_transferred') return '/books'
   return '/friends'
 }
 
@@ -58,6 +61,10 @@ export default function NotificationsBell() {
     if (n.type === 'borrow_rejected') return t('borrowRejected', { name, title })
     if (n.type === 'new_message') return t('newMessage', { name })
     if (n.type === 'support_reply') return t('supportReply')
+    if (n.type === 'buy_request') return t('buyRequest', { name, title })
+    if (n.type === 'buy_accepted') return t('buyAccepted', { name, title })
+    if (n.type === 'buy_declined') return t('buyDeclined', { name, title })
+    if (n.type === 'book_transferred') return t('bookTransferred', { title })
     return ''
   }
 

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getLentOut, getBorrowed } from '@/lib/db/loans'
 import LoanList from './loan-list'
-import type { SentRequest } from '@/types'
+import type { SentRequest, SaleRequest } from '@/types'
 
 export default async function LoansPage({
   searchParams,
@@ -18,7 +18,7 @@ export default async function LoansPage({
   const t = await getTranslations('loans')
   const { tab } = await searchParams
 
-  const [{ data: lentOut, error: lentError }, { data: borrowed, error: borrowedError }, { data: sentData }] =
+  const [{ data: lentOut, error: lentError }, { data: borrowed, error: borrowedError }, { data: sentData }, { data: sellingData }, { data: buyingData }] =
     await Promise.all([
       getLentOut(user.id),
       getBorrowed(user.id),
@@ -31,6 +31,26 @@ export default async function LoansPage({
           owner:profiles!borrow_requests_owner_id_fkey(id, name, avatar_url)
         `)
         .eq('requester_id', user.id)
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('sale_requests')
+        .select(`
+          id, book_id, buyer_id, seller_id, message, sale_price, sale_currency, status, created_at, updated_at,
+          book:books!sale_requests_book_id_fkey(id, title, author, cover_url),
+          buyer:profiles!sale_requests_buyer_id_fkey(id, name, avatar_url),
+          seller:profiles!sale_requests_seller_id_fkey(id, name, avatar_url)
+        `)
+        .eq('seller_id', user.id)
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('sale_requests')
+        .select(`
+          id, book_id, buyer_id, seller_id, message, sale_price, sale_currency, status, created_at, updated_at,
+          book:books!sale_requests_book_id_fkey(id, title, author, cover_url),
+          buyer:profiles!sale_requests_buyer_id_fkey(id, name, avatar_url),
+          seller:profiles!sale_requests_seller_id_fkey(id, name, avatar_url)
+        `)
+        .eq('buyer_id', user.id)
         .order('created_at', { ascending: false }),
     ])
 
@@ -82,6 +102,8 @@ export default async function LoansPage({
         lentOut={lentOutWithDetails}
         borrowed={borrowedWithDetails}
         sentRequests={(sentData ?? []) as unknown as SentRequest[]}
+        selling={(sellingData ?? []) as unknown as SaleRequest[]}
+        buying={(buyingData ?? []) as unknown as SaleRequest[]}
         defaultTab={tab}
       />
     </div>

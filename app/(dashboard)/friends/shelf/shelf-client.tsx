@@ -6,8 +6,10 @@ import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { translateCategory } from '@/lib/translate-category'
+import { formatPrice } from '@/lib/format-currency'
 import ViewToggle, { useViewMode } from '../../books/view-toggle'
 import Pagination from '../../components/pagination'
+import BuyButton from '../[id]/buy-button'
 
 export type FriendInfo = {
   id: string
@@ -20,6 +22,10 @@ export type BookCopy = {
   friend: FriendInfo
   status: 'available' | 'lent_out'
   created_at: string
+  availabilityMode?: string
+  salePrice?: number | null
+  saleCurrency?: string | null
+  conditionNote?: string | null
 }
 
 export type BookGroup = {
@@ -94,6 +100,16 @@ function BookGroupRow({ group }: { group: BookGroup }) {
               <FriendAvatar friend={group.copies[0].friend} />
               <span className="text-xs text-stone-600">{group.copies[0].friend.name}</span>
               <StatusBadge status={group.copies[0].status} />
+              {(group.copies[0].availabilityMode === 'sell_only' || group.copies[0].availabilityMode === 'lend_and_sell') && (
+                <BuyButton
+                  bookId={group.copies[0].bookId}
+                  bookTitle={group.title}
+                  ownerId={group.copies[0].friend.id}
+                  salePrice={group.copies[0].salePrice ?? null}
+                  saleCurrency={group.copies[0].saleCurrency ?? null}
+                  conditionNote={group.copies[0].conditionNote ?? null}
+                />
+              )}
             </div>
           ) : (
             <div>
@@ -133,6 +149,16 @@ function BookGroupRow({ group }: { group: BookGroup }) {
                       >
                         View →
                       </Link>
+                      {(copy.availabilityMode === 'sell_only' || copy.availabilityMode === 'lend_and_sell') && (
+                        <BuyButton
+                          bookId={copy.bookId}
+                          bookTitle={group.title}
+                          ownerId={copy.friend.id}
+                          salePrice={copy.salePrice ?? null}
+                          saleCurrency={copy.saleCurrency ?? null}
+                          conditionNote={copy.conditionNote ?? null}
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>

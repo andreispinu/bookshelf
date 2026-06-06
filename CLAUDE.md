@@ -1151,6 +1151,97 @@ Users can add up to 3 books to a daily AI reading program. Claude generates 10�
 - `app/api/cron/deliver-insights/route.ts` — daily delivery cron
 - `lib/email-templates.ts` → `dailyInsightEmail()`
 
+### Buy & Sell
+Users can mark books for sale and buy books from friends. Built on top of the existing borrow/messaging infrastructure.
+
+**Database migration:** Run `supabase/add-buy-sell.sql`.
+
+**New columns on `books` table:**
+```sql
+sale_price       decimal(10,2)
+sale_currency    text DEFAULT 'EUR'
+condition_note   text
+availability_mode text DEFAULT 'lend_only'  -- 'lend_only' | 'sell_only' | 'lend_and_sell'
+```
+
+**New `sale_requests` table:**
+```sql
+id            uuid PRIMARY KEY DEFAULT gen_random_uuid()
+book_id       uuid NOT NULL REFERENCES books(id) ON DELETE CASCADE
+buyer_id      uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+seller_id     uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+message       text
+sale_price    decimal(10,2)
+sale_currency text DEFAULT 'EUR'
+status        text NOT NULL DEFAULT 'pending'  -- 'pending' | 'accepted' | 'declined' | 'completed'
+created_at    timestamptz DEFAULT now()
+updated_at    timestamptz DEFAULT now()
+```
+RLS: participants can read, buyer can insert, participants can update.
+
+**Currency formatting** (`lib/format-currency.ts`):
+- Supported: `EUR` (€), `USD` ($), `GBP` (£), `RON` (lei), `MDL` (L)
+- EUR/USD/GBP: symbol prefix (e.g. `€10`, `$5`, `£8`)
+- RON/MDL: symbol suffix (e.g. `150 lei`, `200 L`)
+- `CURRENCIES` exported const array; `Currency` exported type; `formatPrice(amount, currency)` exported function
+
+**Seller flow:**
+1. ⋯ menu on any book → "Book availability" → `AvailabilityModal`
+2. 3 radio-style cards: Lend only / Sell only / Lend & sell
+3. Sell modes show price input, currency selector, condition note textarea
+4. Saves via `updateBookAvailability()` server action (ownership-checked); clears sale fields for lend_only
+5. Book list shows "For sale · €10" label (grid view) / price badge (list view) when not lend_only
+
+**Buyer flow:**
+1. On friend's shelf: BorrowButton hidden when `availability_mode === 'sell_only'`; BuyButton shown when `sell_only` or `lend_and_sell`
+2. BuyButton shows book price; clicking opens modal with title, price, condition note, optional message textarea
+3. Submit: `POST /api/sale-requests` → creates request, inserts `SALE_REQUEST:{json}` message in thread, sends `buy_request` notification + email to seller
+
+**Message cards in chat** (`messages-client.tsx`):
+- `SALE_REQUEST:{json}` → shows book cover thumbnail, title/author, price, condition note, Accept/Decline buttons for seller (hidden if `respondedSaleRequestIds` already has a response)
+- `SALE_RESPONSE:{json}` → shows accepted (green) or declined (stone) outcome card
+- `formatPreview()` strips these prefixes for conversation list previews
+- `respondedSaleRequestIds` useMemo mirrors the existing borrow request pattern
+
+**Sale request lifecycle** (`app/api/sale-requests/[id]/route.ts` — PATCH):
+- `accept` → updates status, inserts `SALE_RESPONSE:{json}` message, creates `buy_accepted` notification + email to buyer
+- `decline` → same but `buy_declined`
+- `complete` ("Confirm sold") → transfers book: inserts copy for buyer (`availability_mode: 'lend_only'`), deletes original from seller; creates `book_transferred` notification + email to buyer
+
+**Sales tab on Loans page:**
+- "Sales" TabsTrigger with pending count badge
+- Selling sub-section: pending/accepted requests with Accept / Decline / Confirm sold buttons
+- Buying sub-section: status display for outgoing requests
+
+**Notification types added:** `buy_request` (→ `/loans?tab=sales`), `buy_accepted` (→ `/loans?tab=sales`), `buy_declined` (→ `/loans?tab=sales`), `book_transferred` (→ `/books`)
+
+**Email templates added** (`lib/email-templates.ts`):
+- `buyRequestEmail(sellerFirstName, buyerName, bookTitle, message?)` — to seller
+- `buyAcceptedEmail(buyerFirstName, sellerName, bookTitle)` — to buyer
+- `buyDeclinedEmail(buyerFirstName, sellerName, bookTitle)` — to buyer
+- `bookTransferredEmail(buyerFirstName, sellerName, bookTitle)` — to buyer on complete
+
+**Admin dashboard:** "Buy & Sell" section in Activity with 3 metrics: Sale Requests Sent, Accepted (%), Completed Sales (%).
+
+**Files:**
+- `supabase/add-buy-sell.sql` — migration (ALTER books + CREATE sale_requests + RLS)
+- `lib/format-currency.ts` — `CURRENCIES`, `Currency`, `formatPrice()`
+- `types/index.ts` — `Book` type updated (sale_price, sale_currency, condition_note, availability_mode); new `SaleRequest` type
+- `app/(dashboard)/books/actions.ts` — `updateBookAvailability()` server action
+- `app/(dashboard)/books/availability-modal.tsx` — modal with 3 radio cards + price/currency/condition inputs
+- `app/(dashboard)/books/book-list.tsx` — "Book availability" menu item + sale price display
+- `app/(dashboard)/friends/[id]/buy-button.tsx` — buy modal + POST /api/sale-requests
+- `app/(dashboard)/friends/[id]/friend-shelf-client.tsx` — BuyButton shown/hidden by availability_mode
+- `app/(dashboard)/friends/shelf/shelf-client.tsx` — BuyButton in combined shelf
+- `app/(dashboard)/friends/shelf/page.tsx` — selects availability_mode, sale_price, sale_currency, condition_note
+- `app/(dashboard)/loans/loan-list.tsx` — Sales tab with Selling/Buying sections
+- `app/(dashboard)/loans/page.tsx` — parallel sale_requests queries (as seller + as buyer)
+- `app/(dashboard)/messages/messages-client.tsx` — SALE_REQUEST/SALE_RESPONSE card rendering
+- `app/(dashboard)/notifications-bell.tsx` — 4 new notification types
+- `app/api/sale-requests/route.ts` — GET list, POST create
+- `app/api/sale-requests/[id]/route.ts` — PATCH accept/decline/complete
+- `app/admin/page.tsx` — Buy & Sell metrics section
+
 ## Build order (phases)
 
 - [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes

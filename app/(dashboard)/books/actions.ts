@@ -5,6 +5,33 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
+export async function updateBookAvailability(
+  bookId: string,
+  availabilityMode: 'lend_only' | 'sell_only' | 'lend_and_sell',
+  salePrice: number | null,
+  saleCurrency: string | null,
+  conditionNote: string | null,
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('books')
+    .update({
+      availability_mode: availabilityMode,
+      sale_price: availabilityMode === 'lend_only' ? null : salePrice,
+      sale_currency: availabilityMode === 'lend_only' ? null : (saleCurrency ?? 'EUR'),
+      condition_note: availabilityMode === 'lend_only' ? null : conditionNote,
+    })
+    .eq('id', bookId)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/books')
+  return { error: null }
+}
+
 type BookFields = {
   isbn?: string | null
   publisher?: string | null

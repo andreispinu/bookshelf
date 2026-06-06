@@ -103,6 +103,7 @@ export default async function AdminPage() {
     qUserMessages, qSysMessages,
     qWishlist,
     qReadingStarted, qInsightsDelivered, qInsightsRead,
+    qTotalSaleRequests, qAcceptedSales, qCompletedSales,
     authResult,
   ] = await Promise.all([
     // ── User metrics ──
@@ -142,6 +143,10 @@ export default async function AdminPage() {
     supabaseAdmin.from('reading_ai_books').select('*', { count: 'exact', head: true }).neq('status', 'pending'),
     supabaseAdmin.from('reading_ai_insights').select('*', { count: 'exact', head: true }).not('delivered_at', 'is', null),
     supabaseAdmin.from('reading_ai_insights').select('*', { count: 'exact', head: true }).not('read_at', 'is', null),
+    // ── Sales ──
+    supabaseAdmin.from('sale_requests').select('*', { count: 'exact', head: true }),
+    supabaseAdmin.from('sale_requests').select('*', { count: 'exact', head: true }).eq('status', 'accepted'),
+    supabaseAdmin.from('sale_requests').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
     // ── Auth users for emails ──
     supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
   ])
@@ -184,6 +189,9 @@ export default async function AdminPage() {
   const readingStarted   = qReadingStarted.count ?? 0
   const insightsDelivered = qInsightsDelivered.count ?? 0
   const insightsRead     = qInsightsRead.count ?? 0
+  const totalSaleRequests = qTotalSaleRequests.count ?? 0
+  const acceptedSales     = qAcceptedSales.count ?? 0
+  const completedSales    = qCompletedSales.count ?? 0
 
   // ── Derived metrics ───────────────────────────────────────────────────────
 
@@ -389,13 +397,22 @@ export default async function AdminPage() {
             </div>
           </div>
 
-          <div>
+          <div className="mb-10">
             <SubHeader>Reading & Wishlist</SubHeader>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <MetricCard label="Wishlist Books" value={c(wishlistItems)} />
               <MetricCard label="Read with AI Started" value={c(readingStarted)} tint="green" />
               <MetricCard label="Insights Delivered" value={c(insightsDelivered)} tint="green" />
               <MetricCard label="Insights Read" value={c(insightsRead)} tint="green" sub={pct(insightsRead, insightsDelivered)} />
+            </div>
+          </div>
+
+          <div>
+            <SubHeader>Buy & Sell</SubHeader>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <MetricCard label="Sale Requests Sent" value={c(totalSaleRequests)} />
+              <MetricCard label="Accepted" value={c(acceptedSales)} tint="green" sub={pct(acceptedSales, totalSaleRequests)} />
+              <MetricCard label="Completed Sales" value={c(completedSales)} tint="green" sub={pct(completedSales, totalSaleRequests)} />
             </div>
           </div>
         </section>

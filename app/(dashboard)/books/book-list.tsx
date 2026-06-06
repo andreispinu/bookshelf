@@ -24,8 +24,10 @@ import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
 import { translateCategory } from '@/lib/translate-category'
+import { formatPrice } from '@/lib/format-currency'
 import ViewToggle, { useViewMode } from './view-toggle'
 import Pagination from '../components/pagination'
+import AvailabilityModal from './availability-modal'
 
 type FillSuggestion = {
   field: keyof Pick<Book, 'isbn' | 'publisher' | 'year' | 'category' | 'language' | 'description' | 'cover_url'>
@@ -36,7 +38,7 @@ type FillSuggestion = {
 }
 
 function BookMenu({
-  book, isDeleting, isInReadingAI, onLend, onEdit, onFill, onAddToAI, onRemoveFromAI, onDelete,
+  book, isDeleting, isInReadingAI, onLend, onEdit, onFill, onAddToAI, onRemoveFromAI, onAvailability, onDelete,
 }: {
   book: Book
   isDeleting: boolean
@@ -46,6 +48,7 @@ function BookMenu({
   onFill: () => void
   onAddToAI: () => void
   onRemoveFromAI: () => void
+  onAvailability: () => void
   onDelete: () => void
 }) {
   const t = useTranslations('books')
@@ -110,6 +113,12 @@ function BookMenu({
             </button>
           )}
           <button
+            className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
+            onClick={() => { setOpen(false); onAvailability() }}
+          >
+            {t('bookAvailability')}
+          </button>
+          <button
             className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 disabled:opacity-40"
             disabled={isDeleting}
             onClick={() => { setOpen(false); onDelete() }}
@@ -153,6 +162,7 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
   const [fillSuggestions, setFillSuggestions] = useState<FillSuggestion[]>([])
   const [fillConfirming, setFillConfirming] = useState(false)
 
+  const [availabilityBook, setAvailabilityBook] = useState<Book | null>(null)
   const [localReadingAIMap, setLocalReadingAIMap] = useState(readingAIMap)
   const acceptedFriends = friends.filter(f => f.status === 'accepted')
   const [viewMode, setViewMode] = useViewMode()
@@ -441,16 +451,23 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                 <p className="text-[11px] text-stone-500 truncate">{book.author}</p>
                 {book.category && <p className="text-[10px] text-stone-400">{translateCategory(book.category, tCat)}</p>}
                 <div className="flex items-center justify-between mt-auto pt-1.5">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] px-1.5 py-0 h-4 ${
-                      book.status === 'available'
-                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                        : 'border-amber-200 text-amber-700 bg-amber-50'
-                    }`}
-                  >
-                    {book.status === 'available' ? t('available') : t('lentOut')}
-                  </Badge>
+                  <div className="flex flex-col gap-0.5">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] px-1.5 py-0 h-4 ${
+                        book.status === 'available'
+                          ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                          : 'border-amber-200 text-amber-700 bg-amber-50'
+                      }`}
+                    >
+                      {book.status === 'available' ? t('available') : t('lentOut')}
+                    </Badge>
+                    {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
+                      <span className="text-[9px] text-stone-500 font-medium">
+                        {formatPrice(book.sale_price, book.sale_currency)}
+                      </span>
+                    )}
+                  </div>
                   <BookMenu
                     book={book}
                     isDeleting={deletingId === book.id}
@@ -460,6 +477,7 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                     onFill={() => handleFillWithAI(book)}
                     onAddToAI={() => handleAddToAI(book.id)}
                     onRemoveFromAI={() => handleRemoveFromAI(localReadingAIMap[book.id]!, book.id)}
+                    onAvailability={() => setAvailabilityBook(book)}
                     onDelete={() => handleDelete(book.id)}
                   />
                 </div>
@@ -488,6 +506,11 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
               {localReadingAIMap[book.id] && (
                 <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 text-xs">
                   {t('aiReadingBadge')}
+                </Badge>
+              )}
+              {(book.availability_mode === 'sell_only' || book.availability_mode === 'lend_and_sell') && (
+                <Badge variant="outline" className="border-stone-200 text-stone-500 bg-stone-50 text-xs shrink-0">
+                  {formatPrice(book.sale_price, book.sale_currency)}
                 </Badge>
               )}
               <Badge
@@ -519,6 +542,7 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                   onFill={() => handleFillWithAI(book)}
                   onAddToAI={() => handleAddToAI(book.id)}
                   onRemoveFromAI={() => handleRemoveFromAI(localReadingAIMap[book.id]!, book.id)}
+                  onAvailability={() => setAvailabilityBook(book)}
                   onDelete={() => handleDelete(book.id)}
                 />
               </div>
@@ -534,6 +558,16 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
         pageSize={PAGE_SIZE}
         onPageChange={handlePageChange}
       />
+
+      {availabilityBook && (
+        <AvailabilityModal
+          book={availabilityBook}
+          onClose={() => setAvailabilityBook(null)}
+          onSaved={updated => {
+            setBooks(prev => prev.map(b => b.id === availabilityBook.id ? { ...b, ...updated } : b))
+          }}
+        />
+      )}
 
       {/* Lend dialog */}
       <Dialog open={!!lending} onOpenChange={open => !open && setLending(null)}>

@@ -7,6 +7,7 @@ import { Send, ArrowLeft, SquarePen, X, Search, MessageCircle } from 'lucide-rea
 import type { ConvItem, Message } from '@/types'
 import { COUNTRY_FLAGS } from '@/lib/countries'
 import { parseBorrowPayload, BorrowRequestCard, BorrowResponseCard } from './borrow-card'
+import { formatPrice } from '@/lib/format-currency'
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -42,12 +43,44 @@ function parseSupportReply(content: string): { ticketId: string; body: string } 
   return { ticketId, body }
 }
 
+type SaleRequestPayload = {
+  requestId: string
+  bookId: string
+  bookTitle: string
+  bookAuthor?: string
+  coverUrl?: string | null
+  price?: number | null
+  currency?: string
+  conditionNote?: string | null
+  buyerName?: string
+}
+
+type SaleResponsePayload = {
+  requestId: string
+  action: 'accept' | 'decline' | 'complete'
+  bookTitle: string
+}
+
+function parseSaleRequest(content: string): SaleRequestPayload | null {
+  if (!content.startsWith('SALE_REQUEST:')) return null
+  try { return JSON.parse(content.slice('SALE_REQUEST:'.length)) } catch { return null }
+}
+
+function parseSaleResponse(content: string): SaleResponsePayload | null {
+  if (!content.startsWith('SALE_RESPONSE:')) return null
+  try { return JSON.parse(content.slice('SALE_RESPONSE:'.length)) } catch { return null }
+}
+
 function formatPreview(content: string): string {
   if (content.startsWith('SYSTEM:')) return content.slice(7).trim()
   const support = parseSupportHeader(content)
   if (support) return `Support ticket: ${support.subject}`
   const reply = parseSupportReply(content)
   if (reply) return 'Support team replied'
+  const sale = parseSaleRequest(content)
+  if (sale) return `Buy request: ${sale.bookTitle}`
+  const saleResp = parseSaleResponse(content)
+  if (saleResp) return `Buy request ${saleResp.action === 'accept' ? 'accepted' : saleResp.action === 'complete' ? 'completed' : 'declined'}: ${saleResp.bookTitle}`
   const payload = parseBorrowPayload(content)
   if (!payload) return content
   if (payload.type === 'borrow_request') return `Borrow request: ${payload.book_title}`
@@ -167,6 +200,28 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
     }
     return ids
   }, [messages])
+
+  // Collect sale_request IDs that already have a SALE_RESPONSE in this thread
+  const respondedSaleRequestIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const msg of messages) {
+      const resp = parseSaleResponse(msg.content)
+      if (resp) ids.add(resp.requestId)
+    }
+    return ids
+  }, [messages])
+
+  async function handleSaleDecide(requestId: string, action: 'accept' | 'decline') {
+    const res = await fetch(`/api/sale-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    })
+    if (res.ok && activeConvId) {
+      fetchMessages(activeConvId)
+      fetchConversations()
+    }
+  }
 
   async function handleBorrowDecide(requestId: string, action: 'approve' | 'reject', message: string, approvedDays?: number | null) {
     await fetch('/api/borrow-requests', {
@@ -433,6 +488,82 @@ export default function MessagesClient({ userId, friends }: { userId: string; fr
                             <p className="text-sm text-stone-700 mb-1">{supportReply.body}</p>
                           )}
                           <a href="/support" className="text-xs text-stone-400 hover:text-stone-600 underline inline-block">View in Support →</a>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // Sale request card
+                  const saleRequestPayload = parseSaleRequest(msg.content)
+                  if (saleRequestPayload) {
+                    const isSeller = !isMine
+                    const hasResponse = respondedSaleRequestIds.has(saleRequestPayload.requestId)
+                    return (
+                      <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                        <div className="max-w-[80%] rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-sm">
+                          {saleRequestPayload.coverUrl && (
+                            <div className="w-full h-20 bg-stone-100 overflow-hidden">
+                              <img src={saleRequestPayload.coverUrl} alt={saleRequestPayload.bookTitle} className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          <div className="px-3.5 py-2.5">
+                            <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wide mb-1">Buy request</p>
+                            <p className="text-sm font-medium text-stone-800 line-clamp-1">{saleRequestPayload.bookTitle}</p>
+                            {saleRequestPayload.bookAuthor && (
+                              <p className="text-xs text-stone-500">{saleRequestPayload.bookAuthor}</p>
+                            )}
+                            {saleRequestPayload.price != null && (
+                              <p className="text-sm font-semibold text-stone-800 mt-1">{formatPrice(saleRequestPayload.price, saleRequestPayload.currency ?? 'EUR')}</p>
+                            )}
+                            {saleRequestPayload.conditionNote && (
+                              <p className="text-xs text-stone-500 mt-0.5">{saleRequestPayload.conditionNote}</p>
+                            )}
+                            {isSeller && !hasResponse && (
+                              <div className="flex gap-2 mt-2.5">
+                                <button
+                                  onClick={() => handleSaleDecide(saleRequestPayload.requestId, 'accept')}
+                                  className="flex-1 h-7 rounded-lg bg-stone-800 text-white text-xs font-medium hover:bg-stone-700 transition-colors"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() => handleSaleDecide(saleRequestPayload.requestId, 'decline')}
+                                  className="flex-1 h-7 rounded-lg border border-stone-200 text-stone-600 text-xs hover:bg-stone-50 transition-colors"
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            )}
+                            {hasResponse && (
+                              <p className="text-xs text-stone-400 mt-1.5">Responded</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // Sale response card
+                  const saleResponsePayload = parseSaleResponse(msg.content)
+                  if (saleResponsePayload) {
+                    const accepted = saleResponsePayload.action === 'accept'
+                    const completed = saleResponsePayload.action === 'complete'
+                    return (
+                      <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 border ${
+                          completed ? 'bg-emerald-50 border-emerald-200' :
+                          accepted ? 'bg-emerald-50 border-emerald-200' :
+                          'bg-stone-50 border-stone-200'
+                        }`}>
+                          <p className={`text-xs font-semibold ${completed || accepted ? 'text-emerald-700' : 'text-stone-500'}`}>
+                            {completed ? 'Sale completed' : accepted ? 'Buy request accepted' : 'Buy request declined'}
+                          </p>
+                          <p className="text-sm text-stone-700 mt-0.5 line-clamp-1">"{saleResponsePayload.bookTitle}"</p>
+                          {(accepted || completed) && (
+                            <a href="/loans?tab=sales" className="text-xs text-stone-400 hover:text-stone-600 underline mt-1 inline-block">
+                              View in Sales →
+                            </a>
+                          )}
                         </div>
                       </div>
                     )

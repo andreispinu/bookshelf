@@ -8,7 +8,8 @@ import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import type { LoanWithDetails, SentRequest, WorkflowStatus } from '@/types'
+import type { LoanWithDetails, SentRequest, SaleRequest, WorkflowStatus } from '@/types'
+import { formatPrice } from '@/lib/format-currency'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -397,17 +398,23 @@ export default function LoanList({
   lentOut: initialLentOut,
   borrowed: initialBorrowed,
   sentRequests,
+  selling: initialSelling,
+  buying: initialBuying,
   defaultTab,
 }: {
   lentOut: LoanWithDetails[]
   borrowed: LoanWithDetails[]
   sentRequests: SentRequest[]
+  selling: SaleRequest[]
+  buying: SaleRequest[]
   defaultTab?: string
 }) {
   const t = useTranslations('loans')
   const router = useRouter()
   const [lentOut, setLentOut] = useState(initialLentOut)
   const [borrowed, setBorrowed] = useState(initialBorrowed)
+  const [selling, setSelling] = useState(initialSelling)
+  const [buying, setBuying] = useState(initialBuying)
   const [loadingLoanId, setLoadingLoanId] = useState<string | null>(null)
   const [extensionModal, setExtensionModal] = useState<string | null>(null)
   const [recallModal, setRecallModal] = useState<string | null>(null)
@@ -415,6 +422,8 @@ export default function LoanList({
   // Sync state when server data refreshes (after router.refresh())
   useEffect(() => { setLentOut(initialLentOut) }, [initialLentOut])
   useEffect(() => { setBorrowed(initialBorrowed) }, [initialBorrowed])
+  useEffect(() => { setSelling(initialSelling) }, [initialSelling])
+  useEffect(() => { setBuying(initialBuying) }, [initialBuying])
 
   function updateLoanInState(loanId: string, update: Partial<LoanWithDetails>) {
     const apply = (l: LoanWithDetails) => l.id === loanId ? { ...l, ...update } : l
@@ -512,6 +521,37 @@ export default function LoanList({
     }
   }
 
+  async function callSaleAction(requestId: string, action: 'accept' | 'decline' | 'complete') {
+    setLoadingLoanId(requestId)
+    try {
+      const res = await fetch(`/api/sale-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        toast.error(d.error ?? t('actionFailed'))
+        return
+      }
+      if (action === 'accept') {
+        setSelling(prev => prev.map(r => r.id === requestId ? { ...r, status: 'accepted' } : r))
+        toast.success(t('saleAccepted'))
+      } else if (action === 'decline') {
+        setSelling(prev => prev.map(r => r.id === requestId ? { ...r, status: 'declined' } : r))
+        toast.success(t('saleDeclined'))
+      } else if (action === 'complete') {
+        setSelling(prev => prev.filter(r => r.id !== requestId))
+        toast.success(t('saleCompleted'))
+      }
+      router.refresh()
+    } catch {
+      toast.error(t('actionFailed'))
+    } finally {
+      setLoadingLoanId(null)
+    }
+  }
+
   const pendingCount = sentRequests.filter(r => r.status === 'pending').length
 
   const statusLabel: Record<SentRequest['status'], string> = {
@@ -574,6 +614,14 @@ export default function LoanList({
             {pendingCount > 0 && (
               <Badge variant="outline" className="ml-1.5 border-amber-200 text-amber-700 bg-amber-50">
                 {pendingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="sales">
+            {t('salesTab')}
+            {selling.filter(r => r.status === 'pending').length > 0 && (
+              <Badge variant="outline" className="ml-1.5 border-amber-200 text-amber-700 bg-amber-50">
+                {selling.filter(r => r.status === 'pending').length}
               </Badge>
             )}
           </TabsTrigger>
@@ -663,6 +711,116 @@ export default function LoanList({
             <Link href="/loans/requests" className="text-sm text-stone-500 hover:text-stone-800 transition-colors">
               {t('viewIncomingRequests')}
             </Link>
+          </div>
+        </TabsContent>
+
+        {/* Sales */}
+        <TabsContent value="sales">
+          <div className="mb-6">
+            <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">{t('selling')}</p>
+            {selling.length === 0 ? (
+              <p className="text-sm text-stone-400 py-4 text-center">{t('noSelling')}</p>
+            ) : (
+              <ul className="divide-y divide-stone-100">
+                {selling.map(req => {
+                  const buyer = req.buyer as { id: string; name: string; avatar_url: string | null }
+                  return (
+                    <li key={req.id} className="py-4 flex items-start gap-3">
+                      <div className="shrink-0 w-9 h-12 rounded bg-stone-200 overflow-hidden flex items-center justify-center">
+                        {req.book.cover_url
+                          ? <img src={req.book.cover_url} alt={req.book.title} className="w-full h-full object-cover" />
+                          : <span className="text-stone-400 text-base">📖</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-stone-800 truncate">{req.book.title}</p>
+                        <p className="text-sm text-stone-500 truncate">{req.book.author}</p>
+                        <p className="text-xs text-stone-400 mt-0.5">{t('soldTo', { name: buyer.name })}</p>
+                        {req.sale_price != null && (
+                          <p className="text-xs text-stone-500 mt-0.5">{formatPrice(req.sale_price, req.sale_currency)}</p>
+                        )}
+                        {req.status === 'pending' && (
+                          <div className="flex gap-2 mt-2">
+                            <Button size="sm" disabled={loadingLoanId === req.id}
+                              onClick={() => callSaleAction(req.id, 'accept')}
+                              className="bg-stone-800 text-white hover:bg-stone-700 h-7 px-3 text-xs">
+                              {t('saleAccept')}
+                            </Button>
+                            <Button size="sm" variant="outline" disabled={loadingLoanId === req.id}
+                              onClick={() => callSaleAction(req.id, 'decline')}
+                              className="border-stone-200 text-stone-600 hover:bg-stone-50 h-7 px-3 text-xs">
+                              {t('saleDecline')}
+                            </Button>
+                          </div>
+                        )}
+                        {req.status === 'accepted' && (
+                          <div className="mt-2">
+                            <Button size="sm" disabled={loadingLoanId === req.id}
+                              onClick={() => callSaleAction(req.id, 'complete')}
+                              className="bg-stone-800 text-white hover:bg-stone-700 h-7 px-3 text-xs">
+                              {t('confirmSold')}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <Badge variant="outline" className={`shrink-0 text-xs ${
+                        req.status === 'pending' ? 'border-amber-200 text-amber-700 bg-amber-50' :
+                        req.status === 'accepted' ? 'border-emerald-200 text-emerald-700 bg-emerald-50' :
+                        req.status === 'completed' ? 'border-stone-200 text-stone-500 bg-stone-50' :
+                        'border-stone-200 text-stone-400'
+                      }`}>
+                        {req.status === 'pending' ? t('saleRequestPending') :
+                         req.status === 'accepted' ? t('saleRequestAccepted') :
+                         req.status === 'completed' ? t('saleRequestCompleted') :
+                         t('saleRequestDeclined')}
+                      </Badge>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">{t('buying')}</p>
+            {buying.length === 0 ? (
+              <p className="text-sm text-stone-400 py-4 text-center">{t('noBuying')}</p>
+            ) : (
+              <ul className="divide-y divide-stone-100">
+                {buying.map(req => {
+                  const seller = req.seller as { id: string; name: string; avatar_url: string | null }
+                  return (
+                    <li key={req.id} className="py-4 flex items-start gap-3">
+                      <div className="shrink-0 w-9 h-12 rounded bg-stone-200 overflow-hidden flex items-center justify-center">
+                        {req.book.cover_url
+                          ? <img src={req.book.cover_url} alt={req.book.title} className="w-full h-full object-cover" />
+                          : <span className="text-stone-400 text-base">📖</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-stone-800 truncate">{req.book.title}</p>
+                        <p className="text-sm text-stone-500 truncate">{req.book.author}</p>
+                        <p className="text-xs text-stone-400 mt-0.5">{t('boughtFrom', { name: seller.name })}</p>
+                        {req.sale_price != null && (
+                          <p className="text-xs text-stone-500 mt-0.5">{formatPrice(req.sale_price, req.sale_currency)}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className={`shrink-0 text-xs ${
+                        req.status === 'pending' ? 'border-amber-200 text-amber-700 bg-amber-50' :
+                        req.status === 'accepted' ? 'border-emerald-200 text-emerald-700 bg-emerald-50' :
+                        req.status === 'completed' ? 'border-stone-200 text-stone-500 bg-stone-50' :
+                        'border-stone-200 text-stone-400'
+                      }`}>
+                        {req.status === 'pending' ? t('saleRequestPending') :
+                         req.status === 'accepted' ? t('saleRequestAccepted') :
+                         req.status === 'completed' ? t('saleRequestCompleted') :
+                         t('saleRequestDeclined')}
+                      </Badge>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </div>
         </TabsContent>
       </Tabs>
