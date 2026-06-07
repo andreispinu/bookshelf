@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/overdue-loans",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/first-book-reminder",
+      "schedule": "0 10 * * *"
     }
   ]
 }

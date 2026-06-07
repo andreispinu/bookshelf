@@ -189,6 +189,7 @@ country              text  -- nullable, clean country name from lib/countries.ts
 city                 text  -- nullable, free-text city name
 reading_ai_email_notifications  boolean DEFAULT true  -- daily insight email opt-out
 message_digest_enabled          boolean DEFAULT true  -- daily message digest email opt-out
+first_book_email_sent_at        timestamptz           -- set after first-book reminder sent; guards against duplicates
 ```
 
 ### `books`
@@ -1497,6 +1498,40 @@ RLS: inviter can read/insert/update their own invitations.
 - `app/(dashboard)/friends/invite-section.tsx` — client component (form + list)
 - `app/(dashboard)/friends/page.tsx` — fetches invitations, renders InviteSection
 - `lib/email-templates.ts` — `invitationEmail(inviterName, token)`
+
+### First book reminder email (Vercel cron)
+Sent the day after signup if the user has added no books yet. Multilingual — sent in the user's `ui_language` if set, otherwise English.
+
+**Vercel cron schedule** (`vercel.json`): `0 10 * * *` — runs every day at 10:00 UTC.
+
+**Cron route:** `GET /api/cron/first-book-reminder`
+- Secured by `Authorization: Bearer {CRON_SECRET}` header
+- Finds all profiles where `created_at` is between `now - 28h` and `now - 20h` AND `first_book_email_sent_at IS NULL`
+- Batch-fetches books for those profile IDs to find users with 0 books
+- For each user with no books: sends email, sets `first_book_email_sent_at = now()`
+
+**Database field** (run `supabase/add-first-book-email-field.sql`):
+- `first_book_email_sent_at` — timestamptz, nullable, guards against duplicate sends
+
+**Email content (EN/RO/RU):**
+- Subject (EN): "Your BookShelf is empty — let's add your first book 📚"
+- Subject (RO): "Raftul tău BookShelf este gol — hai să adăugi prima carte 📚"
+- Subject (RU): "Ваша полка BookShelf пуста — добавьте первую книгу 📚"
+- Two options: AI photo scan (5 steps) + manual add (3 steps)
+- Lists what they can do once books are added (share shelf, lend/sell, Read with AI)
+- CTA: "Add my first book →" → `https://bookshelf.name/books`
+- Footer note: "You're receiving this because you recently joined BookShelf."
+
+**Templates** (`lib/email-templates.ts`):
+- `firstBookReminderEmail(firstName)` — English
+- `firstBookReminderEmailRo(firstName)` — Romanian
+- `firstBookReminderEmailRu(firstName)` — Russian
+
+**Files:**
+- `supabase/add-first-book-email-field.sql` — migration (ADD COLUMN first_book_email_sent_at)
+- `app/api/cron/first-book-reminder/route.ts` — cron handler
+- `lib/email-templates.ts` — three template functions
+- `vercel.json` — cron schedule added
 
 ### Trial lifecycle emails (Vercel cron)
 Three automated emails sent at key moments in the trial lifecycle. A single cron job processes all three types in one daily run.

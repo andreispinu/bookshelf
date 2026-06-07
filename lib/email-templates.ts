@@ -1,4 +1,5 @@
 const BASE_URL = 'https://bookshelf.name'
+const BOOKS_URL = `${BASE_URL}/books`
 const YEAR = new Date().getFullYear()
 
 const footer = `
@@ -752,6 +753,153 @@ export function bookTransferredEmail(
           The book has been added to your shelf automatically.
         </p>
         ${ctaButton('View my books →', `${BASE_URL}/books`)}
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function firstBookReminderEmail(firstName: string): { subject: string; html: string } {
+  const subject = `Your BookShelf is empty — let's add your first book 📚`
+  const safe = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Hi ${safe},</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">
+          Welcome to BookShelf! Your account is ready — now it's time to build your library.
+        </p>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Option 1 — Scan the cover with AI (fastest):</p>
+        <ol style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Open BookShelf on your phone</li>
+          <li>Tap "Add a book" → "Add with AI"</li>
+          <li>Take a photo of any book cover</li>
+          <li>AI fills in the title, author, category and description automatically</li>
+          <li>Tap "Add book" — done!</li>
+        </ol>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Option 2 — Add manually:</p>
+        <ol style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Tap "Add a book" → "Add manually"</li>
+          <li>Type the title — tap "Fill with AI" to let AI complete the rest</li>
+          <li>Review the details and tap "Add book"</li>
+        </ol>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Once your books are in, you can:</p>
+        <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Share your shelf with friends at bookshelf.name/[username]</li>
+          <li>Lend or sell books to friends</li>
+          <li>Get daily AI reading insights with Read with AI</li>
+        </ul>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Your free trial is 14 days — make the most of it.
+        </p>
+
+        ${ctaButton('Add my first book →', BOOKS_URL)}
+
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          You're receiving this because you recently joined BookShelf.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function firstBookReminderEmailRo(firstName: string): { subject: string; html: string } {
+  const subject = `Raftul tău BookShelf este gol — hai să adăugi prima carte 📚`
+  const safe = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Salut, ${safe}!</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">
+          Bun venit pe BookShelf! Contul tău este gata — acum e timpul să îți construiești biblioteca.
+        </p>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Opțiunea 1 — Scanează coperta cu AI (cel mai rapid):</p>
+        <ol style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Deschide BookShelf pe telefon</li>
+          <li>Apasă "Adaugă o carte" → "Adaugă cu AI"</li>
+          <li>Fotografiază coperta oricărei cărți</li>
+          <li>AI completează automat titlul, autorul, categoria și descrierea</li>
+          <li>Apasă "Adaugă carte" — gata!</li>
+        </ol>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Opțiunea 2 — Adaugă manual:</p>
+        <ol style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Apasă "Adaugă o carte" → "Adaugă manual"</li>
+          <li>Scrie titlul — apasă "Completează cu AI" și lasă AI-ul să facă restul</li>
+          <li>Verifică detaliile și apasă "Adaugă carte"</li>
+        </ol>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Odată ce ai cărțile adăugate, poți:</p>
+        <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Împărtăși raftul cu prietenii la bookshelf.name/[username]</li>
+          <li>Împrumuta sau vinde cărți prietenilor</li>
+          <li>Primi zilnic insight-uri AI cu Read with AI</li>
+        </ul>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Perioada ta de probă gratuită este de 14 zile — profită la maximum de ea.
+        </p>
+
+        ${ctaButton('Adaugă prima mea carte →', BOOKS_URL)}
+
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          Primești acest email deoarece te-ai înscris recent pe BookShelf.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function firstBookReminderEmailRu(firstName: string): { subject: string; html: string } {
+  const subject = `Ваша полка BookShelf пуста — добавьте первую книгу 📚`
+  const safe = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Привет, ${safe}!</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">
+          Добро пожаловать в BookShelf! Ваш аккаунт готов — пора начать строить свою библиотеку.
+        </p>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Вариант 1 — Сканирование обложки с AI (самый быстрый):</p>
+        <ol style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Откройте BookShelf на телефоне</li>
+          <li>Нажмите «Добавить книгу» → «Добавить с AI»</li>
+          <li>Сфотографируйте обложку любой книги</li>
+          <li>AI автоматически заполнит название, автора, категорию и описание</li>
+          <li>Нажмите «Добавить книгу» — готово!</li>
+        </ol>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Вариант 2 — Добавить вручную:</p>
+        <ol style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Нажмите «Добавить книгу» → «Добавить вручную»</li>
+          <li>Введите название — нажмите «Заполнить с AI», чтобы AI завершил остальное</li>
+          <li>Проверьте данные и нажмите «Добавить книгу»</li>
+        </ol>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">После добавления книг вы сможете:</p>
+        <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Поделиться полкой с друзьями на bookshelf.name/[username]</li>
+          <li>Одалживать или продавать книги друзьям</li>
+          <li>Получать ежедневные AI-инсайты с Read with AI</li>
+        </ul>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Ваш бесплатный пробный период — 14 дней. Используйте его по максимуму.
+        </p>
+
+        ${ctaButton('Добавить первую книгу →', BOOKS_URL)}
+
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          Вы получили это письмо, потому что недавно зарегистрировались в BookShelf.
+        </p>
       </td>
     </tr>
   `)
