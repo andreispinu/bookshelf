@@ -195,7 +195,26 @@
     "saleDecline": "Refuză",
     "saleAccepted": "Vânzare acceptată!",
     "saleDeclined": "Refuzat",
-    "saleCompleted": "Vânzare confirmată — carte transferată!"
+    "saleCompleted": "Vânzare confirmată — carte transferată!",
+    "currentlyReadingTitle": "Citesc acum",
+    "currentlyReading": "Citesc acum",
+    "inProgress": "În progres",
+    "finishedSection": "Terminate",
+    "updateProgress": "Actualizează progresul",
+    "iveFinishedThisBook": "Am terminat această carte",
+    "howWasIt": "Cum a fost?",
+    "reviewPlaceholder": "Scrie o notă despre această carte (opțional)",
+    "saveAndFinish": "Salvează și termină",
+    "skipRating": "Omite",
+    "startedLabel": "Început",
+    "finishedOnLabel": "Terminat pe",
+    "readAgain": "Citește din nou",
+    "isReadingDots": "citește...",
+    "readingColon": "Citește:",
+    "keepGoing": "Continuă! Aici vei vedea cărțile terminate.",
+    "noReadingBooksYet": "Nu ai început nicio carte încă",
+    "currentlyReadingLink": "Citesc acum",
+    "currentlyReadingSection": "Citesc acum"
   },
   "friends": {
     "title": "Prieteni",
@@ -430,7 +449,8 @@
     "buyRequest": "{name} vrea să cumpere {title}",
     "buyAccepted": "{name} a acceptat oferta ta pentru {title}",
     "buyDeclined": "{name} a refuzat oferta ta pentru {title}",
-    "bookTransferred": "Achiziția ta pentru {title} este finalizată — e pe raftul tău!"
+    "bookTransferred": "Achiziția ta pentru {title} este finalizată — e pe raftul tău!",
+    "friendFinishedBook": "{name} a terminat de citit {title}"
   },
   "landing": {
     "navBooks": "Cărți",
@@ -559,7 +579,8 @@
     "publicProfileCtaHeading": "Descoperă propria ta bibliotecă",
     "publicProfileCtaText": "Urmărește cărțile tale, conectează-te cu prieteni și împrumută-ți preferatele.",
     "publicProfileCtaButton": "Încearcă BookShelf gratuit",
-    "publicProfilePoweredBy": "Creat cu"
+    "publicProfilePoweredBy": "Creat cu",
+    "publicCurrentlyReading": "Citesc în prezent"
   },
   "bookstore": {
     "title": "Librăria mea",

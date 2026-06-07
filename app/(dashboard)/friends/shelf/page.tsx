@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getFriends } from '@/lib/db/friends'
 import FriendsTabs from '../friends-tabs'
 import ShelfClient, { type BookGroup, type BookCopy, type FriendInfo } from './shelf-client'
@@ -22,15 +23,24 @@ export default async function FriendsShelfPage() {
   }
 
   let groups: BookGroup[] = []
+  let readingBookIds = new Set<string>()
 
   if (acceptedFriends.length > 0) {
     const friendIds = acceptedFriends.map(f => f.profile.id)
 
-    const { data: books } = await supabase
-      .from('books')
-      .select('id, user_id, title, author, isbn, cover_url, status, category, created_at, availability_mode, sale_price, sale_currency, condition_note')
-      .in('user_id', friendIds)
-      .order('created_at', { ascending: false })
+    const [{ data: books }, { data: readingProgressData }] = await Promise.all([
+      supabase
+        .from('books')
+        .select('id, user_id, title, author, isbn, cover_url, status, category, created_at, availability_mode, sale_price, sale_currency, condition_note')
+        .in('user_id', friendIds)
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('reading_progress')
+        .select('book_id')
+        .in('user_id', friendIds)
+        .eq('status', 'reading'),
+    ])
+    readingBookIds = new Set((readingProgressData ?? []).map(r => r.book_id))
 
     const groupMap = new Map<string, BookGroup>()
 
@@ -96,7 +106,7 @@ export default async function FriendsShelfPage() {
           <p className="text-sm mt-1">Your friends haven't added any books yet.</p>
         </div>
       ) : (
-        <ShelfClient groups={groups} />
+        <ShelfClient groups={groups} readingBookIds={[...readingBookIds]} />
       )}
     </div>
   )

@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { updateBook, deleteBook, fillBookFields } from './actions'
 import { addToReadWithAI, removeFromReadWithAI } from './read-with-ai/actions'
+import { startReading } from './currently-reading/actions'
 import { lendBook } from '../loans/actions'
 import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
@@ -38,17 +39,19 @@ type FillSuggestion = {
 }
 
 function BookMenu({
-  book, isDeleting, isInReadingAI, onLend, onEdit, onFill, onAddToAI, onRemoveFromAI, onAvailability, onDelete,
+  book, isDeleting, isInReadingAI, isReading, onLend, onEdit, onFill, onAddToAI, onRemoveFromAI, onAvailability, onMarkReading, onDelete,
 }: {
   book: Book
   isDeleting: boolean
   isInReadingAI: boolean
+  isReading: boolean
   onLend: () => void
   onEdit: () => void
   onFill: () => void
   onAddToAI: () => void
   onRemoveFromAI: () => void
   onAvailability: () => void
+  onMarkReading: () => void
   onDelete: () => void
 }) {
   const t = useTranslations('books')
@@ -113,6 +116,13 @@ function BookMenu({
             </button>
           )}
           <button
+            className={`w-full text-left px-3 py-1.5 text-sm hover:bg-stone-50 ${isReading ? 'text-sky-600' : 'text-stone-600'}`}
+            onClick={() => { if (!isReading) { setOpen(false); onMarkReading() } }}
+            disabled={isReading}
+          >
+            {isReading ? `✓ ${t('currentlyReading')}` : t('currentlyReading')}
+          </button>
+          <button
             className="w-full text-left px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50"
             onClick={() => { setOpen(false); onAvailability() }}
           >
@@ -135,7 +145,7 @@ function initials(name: string) {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
-export default function BookList({ books: initial, friends, readingAIMap }: { books: Book[], friends: Friend[], readingAIMap: Record<string, string> }) {
+export default function BookList({ books: initial, friends, readingAIMap, readingProgressMap: initialReadingProgressMap }: { books: Book[], friends: Friend[], readingAIMap: Record<string, string>, readingProgressMap: Record<string, boolean> }) {
   const t = useTranslations('books')
   const tc = useTranslations('common')
   const tCat = useTranslations('categories')
@@ -164,6 +174,7 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
 
   const [availabilityBook, setAvailabilityBook] = useState<Book | null>(null)
   const [localReadingAIMap, setLocalReadingAIMap] = useState(readingAIMap)
+  const [localReadingProgressMap, setLocalReadingProgressMap] = useState(initialReadingProgressMap)
   const acceptedFriends = friends.filter(f => f.status === 'accepted')
   const [viewMode, setViewMode] = useViewMode()
   const [page, setPage] = useState(1)
@@ -317,6 +328,16 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
     })
   }
 
+  async function handleMarkReading(bookId: string) {
+    if (localReadingProgressMap[bookId]) return
+    setLocalReadingProgressMap(prev => ({ ...prev, [bookId]: true }))
+    const result = await startReading(bookId)
+    if (result.error) {
+      toast.error(result.error)
+      setLocalReadingProgressMap(prev => { const n = { ...prev }; delete n[bookId]; return n })
+    }
+  }
+
   async function handleFillWithAI(book: Book) {
     setFillingBook(book)
     setFillLoading(true)
@@ -440,7 +461,12 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                   ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
                   : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
                 }
-                {localReadingAIMap[book.id] && (
+                {localReadingProgressMap[book.id] && (
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-sky-100 border border-sky-200 text-sky-700 text-[10px] font-medium leading-none">
+                    {t('currentlyReading')}
+                  </span>
+                )}
+                {!localReadingProgressMap[book.id] && localReadingAIMap[book.id] && (
                   <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-medium leading-none">
                     {t('aiReadingBadge')}
                   </span>
@@ -470,12 +496,14 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                     book={book}
                     isDeleting={deletingId === book.id}
                     isInReadingAI={!!localReadingAIMap[book.id]}
+                    isReading={!!localReadingProgressMap[book.id]}
                     onLend={() => { setLending(book); setLendError(null) }}
                     onEdit={() => { setEditing(book); setEditError(null); setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(false) }}
                     onFill={() => handleFillWithAI(book)}
                     onAddToAI={() => handleAddToAI(book.id)}
                     onRemoveFromAI={() => handleRemoveFromAI(localReadingAIMap[book.id]!, book.id)}
                     onAvailability={() => setAvailabilityBook(book)}
+                    onMarkReading={() => handleMarkReading(book.id)}
                     onDelete={() => handleDelete(book.id)}
                   />
                 </div>
@@ -501,8 +529,13 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                 {book.isbn && <p className="text-xs text-stone-400 mt-0.5">ISBN {book.isbn}</p>}
               </div>
 
-              {localReadingAIMap[book.id] && (
-                <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 text-xs">
+              {localReadingProgressMap[book.id] && (
+                <Badge variant="outline" className="border-sky-200 text-sky-700 bg-sky-50 text-xs shrink-0">
+                  {t('currentlyReading')}
+                </Badge>
+              )}
+              {!localReadingProgressMap[book.id] && localReadingAIMap[book.id] && (
+                <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 text-xs shrink-0">
                   {t('aiReadingBadge')}
                 </Badge>
               )}
@@ -533,12 +566,14 @@ export default function BookList({ books: initial, friends, readingAIMap }: { bo
                   book={book}
                   isDeleting={deletingId === book.id}
                   isInReadingAI={!!localReadingAIMap[book.id]}
+                  isReading={!!localReadingProgressMap[book.id]}
                   onLend={() => { setLending(book); setLendError(null) }}
                   onEdit={() => { setEditing(book); setEditError(null); setEditCoverFile(null); setEditCoverPreview(null); setEditCoverRemoved(false) }}
                   onFill={() => handleFillWithAI(book)}
                   onAddToAI={() => handleAddToAI(book.id)}
                   onRemoveFromAI={() => handleRemoveFromAI(localReadingAIMap[book.id]!, book.id)}
                   onAvailability={() => setAvailabilityBook(book)}
+                  onMarkReading={() => handleMarkReading(book.id)}
                   onDelete={() => handleDelete(book.id)}
                 />
               </div>

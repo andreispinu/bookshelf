@@ -29,6 +29,26 @@ export default async function FriendsPage() {
       .order('created_at', { ascending: false }),
   ])
 
+  // Fetch currently reading book per accepted friend
+  const acceptedFriendIds = (friends ?? []).filter(f => f.status === 'accepted').map(f => f.profile.id)
+  const readingMap: Record<string, string> = {}
+  if (acceptedFriendIds.length > 0) {
+    const { data: readings } = await supabaseAdmin
+      .from('reading_progress')
+      .select('user_id, book:books!reading_progress_book_id_fkey(title)')
+      .in('user_id', acceptedFriendIds)
+      .eq('status', 'reading')
+      .order('updated_at', { ascending: false })
+    if (readings) {
+      for (const r of readings) {
+        if (!readingMap[r.user_id]) {
+          const book = Array.isArray(r.book) ? r.book[0] : r.book
+          if (book?.title) readingMap[r.user_id] = book.title
+        }
+      }
+    }
+  }
+
   const inviteCount = (invitations ?? []).length
 
   return (
@@ -47,7 +67,7 @@ export default async function FriendsPage() {
 
       {error && <p className="text-sm text-red-600">Failed to load friends: {error}</p>}
 
-      {friends && <FriendList friends={friends} />}
+      {friends && <FriendList friends={friends} readingMap={readingMap} />}
 
       {suggestions.length > 0 && (
         <>

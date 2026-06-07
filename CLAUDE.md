@@ -256,6 +256,22 @@ status       text        NOT NULL DEFAULT 'pending'  -- 'pending' | 'acknowledge
 created_at   timestamptz DEFAULT now()
 ```
 
+### `reading_progress`
+```sql
+id               uuid        PRIMARY KEY DEFAULT gen_random_uuid()
+user_id          uuid        NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+book_id          uuid        NOT NULL REFERENCES books(id) ON DELETE CASCADE
+status           text        NOT NULL DEFAULT 'reading'  -- 'reading' | 'finished'
+progress_percent int         DEFAULT 0 CHECK (progress_percent >= 0 AND progress_percent <= 100)
+rating           int         CHECK (rating >= 1 AND rating <= 5)
+review           text
+started_at       timestamptz DEFAULT now()
+finished_at      timestamptz
+created_at       timestamptz DEFAULT now()
+updated_at       timestamptz DEFAULT now()
+UNIQUE(user_id, book_id)
+```
+
 ### `reading_ai_books`
 ```sql
 id            uuid        PRIMARY KEY DEFAULT gen_random_uuid()
@@ -1241,6 +1257,66 @@ RLS: participants can read, buyer can insert, participants can update.
 - `app/api/sale-requests/route.ts` — GET list, POST create
 - `app/api/sale-requests/[id]/route.ts` — PATCH accept/decline/complete
 - `app/admin/page.tsx` — Buy & Sell metrics section
+
+### Currently Reading
+Users can track books they are currently reading, log progress (0–100%), and mark books as finished with a star rating and optional review.
+
+**Database migration:** Run `supabase/add-reading-progress.sql`.
+
+**`reading_progress` table:**
+```sql
+id               uuid PRIMARY KEY DEFAULT gen_random_uuid()
+user_id          uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+book_id          uuid NOT NULL REFERENCES books(id) ON DELETE CASCADE
+status           text NOT NULL DEFAULT 'reading'  -- 'reading' | 'finished'
+progress_percent int  DEFAULT 0  -- 0–100
+rating           int  CHECK (rating >= 1 AND rating <= 5)
+review           text
+started_at       timestamptz DEFAULT now()
+finished_at      timestamptz
+created_at       timestamptz DEFAULT now()
+updated_at       timestamptz DEFAULT now()
+UNIQUE(user_id, book_id)
+```
+RLS: own rows full access; accepted friends can SELECT.
+
+**Flow:**
+1. Book ⋯ menu → "Currently reading" → calls `startReading(bookId)` (upsert with status='reading')
+2. Badge: sky-colored "Currently reading" badge on book card (grid overlay / list badge)
+3. Subtitle link "Currently reading (N)" on My Books page → `/books/currently-reading`
+4. Currently Reading page: two sections — "In progress" and "Finished"
+5. "In progress": progress slider (debounced 800ms → `updateProgress()`), "✓ I've finished this book" button → finish modal
+6. Finish modal: star rating (1–5) + optional review textarea; "Skip" saves without rating
+7. "Finished" section: shows star rating, review, finished date, "↺ Read again" button
+8. `finishBook()`: if rating >= 4, creates `friend_finished_book` notifications for all accepted friends
+9. "Read again": resets to status='reading', clears rating/review/finished_at
+
+**Friend visibility:**
+- `/friends` page: shows "Reading: [Title]" in sky color under each friend's name
+- `/friends/[id]` (friend shelf): "Currently Reading" section at top with progress bars
+- `/friends/shelf` (combined shelf): "Currently reading (N)" filter pill in sky style; "Reading" badge on cards
+- Public profile: "Currently reading" section above the book shelf (for any public visibility level)
+
+**Notification:** `friend_finished_book` type → links to `/friends/[actorId]`; triggered when `finishBook()` called with rating >= 4
+
+**Admin:** Currently Reading section in Activity tab — Currently Reading count, Books Finished, Books Rated, Avg Rating
+
+**Files:**
+- `supabase/add-reading-progress.sql` — migration + RLS
+- `types/index.ts` — `ReadingProgress` type
+- `app/(dashboard)/books/currently-reading/actions.ts` — `startReading()`, `updateProgress()`, `finishBook()`, `readAgain()`
+- `app/(dashboard)/books/currently-reading/page.tsx` — server page (fetches reading_progress with book data)
+- `app/(dashboard)/books/currently-reading/reading-client.tsx` — client UI (sliders, star rating, finish modal)
+- `app/(dashboard)/books/book-list.tsx` — "Currently reading" menu item; sky badge; `readingProgressMap` prop
+- `app/(dashboard)/books/page.tsx` — fetches reading_progress; "Currently reading (N)" subtitle link
+- `app/(dashboard)/friends/friend-list.tsx` — `readingMap` prop; "Reading: [Title]" under name
+- `app/(dashboard)/friends/page.tsx` — fetches most-recent reading book per friend
+- `app/(dashboard)/friends/[id]/page.tsx` — "Currently Reading" section at top
+- `app/(dashboard)/friends/shelf/page.tsx` — fetches `readingBookIds` from reading_progress
+- `app/(dashboard)/friends/shelf/shelf-client.tsx` — "Currently reading" filter pill; "Reading" badge on cards
+- `app/[username]/page.tsx` — fetches currently reading (up to 3); renders section above shelf
+- `app/(dashboard)/notifications-bell.tsx` — `friend_finished_book` type + message + href
+- `app/admin/page.tsx` — Currently Reading metrics section
 
 ## Build order (phases)
 

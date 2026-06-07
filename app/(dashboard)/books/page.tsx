@@ -15,15 +15,19 @@ export default async function BooksPage() {
 
   const t = await getTranslations('books')
 
-  const [{ data: books, error }, { data: friends }, { data: profile }, { data: readingAIBooks }] = await Promise.all([
+  const [{ data: books, error }, { data: friends }, { data: profile }, { data: readingAIBooks }, { data: readingProgress }] = await Promise.all([
     getBooks(user.id),
     getFriends(user.id),
     supabase.from('profiles').select('username, profile_visibility, name').eq('id', user.id).single(),
     supabase.from('reading_ai_books').select('id, book_id').eq('user_id', user.id),
+    supabase.from('reading_progress').select('book_id').eq('user_id', user.id).eq('status', 'reading'),
   ])
 
   const readingAIMap: Record<string, string> = {}
   for (const r of readingAIBooks ?? []) readingAIMap[r.book_id] = r.id
+
+  const readingProgressMap: Record<string, boolean> = {}
+  for (const r of readingProgress ?? []) readingProgressMap[r.book_id] = true
 
   return (
     <div>
@@ -32,6 +36,14 @@ export default async function BooksPage() {
           <h2 className="text-2xl font-semibold text-stone-800">{t('title')}</h2>
           <p className="text-stone-500 text-sm mt-0.5">
             {t('booksCount', { count: books?.length ?? 0 })}
+            {(readingProgress?.length ?? 0) > 0 && (
+              <>
+                {' · '}
+                <Link href="/books/currently-reading" className="text-sky-600 hover:text-sky-700 transition-colors">
+                  {t('currentlyReadingLink')} ({readingProgress!.length})
+                </Link>
+              </>
+            )}
             {(readingAIBooks?.length ?? 0) > 0 && (
               <>
                 {' · '}
@@ -57,7 +69,7 @@ export default async function BooksPage() {
         <p className="text-sm text-red-600">Failed to load books: {error}</p>
       )}
 
-      {books && <BookList books={books} friends={friends ?? []} readingAIMap={readingAIMap} />}
+      {books && <BookList books={books} friends={friends ?? []} readingAIMap={readingAIMap} readingProgressMap={readingProgressMap} />}
     </div>
   )
 }

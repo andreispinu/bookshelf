@@ -14,8 +14,9 @@ function initials(name: string) {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
-export default function FriendList({ friends: initial }: { friends: Friend[] }) {
+export default function FriendList({ friends: initial, readingMap = {} }: { friends: Friend[], readingMap?: Record<string, string> }) {
   const t = useTranslations('friends')
+  const tb = useTranslations('books')
   const [friends, setFriends] = useState(initial)
   const [isPending, startTransition] = useTransition()
 
@@ -111,14 +112,21 @@ export default function FriendList({ friends: initial }: { friends: Friend[] }) 
                       {initials(f.profile.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-stone-800 truncate group-hover:text-stone-600 transition-colors">
-                    {f.profile.name}
-                    {f.profile.country && COUNTRY_FLAGS[f.profile.country] && (
-                      <span className="ml-1.5" title={f.profile.country}>
-                        {COUNTRY_FLAGS[f.profile.country]}
+                  <div className="min-w-0">
+                    <span className="text-sm text-stone-800 truncate group-hover:text-stone-600 transition-colors block">
+                      {f.profile.name}
+                      {f.profile.country && COUNTRY_FLAGS[f.profile.country] && (
+                        <span className="ml-1.5" title={f.profile.country}>
+                          {COUNTRY_FLAGS[f.profile.country]}
+                        </span>
+                      )}
+                    </span>
+                    {readingMap[f.profile.id] && (
+                      <span className="text-xs text-sky-600 truncate block">
+                        {tb('readingColon')} {readingMap[f.profile.id]}
                       </span>
                     )}
-                  </span>
+                  </div>
                 </Link>
                 <Link
                   href={`/friends/${f.profile.id}`}

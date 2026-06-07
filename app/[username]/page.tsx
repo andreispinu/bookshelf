@@ -41,6 +41,24 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const visibility = profile.profile_visibility as 'public_minimal' | 'public_full'
 
+  // Fetch currently reading (always, for any public profile)
+  const { data: readingProgressData } = await supabaseAdmin
+    .from('reading_progress')
+    .select(`
+      id, progress_percent,
+      book:books!reading_progress_book_id_fkey(id, title, author, cover_url)
+    `)
+    .eq('user_id', profile.id)
+    .eq('status', 'reading')
+    .order('updated_at', { ascending: false })
+    .limit(3)
+
+  type ReadingItem = { id: string; progress_percent: number; book: { id: string; title: string; author: string; cover_url: string | null } | null }
+  const currentlyReading: ReadingItem[] = (readingProgressData ?? []).map((r: Record<string, unknown>) => ({
+    ...r,
+    book: Array.isArray(r.book) ? (r.book[0] ?? null) : r.book as ReadingItem['book'],
+  })).filter((r: ReadingItem) => r.book) as ReadingItem[]
+
   // Fetch books for public_full
   let books: { id: string; title: string; author: string; cover_url: string | null; status: string; category: string | null; availability_mode: string | null; sale_price: number | null; sale_currency: string | null }[] = []
   if (visibility === 'public_full') {
@@ -91,6 +109,40 @@ export default async function PublicProfilePage({ params }: Props) {
             )}
           </div>
         </div>
+
+        {/* Currently Reading */}
+        {currentlyReading.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">
+              {t('publicCurrentlyReading')}
+            </h3>
+            <div className="space-y-2">
+              {currentlyReading.map(r => r.book && (
+                <div key={r.id} className="flex items-center gap-3 p-3 rounded-lg border border-stone-200 bg-white">
+                  <div className="shrink-0 w-9 h-12 rounded overflow-hidden bg-stone-100 flex items-center justify-center">
+                    {r.book.cover_url
+                      ? <img src={r.book.cover_url} alt={r.book.title} className="w-full h-full object-cover" />
+                      : <span className="text-stone-400 text-sm">📖</span>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-800 truncate">{r.book.title}</p>
+                    <p className="text-xs text-stone-500 truncate">{r.book.author}</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <div className="flex-1 bg-stone-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-sky-400 h-1.5 rounded-full"
+                          style={{ width: `${r.progress_percent}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-stone-400 shrink-0">{r.progress_percent}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Minimal — no book list */}
         {visibility === 'public_minimal' && (

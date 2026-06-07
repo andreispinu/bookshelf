@@ -178,6 +178,20 @@ export type SaleRequest = {
   seller: Pick<Profile, 'id' | 'name' | 'avatar_url'>
 }
 
+export type ReadingProgress = {
+  id: string
+  user_id: string
+  book_id: string
+  status: 'reading' | 'finished'
+  progress_percent: number
+  rating: number | null
+  review: string | null
+  started_at: string
+  finished_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type SentRequest = {
   id: string
   book_id: string

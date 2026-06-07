@@ -104,6 +104,7 @@ export default async function AdminPage() {
     qWishlist,
     qReadingStarted, qInsightsDelivered, qInsightsRead,
     qTotalSaleRequests, qAcceptedSales, qCompletedSales,
+    qCurrentlyReading, qFinishedBooks, qRatedBooks,
     authResult,
   ] = await Promise.all([
     // ── User metrics ──
@@ -147,6 +148,10 @@ export default async function AdminPage() {
     supabaseAdmin.from('sale_requests').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('sale_requests').select('*', { count: 'exact', head: true }).eq('status', 'accepted'),
     supabaseAdmin.from('sale_requests').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+    // ── Reading progress ──
+    supabaseAdmin.from('reading_progress').select('*', { count: 'exact', head: true }).eq('status', 'reading'),
+    supabaseAdmin.from('reading_progress').select('*', { count: 'exact', head: true }).eq('status', 'finished'),
+    supabaseAdmin.from('reading_progress').select('rating').eq('status', 'finished').not('rating', 'is', null),
     // ── Auth users for emails ──
     supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
   ])
@@ -192,6 +197,12 @@ export default async function AdminPage() {
   const totalSaleRequests = qTotalSaleRequests.count ?? 0
   const acceptedSales     = qAcceptedSales.count ?? 0
   const completedSales    = qCompletedSales.count ?? 0
+  const currentlyReadingCount = qCurrentlyReading.count ?? 0
+  const finishedBooksCount = qFinishedBooks.count ?? 0
+  const ratedBooks = qRatedBooks.data ?? []
+  const avgRating = ratedBooks.length > 0
+    ? (ratedBooks.reduce((sum, r) => sum + (r.rating ?? 0), 0) / ratedBooks.length).toFixed(1)
+    : '—'
 
   // ── Derived metrics ───────────────────────────────────────────────────────
 
@@ -407,12 +418,22 @@ export default async function AdminPage() {
             </div>
           </div>
 
-          <div>
+          <div className="mb-10">
             <SubHeader>Buy & Sell</SubHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <MetricCard label="Sale Requests Sent" value={c(totalSaleRequests)} />
               <MetricCard label="Accepted" value={c(acceptedSales)} tint="green" sub={pct(acceptedSales, totalSaleRequests)} />
               <MetricCard label="Completed Sales" value={c(completedSales)} tint="green" sub={pct(completedSales, totalSaleRequests)} />
+            </div>
+          </div>
+
+          <div>
+            <SubHeader>Currently Reading</SubHeader>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <MetricCard label="Currently Reading" value={c(currentlyReadingCount)} tint="green" />
+              <MetricCard label="Books Finished" value={c(finishedBooksCount)} tint="green" />
+              <MetricCard label="Books Rated" value={c(ratedBooks.length)} />
+              <MetricCard label="Avg Rating" value={avgRating} sub={`of ${c(ratedBooks.length)} ratings`} />
             </div>
           </div>
         </section>

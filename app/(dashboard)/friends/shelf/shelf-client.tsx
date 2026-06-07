@@ -71,7 +71,7 @@ function StatusBadge({ status }: { status: 'available' | 'lent_out' }) {
   )
 }
 
-function BookGroupRow({ group }: { group: BookGroup }) {
+function BookGroupRow({ group, isReading }: { group: BookGroup; isReading: boolean }) {
   const tCat = useTranslations('categories')
   const [expanded, setExpanded] = useState(false)
   const isMulti = group.copies.length > 1
@@ -90,9 +90,18 @@ function BookGroupRow({ group }: { group: BookGroup }) {
 
       {/* Details */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-stone-800 truncate">{group.title}</p>
-        <p className="text-sm text-stone-500 truncate">{group.author}</p>
-        {group.category && <p className="text-xs text-stone-400 mt-0.5">{translateCategory(group.category, tCat)}</p>}
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-stone-800 truncate">{group.title}</p>
+            <p className="text-sm text-stone-500 truncate">{group.author}</p>
+            {group.category && <p className="text-xs text-stone-400 mt-0.5">{translateCategory(group.category, tCat)}</p>}
+          </div>
+          {isReading && (
+            <Badge variant="outline" className="border-sky-200 text-sky-700 bg-sky-50 text-xs shrink-0 mt-0.5">
+              Reading
+            </Badge>
+          )}
+        </div>
 
         <div className="mt-1.5">
           {!isMulti ? (
@@ -189,7 +198,7 @@ function BookGroupRow({ group }: { group: BookGroup }) {
   )
 }
 
-function BookGroupCard({ group }: { group: BookGroup }) {
+function BookGroupCard({ group, isReading }: { group: BookGroup; isReading: boolean }) {
   const tCat = useTranslations('categories')
   const t = useTranslations('books')
   const [expanded, setExpanded] = useState(false)
@@ -213,6 +222,11 @@ function BookGroupCard({ group }: { group: BookGroup }) {
               : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
             }
           </Link>
+        )}
+        {isReading && (
+          <span className="absolute top-1.5 left-1.5 pointer-events-none px-1.5 py-0.5 rounded-md bg-sky-100 border border-sky-200 text-sky-700 text-[10px] font-medium leading-none">
+            Reading
+          </span>
         )}
         {!isMulti && (firstCopy.availabilityMode === 'sell_only' || firstCopy.availabilityMode === 'lend_and_sell') && (
           <span className="absolute bottom-1.5 right-1.5 pointer-events-none">
@@ -274,15 +288,23 @@ function BookGroupCard({ group }: { group: BookGroup }) {
   )
 }
 
-export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
+export default function ShelfClient({ groups, readingBookIds: readingBookIdsArr = [] }: { groups: BookGroup[]; readingBookIds?: string[] }) {
   const tCat = useTranslations('categories')
   const t = useTranslations('books')
   const tc = useTranslations('common')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<'recent' | 'title' | 'popular'>('recent')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [showReading, setShowReading] = useState(false)
   const [viewMode, setViewMode] = useViewMode()
   const [page, setPage] = useState(1)
+
+  const readingBookIds = useMemo(() => new Set(readingBookIdsArr), [readingBookIdsArr])
+
+  const readingCount = useMemo(() =>
+    groups.filter(g => g.copies.some(c => readingBookIds.has(c.bookId))).length,
+    [groups, readingBookIds]
+  )
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -318,6 +340,7 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
     let result = groups
     if (q) result = result.filter(g => g.title.toLowerCase().includes(q) || g.author.toLowerCase().includes(q))
     if (activeCategory) result = result.filter(g => g.category === activeCategory)
+    if (showReading) result = result.filter(g => g.copies.some(c => readingBookIds.has(c.bookId)))
 
     if (sort === 'title') {
       result = [...result].sort((a, b) => a.title.localeCompare(b.title))
@@ -328,7 +351,7 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
     }
 
     return result
-  }, [groups, query, sort, activeCategory])
+  }, [groups, query, sort, activeCategory, showReading, readingBookIds])
 
   const PAGE_SIZE = 10
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
@@ -357,20 +380,30 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
         </div>
       </div>
 
-      {uniqueCategories.length > 0 && (
+      {(uniqueCategories.length > 0 || readingCount > 0) && (
         <div className="flex flex-wrap gap-2 mb-5">
           <button
-            onClick={() => { setActiveCategory(null); handlePageChange(1) }}
+            onClick={() => { setActiveCategory(null); setShowReading(false); handlePageChange(1) }}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              !activeCategory ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              !activeCategory && !showReading ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            {tc('all')} <span className={!activeCategory ? 'opacity-75' : 'text-stone-400'}>({groups.length})</span>
+            {tc('all')} <span className={!activeCategory && !showReading ? 'opacity-75' : 'text-stone-400'}>({groups.length})</span>
           </button>
+          {readingCount > 0 && (
+            <button
+              onClick={() => { setShowReading(v => !v); setActiveCategory(null); handlePageChange(1) }}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                showReading ? 'bg-sky-700 text-white' : 'bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100'
+              }`}
+            >
+              {t('currentlyReading')} <span className={showReading ? 'opacity-75' : 'text-sky-400'}>({readingCount})</span>
+            </button>
+          )}
           {uniqueCategories.map(cat => (
             <button
               key={cat}
-              onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); handlePageChange(1) }}
+              onClick={() => { setActiveCategory(activeCategory === cat ? null : cat); setShowReading(false); handlePageChange(1) }}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 activeCategory === cat ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
@@ -388,13 +421,13 @@ export default function ShelfClient({ groups }: { groups: BookGroup[] }) {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {paginatedGroups.map(group => (
-            <BookGroupCard key={group.key} group={group} />
+            <BookGroupCard key={group.key} group={group} isReading={group.copies.some(c => readingBookIds.has(c.bookId))} />
           ))}
         </div>
       ) : (
         <ul className="divide-y divide-stone-100">
           {paginatedGroups.map(group => (
-            <BookGroupRow key={group.key} group={group} />
+            <BookGroupRow key={group.key} group={group} isReading={group.copies.some(c => readingBookIds.has(c.bookId))} />
           ))}
         </ul>
       )}

@@ -195,7 +195,26 @@
     "saleDecline": "Отклонить",
     "saleAccepted": "Продажа принята!",
     "saleDeclined": "Отклонено",
-    "saleCompleted": "Продажа подтверждена — книга передана!"
+    "saleCompleted": "Продажа подтверждена — книга передана!",
+    "currentlyReadingTitle": "Читаю сейчас",
+    "currentlyReading": "Читаю сейчас",
+    "inProgress": "В процессе",
+    "finishedSection": "Прочитано",
+    "updateProgress": "Обновить прогресс",
+    "iveFinishedThisBook": "Я закончил эту книгу",
+    "howWasIt": "Как вам книга?",
+    "reviewPlaceholder": "Напишите заметку об этой книге (необязательно)",
+    "saveAndFinish": "Сохранить и завершить",
+    "skipRating": "Пропустить",
+    "startedLabel": "Начато",
+    "finishedOnLabel": "Завершено",
+    "readAgain": "Читать снова",
+    "isReadingDots": "читает...",
+    "readingColon": "Читает:",
+    "keepGoing": "Продолжайте! Здесь вы увидите прочитанные книги.",
+    "noReadingBooksYet": "Вы ещё не начали ни одной книги",
+    "currentlyReadingLink": "Читаю сейчас",
+    "currentlyReadingSection": "Читаю сейчас"
   },
   "friends": {
     "title": "Друзья",
@@ -430,7 +449,8 @@
     "buyRequest": "{name} хочет купить {title}",
     "buyAccepted": "{name} принял ваше предложение о покупке {title}",
     "buyDeclined": "{name} отклонил ваше предложение о покупке {title}",
-    "bookTransferred": "Ваша покупка {title} завершена — книга на полке!"
+    "bookTransferred": "Ваша покупка {title} завершена — книга на полке!",
+    "friendFinishedBook": "{name} закончил читать {title}"
   },
   "landing": {
     "navBooks": "Книги",
@@ -559,7 +579,8 @@
     "publicProfileCtaHeading": "Создайте свою библиотеку",
     "publicProfileCtaText": "Отслеживайте книги, общайтесь с друзьями и делитесь любимыми.",
     "publicProfileCtaButton": "Попробовать BookShelf бесплатно",
-    "publicProfilePoweredBy": "Работает на"
+    "publicProfilePoweredBy": "Работает на",
+    "publicCurrentlyReading": "Сейчас читает"
   },
   "bookstore": {
     "title": "Мой книжный магазин",
