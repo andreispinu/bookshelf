@@ -190,6 +190,7 @@ city                 text  -- nullable, free-text city name
 reading_ai_email_notifications  boolean DEFAULT true  -- daily insight email opt-out
 message_digest_enabled          boolean DEFAULT true  -- daily message digest email opt-out
 first_book_email_sent_at        timestamptz           -- set after first-book reminder sent; guards against duplicates
+invite_friends_email_sent_at    timestamptz           -- set after invite-friends reminder sent; guards against duplicates
 ```
 
 ### `books`
@@ -1498,6 +1499,42 @@ RLS: inviter can read/insert/update their own invitations.
 - `app/(dashboard)/friends/invite-section.tsx` — client component (form + list)
 - `app/(dashboard)/friends/page.tsx` — fetches invitations, renders InviteSection
 - `lib/email-templates.ts` — `invitationEmail(inviterName, token)`
+
+### Invite friends reminder email (Vercel cron)
+Sent 5 days after signup if the user has fewer than 3 accepted friends. Personalised with their book count. Multilingual — sent in the user's `ui_language` if set, otherwise English.
+
+**Vercel cron schedule** (`vercel.json`): `0 10 * * *` — runs every day at 10:00 UTC.
+
+**Cron route:** `GET /api/cron/invite-friends-reminder`
+- Secured by `Authorization: Bearer {CRON_SECRET}` header
+- Finds profiles where `created_at` between `now - 132h` and `now - 108h` (4.5–5.5 days) AND `invite_friends_email_sent_at IS NULL`
+- Batch-fetches accepted friendships for those profile IDs and counts per user
+- Keeps only users with fewer than 3 accepted friends
+- Batch-fetches book counts for personalization
+- For each eligible user: sends email, sets `invite_friends_email_sent_at = now()`
+
+**Database field** (run `supabase/add-invite-friends-email-field.sql`):
+- `invite_friends_email_sent_at` — timestamptz, nullable, guards against duplicate sends
+
+**Email content (EN/RO/RU):**
+- Subject (EN): "BookShelf is better with friends — invite yours"
+- Subject (RO): "BookShelf e mai bun cu prietenii — invită-i pe ai tăi"
+- Subject (RU): "BookShelf лучше с друзьями — пригласите своих"
+- Personalised opening: if `bookCount > 0`, mentions how many books they've added
+- Lists 4 benefits of connecting with friends
+- Three invite options: email invite, search by name, share shelf link
+- CTA: "Invite my friends →" → `https://bookshelf.name/friends`
+
+**Templates** (`lib/email-templates.ts`):
+- `inviteFriendsReminderEmail(firstName, bookCount)` — English
+- `inviteFriendsReminderEmailRo(firstName, bookCount)` — Romanian
+- `inviteFriendsReminderEmailRu(firstName, bookCount)` — Russian (with correct RU plural forms for книга/книги/книг)
+
+**Files:**
+- `supabase/add-invite-friends-email-field.sql` — migration
+- `app/api/cron/invite-friends-reminder/route.ts` — cron handler
+- `lib/email-templates.ts` — three template functions
+- `vercel.json` — cron schedule added
 
 ### First book reminder email (Vercel cron)
 Sent the day after signup if the user has added no books yet. Multilingual — sent in the user's `ui_language` if set, otherwise English.

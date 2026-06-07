@@ -905,3 +905,165 @@ export function firstBookReminderEmailRu(firstName: string): { subject: string; 
   `)
   return { subject, html }
 }
+
+export function inviteFriendsReminderEmail(firstName: string, bookCount: number): { subject: string; html: string } {
+  const subject = `BookShelf is better with friends — invite yours`
+  const safe = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const bookLine = bookCount > 0
+    ? `and you've already added <strong>${bookCount} ${bookCount === 1 ? 'book' : 'books'}</strong> to your library — great start!`
+    : ''
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Hi ${safe},</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">
+          You've been on BookShelf for 5 days${bookLine ? ` ${bookLine}` : '.'}
+        </p>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Here's what happens when you connect with friends:</p>
+        <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>See every book on their shelf</li>
+          <li>Request to borrow books from each other</li>
+          <li>Buy and sell books directly</li>
+          <li>Get notified when they add something new</li>
+        </ul>
+
+        <p style="margin:0 0 12px;font-size:14px;font-weight:bold;color:#292524;">How to invite friends:</p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Option 1 — Invite by email:</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          Go to Friends → scroll to "Invite a friend" → type their email and send. They'll get a personal invite from you.
+        </p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Option 2 — Search by name:</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          Go to Friends → search for someone already on BookShelf → send a friend request.
+        </p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Option 3 — Share your shelf:</p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Set up your username in Profile → share your bookshelf.name/[username] link anywhere — WhatsApp, Instagram, wherever your friends are.
+        </p>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          The more friends you connect with, the more useful BookShelf becomes.
+        </p>
+
+        ${ctaButton('Invite my friends →', `${BASE_URL}/friends`)}
+
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          You're receiving this because you recently joined BookShelf.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function inviteFriendsReminderEmailRo(firstName: string, bookCount: number): { subject: string; html: string } {
+  const subject = `BookShelf e mai bun cu prietenii — invită-i pe ai tăi`
+  const safe = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const bookLine = bookCount > 0
+    ? `și ai adăugat deja <strong>${bookCount} ${bookCount === 1 ? 'carte' : 'cărți'}</strong> în biblioteca ta — start excelent!`
+    : ''
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Salut, ${safe}!</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">
+          Ești pe BookShelf de 5 zile${bookLine ? ` ${bookLine}` : '.'}
+        </p>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Iată ce se întâmplă când te conectezi cu prietenii:</p>
+        <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Vezi toate cărțile de pe raftul lor</li>
+          <li>Cereți să împrumutați cărți reciproc</li>
+          <li>Cumpărați și vindeți cărți direct</li>
+          <li>Primești notificări când adaugă ceva nou</li>
+        </ul>
+
+        <p style="margin:0 0 12px;font-size:14px;font-weight:bold;color:#292524;">Cum să îți inviți prietenii:</p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Opțiunea 1 — Invită prin email:</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          Mergi la Prieteni → derulează la „Invită un prieten" → scrie emailul lor și trimite. Vor primi o invitație personală din partea ta.
+        </p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Opțiunea 2 — Caută după nume:</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          Mergi la Prieteni → caută pe cineva deja pe BookShelf → trimite o cerere de prietenie.
+        </p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Opțiunea 3 — Împărtășește-ți raftul:</p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Setează-ți numele de utilizator în Profil → distribuie link-ul bookshelf.name/[username] oriunde — WhatsApp, Instagram, oriunde sunt prietenii tăi.
+        </p>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Cu cât te conectezi cu mai mulți prieteni, cu atât BookShelf devine mai util.
+        </p>
+
+        ${ctaButton('Invită-mi prietenii →', `${BASE_URL}/friends`)}
+
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          Primești acest email deoarece te-ai înscris recent pe BookShelf.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function inviteFriendsReminderEmailRu(firstName: string, bookCount: number): { subject: string; html: string } {
+  const subject = `BookShelf лучше с друзьями — пригласите своих`
+  const safe = firstName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const bookLine = bookCount > 0
+    ? `и вы уже добавили <strong>${bookCount} ${bookCount === 1 ? 'книгу' : bookCount < 5 ? 'книги' : 'книг'}</strong> в свою библиотеку — отличное начало!`
+    : ''
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Привет, ${safe}!</p>
+        <p style="margin:0 0 20px;font-size:15px;color:#57534e;line-height:1.6;">
+          Вы пользуетесь BookShelf уже 5 дней${bookLine ? ` ${bookLine}` : '.'}
+        </p>
+
+        <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#292524;">Вот что происходит, когда вы подключаетесь с друзьями:</p>
+        <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#57534e;line-height:1.8;">
+          <li>Видите все книги на их полке</li>
+          <li>Можете брать книги друг у друга</li>
+          <li>Покупаете и продаёте книги напрямую</li>
+          <li>Получаете уведомления, когда они добавляют что-то новое</li>
+        </ul>
+
+        <p style="margin:0 0 12px;font-size:14px;font-weight:bold;color:#292524;">Как пригласить друзей:</p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Вариант 1 — Пригласить по email:</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          Перейдите в Друзья → прокрутите до «Пригласить друга» → введите их email и отправьте. Они получат личное приглашение от вас.
+        </p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Вариант 2 — Поиск по имени:</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          Перейдите в Друзья → найдите кого-то, кто уже на BookShelf → отправьте запрос в друзья.
+        </p>
+
+        <p style="margin:0 0 4px;font-size:14px;font-weight:bold;color:#292524;">Вариант 3 — Поделитесь полкой:</p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Задайте имя пользователя в Профиле → поделитесь ссылкой bookshelf.name/[username] где угодно — в WhatsApp, Instagram, везде, где есть ваши друзья.
+        </p>
+
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Чем больше друзей вы подключите, тем полезнее становится BookShelf.
+        </p>
+
+        ${ctaButton('Пригласить друзей →', `${BASE_URL}/friends`)}
+
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          Вы получили это письмо, потому что недавно зарегистрировались в BookShelf.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
