@@ -54,10 +54,11 @@ export default async function PublicProfilePage({ params }: Props) {
     .limit(3)
 
   type ReadingItem = { id: string; progress_percent: number; book: { id: string; title: string; author: string; cover_url: string | null } | null }
-  const currentlyReading: ReadingItem[] = (readingProgressData ?? []).map((r: Record<string, unknown>) => ({
-    ...r,
+  const currentlyReading = ((readingProgressData ?? []).map((r: Record<string, unknown>) => ({
+    id: r.id as string,
+    progress_percent: r.progress_percent as number,
     book: Array.isArray(r.book) ? (r.book[0] ?? null) : r.book as ReadingItem['book'],
-  })).filter((r: ReadingItem) => r.book) as ReadingItem[]
+  })) as ReadingItem[]).filter(r => r.book != null) as (ReadingItem & { book: NonNullable<ReadingItem['book']> })[]
 
   // Fetch books for public_full
   let books: { id: string; title: string; author: string; cover_url: string | null; status: string; category: string | null; availability_mode: string | null; sale_price: number | null; sale_currency: string | null }[] = []
