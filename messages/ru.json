@@ -367,7 +367,22 @@
     "receiptConfirmedToast": "Получение подтверждено — займ активен",
     "returnInitiatedToast": "Книга отмечена как возвращённая",
     "returnConfirmedToast": "Возврат подтверждён — займ завершён",
-    "returnDeniedToast": "Возврат оспорен"
+    "returnDeniedToast": "Возврат оспорен",
+    "salesTab": "Продажи",
+    "selling": "Продажи",
+    "buying": "Покупки",
+    "noSelling": "Вы ещё не продали ни одной книги.",
+    "noBuying": "Вы ещё не купили ни одной книги.",
+    "confirmSold": "Подтвердить продажу",
+    "saleAccept": "Принять",
+    "saleDecline": "Отклонить",
+    "saleAccepted": "Продажа принята",
+    "saleDeclined": "Продажа отклонена",
+    "saleCompleted": "Продажа завершена",
+    "saleRequestPending": "Ожидает",
+    "saleRequestAccepted": "Принято",
+    "saleRequestDeclined": "Отклонено",
+    "saleRequestCompleted": "Завершено"
   },
   "profile": {
     "title": "Профиль",

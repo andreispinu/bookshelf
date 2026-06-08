@@ -368,7 +368,21 @@
     "returnInitiatedToast": "Book marked as returned",
     "returnConfirmedToast": "Return confirmed — loan completed",
     "returnDeniedToast": "Return disputed",
-    "salesTab": "Sales"
+    "salesTab": "Sales",
+    "selling": "Selling",
+    "buying": "Buying",
+    "noSelling": "You haven't sold any books yet.",
+    "noBuying": "You haven't bought any books yet.",
+    "confirmSold": "Confirm sold",
+    "saleAccept": "Accept",
+    "saleDecline": "Decline",
+    "saleAccepted": "Sale accepted",
+    "saleDeclined": "Sale declined",
+    "saleCompleted": "Sale completed",
+    "saleRequestPending": "Pending",
+    "saleRequestAccepted": "Accepted",
+    "saleRequestDeclined": "Declined",
+    "saleRequestCompleted": "Completed"
   },
   "profile": {
     "title": "Profile",

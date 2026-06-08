@@ -367,7 +367,22 @@
     "receiptConfirmedToast": "Primire confirmată — împrumutul este acum activ",
     "returnInitiatedToast": "Carte marcată ca returnată",
     "returnConfirmedToast": "Returnare confirmată — împrumut finalizat",
-    "returnDeniedToast": "Returnare contestată"
+    "returnDeniedToast": "Returnare contestată",
+    "salesTab": "Vânzări",
+    "selling": "Vânzări",
+    "buying": "Cumpărături",
+    "noSelling": "Nu ai vândut nicio carte încă.",
+    "noBuying": "Nu ai cumpărat nicio carte încă.",
+    "confirmSold": "Confirmă vânzarea",
+    "saleAccept": "Acceptă",
+    "saleDecline": "Refuză",
+    "saleAccepted": "Vânzare acceptată",
+    "saleDeclined": "Vânzare refuzată",
+    "saleCompleted": "Vânzare finalizată",
+    "saleRequestPending": "În așteptare",
+    "saleRequestAccepted": "Acceptat",
+    "saleRequestDeclined": "Refuzat",
+    "saleRequestCompleted": "Finalizat"
   },
   "profile": {
     "title": "Profil",
