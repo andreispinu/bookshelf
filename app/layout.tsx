@@ -5,6 +5,8 @@ import { getMessages, getLocale } from "next-intl/server";
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner";
 import PwaUpdater from "./pwa-updater";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,6 +60,8 @@ export default async function RootLayout({
           <Toaster position="bottom-center" />
           <PwaUpdater />
         </NextIntlClientProvider>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
