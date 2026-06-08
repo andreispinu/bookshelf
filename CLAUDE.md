@@ -192,6 +192,7 @@ message_digest_enabled          boolean DEFAULT true  -- daily message digest em
 first_book_email_sent_at        timestamptz           -- set after first-book reminder sent; guards against duplicates
 invite_friends_email_sent_at    timestamptz           -- set after invite-friends reminder sent; guards against duplicates
 email_confirmed                 boolean DEFAULT false -- synced from auth.users.email_confirmed_at via DB trigger
+book_limit_email_sent_at        timestamptz           -- set after book-limit nudge email sent (at 9 or 10 books, free tier only)
 ```
 
 ### `books`
@@ -342,29 +343,27 @@ created_at   timestamptz DEFAULT now()
 ### Plans
 | Plan | Price | Stripe Price ID env var |
 |------|-------|------------------------|
+| Free | $0 / forever | — |
 | Monthly | $1/month | `STRIPE_MONTHLY_PRICE_ID` |
 | Annual | $10/year | `STRIPE_ANNUAL_PRICE_ID` |
 
-Free trial: 14 days from signup, full access, no card required.
+**Free tier:** permanent, full access to all features, limited to 10 books in library. No trial expiry.
 
 ### How it works
-1. On signup, the DB trigger sets `trial_ends_at = now() + 14 days` and `subscription_status = 'trialing'`
-2. The dashboard layout checks on every page load: is trial still active OR is subscription active?
-3. If neither → redirect to `/subscribe`
-4. If trialing with ≤ 3 days left → amber banner with countdown + subscribe link
-5. User subscribes via Stripe Checkout (hosted page, no custom card form)
-6. Stripe webhook updates `subscription_status → 'active'` in the profiles table
+1. On signup, the DB trigger sets `trial_ends_at = now() + 14 days` and `subscription_status = 'trialing'` (kept for DB compat but no longer used for access control)
+2. All users with `subscription_status != 'active'` are on the free tier — full access, 10-book limit
+3. Book limit enforced in `addBook()` and `addBookForce()` server actions — returns `{ error: 'book_limit_reached' }` when count ≥ 10
+4. UI shows a modal "You've reached your free shelf limit" with an upgrade CTA
+5. Free users see a book usage indicator on the books page (at 8+ books) and a progress bar on the profile page
+6. User upgrades via Stripe Checkout → `subscription_status → 'active'` → unlimited books
+7. `trial_ends_at` is no longer used for access control. Expired trial users had it set to `2099-01-01` via `supabase/free-tier-migration.sql`
 
 ### Access control (dashboard layout)
-```typescript
-const isTrialing = status === 'trialing' && trial_ends_at > now
-const isActive = status === 'active'
-if (!isTrialing && !isActive) redirect('/subscribe')
-```
+No redirect to `/subscribe`. All authenticated users can access the dashboard. Book limit only enforced at insert time.
 
 ### Files
 - `lib/stripe.ts` — Stripe server client (API version `2026-05-27.dahlia`)
-- `app/subscribe/page.tsx` — Paywall page. Lives **outside** `(dashboard)` to avoid redirect loop. Two pricing cards (Monthly / Annual highlighted as "Best value")
+- `app/subscribe/page.tsx` — Upgrade page (reached from book limit modal). Two plan cards (Monthly / Annual).
 - `app/api/stripe/checkout/route.ts` — `POST { priceId }` → creates Stripe Checkout session → returns `{ url }`
 - `app/api/stripe/webhook/route.ts` — handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
 

@@ -218,7 +218,12 @@
     "keepGoing": "Keep going! You'll see your finished books here.",
     "noReadingBooksYet": "You haven't started any books yet",
     "currentlyReadingLink": "Currently reading",
-    "currentlyReadingSection": "Currently reading"
+    "currentlyReadingSection": "Currently reading",
+    "shelfFull": "Shelf full — upgrade to add more",
+    "bookUsage": "{count}/{limit} books used",
+    "bookLimitTitle": "You've reached your free shelf limit",
+    "bookLimitMessage": "Free accounts can store up to 10 books. Upgrade to keep adding books — it's just $1/month or $10/year.",
+    "bookLimitUpgrade": "Upgrade now"
   },
   "friends": {
     "title": "Friends",
@@ -451,7 +456,11 @@
     "profilePicture": "Profile picture",
     "notificationsSection": "Notifications",
     "messageDigest": "Daily message digest",
-    "messageDigestDesc": "Get a once-daily email when you have unread messages"
+    "messageDigestDesc": "Get a once-daily email when you have unread messages",
+    "freePlan": "Free plan — up to 10 books",
+    "bookUsageOf": "{count} of {limit} books used",
+    "upgradeForUnlimited": "Upgrade for unlimited",
+    "getUnlimited": "Get unlimited"
   },
   "notifications": {
     "title": "Notifications",
@@ -582,6 +591,15 @@
     "pricingWhyHeading": "Why do we charge?",
     "pricingWhyText": "BookShelf is built and maintained by a small team. Your subscription covers the AI that scans book covers and generates daily reading insights, plus hosting, email delivery, and everything that keeps the platform running. No ads. No data selling. Just a fair price for a tool we use ourselves.",
     "pricingStartFreeTrial": "Start free trial",
+    "pricingFree": "Free",
+    "pricingForever": "/ forever",
+    "pricingUpTo10Books": "Up to 10 books",
+    "pricingUnlimitedBooks": "Unlimited books",
+    "pricingEverythingFree": "Everything in free",
+    "pricingPrioritySupport": "Priority support",
+    "pricingStartFree": "Start for free",
+    "pricingGetUnlimited": "Get unlimited",
+    "pricingNoTimeLimit": "No time limit",
     "pricingStripeNote": "Payments processed securely by Stripe. Cancel any time.",
     "footerLogIn": "Log in",
     "footerSignUp": "Sign up",

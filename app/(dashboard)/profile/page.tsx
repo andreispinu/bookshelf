@@ -15,11 +15,17 @@ export default async function ProfilePage() {
 
   const t = await getTranslations('profile')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, first_name, last_name, avatar_url, created_at, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_ends_at, username, profile_visibility, country, city, ui_language, message_digest_enabled')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { count: bookCount }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, name, first_name, last_name, avatar_url, created_at, trial_ends_at, stripe_customer_id, stripe_subscription_id, subscription_status, subscription_plan, subscription_ends_at, username, profile_visibility, country, city, ui_language, message_digest_enabled')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('books')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+  ])
 
   if (!profile) redirect('/login')
 
@@ -43,6 +49,7 @@ export default async function ProfilePage() {
           profile={profile as unknown as Profile}
           email={user.email ?? ''}
           missingFields={missingFields}
+          bookCount={bookCount ?? 0}
         />
         <div id="profile-username">
           <UsernameSection

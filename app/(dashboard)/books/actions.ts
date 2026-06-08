@@ -73,12 +73,31 @@ function extractFields(formData: FormData) {
   }
 }
 
+const FREE_BOOK_LIMIT = 10
+
+async function checkBookLimit(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<boolean> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_status')
+    .eq('id', userId)
+    .single()
+  if (profile?.subscription_status === 'active') return false // paid, no limit
+
+  const { count } = await supabase
+    .from('books')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+  return (count ?? 0) >= FREE_BOOK_LIMIT
+}
+
 export async function addBook(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   const fields = extractFields(formData)
+
+  if (await checkBookLimit(supabase, user.id)) return { error: 'book_limit_reached' as const }
 
   // Duplicate check (case-insensitive)
   const { data: existing } = await supabase
@@ -104,6 +123,8 @@ export async function addBookForce(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  if (await checkBookLimit(supabase, user.id)) return { error: 'book_limit_reached' as const }
 
   const fields = extractFields(formData)
   const { error } = await supabase.from('books').insert({ user_id: user.id, ...fields })

@@ -26,10 +26,13 @@ const FEATURE_KEYS = [
 const LIBRARY_STEP_KEYS = ['createAccount', 'addBooks', 'organiseCategories', 'shareShelf'] as const
 const LEND_STEP_KEYS = ['addFriends', 'browseShelves', 'requestBorrow', 'coordinateHandoff', 'returnSmoothly'] as const
 const BUY_SELL_STEP_KEYS = ['markForSale', 'friendsSeeListing', 'sendBuyRequest', 'transferBook'] as const
+const FREE_FEATURE_KEYS = [
+  'pricingUpTo10Books', 'pricingFriendsLending', 'pricingBorrowWorkflow',
+  'pricingPublicProfile', 'pricingPwa', 'pricingEmailNotifications',
+] as const
 const PAID_FEATURE_KEYS = [
-  'pricingFullLibrary', 'pricingAiScan', 'pricingReadWithAI',
-  'pricingFriendsLending', 'pricingBorrowWorkflow', 'pricingPublicProfile',
-  'pricingPwa', 'pricingEmailNotifications',
+  'pricingUnlimitedBooks', 'pricingEverythingFree', 'pricingAiScan',
+  'pricingReadWithAI', 'pricingPrioritySupport',
 ] as const
 
 export default async function LandingPage() {
@@ -64,6 +67,7 @@ export default async function LandingPage() {
     desc: t(`s_${key}_desc`),
   }))
 
+  const freeFeatures = FREE_FEATURE_KEYS.map(key => t(key))
   const paidFeatures = PAID_FEATURE_KEYS.map(key => t(key))
 
   const iosSteps = [t('installIos1'), t('installIos2'), t('installIos3'), t('installIos4')]
@@ -305,25 +309,27 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
 
-            {/* Free trial */}
+            {/* Free */}
             <div className="rounded-xl border border-stone-200 bg-stone-50 p-6 flex flex-col gap-4">
               <div>
-                <span className="text-sm font-medium text-stone-500">{t('pricingFreeTrial')}</span>
+                <span className="text-sm font-medium text-stone-500">{t('pricingFree')}</span>
               </div>
               <div>
                 <span className="text-3xl font-bold text-stone-800">$0</span>
-                <span className="text-sm text-stone-400 ml-1">{t('pricingPerDays')}</span>
+                <span className="text-sm text-stone-400 ml-1">{t('pricingForever')}</span>
               </div>
               <ul className="space-y-1.5 text-sm text-stone-600 flex-1">
-                <li className="flex items-start gap-2"><span className="text-emerald-500 shrink-0 mt-px">✓</span> {t('pricingFullAccess')}</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-500 shrink-0 mt-px">✓</span> {t('pricingNoCreditCard')}</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-500 shrink-0 mt-px">✓</span> {t('pricingCancelAnyTime')}</li>
+                {freeFeatures.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-emerald-500 shrink-0 mt-px">✓</span> {f}
+                  </li>
+                ))}
               </ul>
               <Link
                 href="/signup"
                 className="mt-auto block text-center py-2.5 rounded-lg border border-stone-300 text-stone-800 text-sm font-medium hover:bg-stone-100 transition-colors"
               >
-                {t('pricingStartFreeTrial')}
+                {t('pricingStartFree')}
               </Link>
             </div>
 
@@ -348,7 +354,7 @@ export default async function LandingPage() {
                 href="/signup"
                 className="mt-auto block text-center py-2.5 rounded-lg border border-stone-300 text-stone-800 text-sm font-medium hover:bg-stone-100 transition-colors"
               >
-                {t('pricingStartFreeTrial')}
+                {t('pricingGetUnlimited')}
               </Link>
             </div>
 
@@ -374,7 +380,7 @@ export default async function LandingPage() {
                 href="/signup"
                 className="mt-auto block text-center py-2.5 rounded-lg bg-white text-stone-900 text-sm font-medium hover:bg-stone-100 transition-colors"
               >
-                {t('pricingStartFreeTrial')}
+                {t('pricingGetUnlimited')}
               </Link>
             </div>
 

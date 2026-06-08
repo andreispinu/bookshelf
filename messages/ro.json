@@ -218,7 +218,12 @@
     "keepGoing": "Continuă! Aici vei vedea cărțile terminate.",
     "noReadingBooksYet": "Nu ai început nicio carte încă",
     "currentlyReadingLink": "Citesc acum",
-    "currentlyReadingSection": "Citesc acum"
+    "currentlyReadingSection": "Citesc acum",
+    "shelfFull": "Raft plin — fă upgrade pentru mai multe",
+    "bookUsage": "{count}/{limit} cărți folosite",
+    "bookLimitTitle": "Ai atins limita raftului gratuit",
+    "bookLimitMessage": "Conturile gratuite pot stoca până la 10 cărți. Fă upgrade pentru a continua să adaugi cărți — doar $1/lună sau $10/an.",
+    "bookLimitUpgrade": "Fă upgrade"
   },
   "friends": {
     "title": "Prieteni",
@@ -451,7 +456,11 @@
     "profilePicture": "Fotografie de profil",
     "notificationsSection": "Notificări",
     "messageDigest": "Rezumat zilnic de mesaje",
-    "messageDigestDesc": "Primești un email zilnic când ai mesaje necitite"
+    "messageDigestDesc": "Primești un email zilnic când ai mesaje necitite",
+    "freePlan": "Plan gratuit — până la 10 cărți",
+    "bookUsageOf": "{count} din {limit} cărți folosite",
+    "upgradeForUnlimited": "Upgrade pentru nelimitat",
+    "getUnlimited": "Obține nelimitat"
   },
   "notifications": {
     "title": "Notificări",
@@ -582,6 +591,15 @@
     "pricingWhyHeading": "De ce percepem o taxă?",
     "pricingWhyText": "BookShelf este construit și întreținut de o echipă mică. Abonamentul tău acoperă AI-ul care scanează coperțile cărților și generează insights zilnice de lectură, plus găzduirea, livrarea e-mailurilor și tot ceea ce menține platforma funcțională. Fără reclame. Fără vânzare de date. Doar un preț corect pentru un instrument pe care îl folosim noi înșine.",
     "pricingStartFreeTrial": "Încearcă gratuit",
+    "pricingFree": "Gratuit",
+    "pricingForever": "/ pentru totdeauna",
+    "pricingUpTo10Books": "Până la 10 cărți",
+    "pricingUnlimitedBooks": "Cărți nelimitate",
+    "pricingEverythingFree": "Tot ce e în gratuit",
+    "pricingPrioritySupport": "Suport prioritar",
+    "pricingStartFree": "Începe gratuit",
+    "pricingGetUnlimited": "Obține nelimitat",
+    "pricingNoTimeLimit": "Fără limită de timp",
     "pricingStripeNote": "Plăți procesate în siguranță de Stripe. Anulezi oricând.",
     "footerLogIn": "Conectare",
     "footerSignUp": "Înregistrare",

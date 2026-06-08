@@ -34,6 +34,7 @@ export default function AddBookForm() {
   const [loading, setLoading] = useState(false)
   const [fillLoading, setFillLoading] = useState(false)
   const [showDuplicate, setShowDuplicate] = useState(false)
+  const [showBookLimit, setShowBookLimit] = useState(false)
   const [pendingFormData, setPendingFormData] = useState<FormData | null>(null)
 
   const [coverFailed, setCoverFailed] = useState(false)
@@ -123,6 +124,11 @@ export default function AddBookForm() {
     const formData = new FormData(e.currentTarget)
     const result = await addBook(formData)
 
+    if (result && 'error' in result && result.error === 'book_limit_reached') {
+      setShowBookLimit(true)
+      setLoading(false)
+      return
+    }
     if (result && 'duplicate' in result) {
       setPendingFormData(formData)
       setShowDuplicate(true)
@@ -140,6 +146,11 @@ export default function AddBookForm() {
     setShowDuplicate(false)
     setLoading(true)
     const result = await addBookForce(pendingFormData)
+    if (result && 'error' in result && result.error === 'book_limit_reached') {
+      setShowBookLimit(true)
+      setLoading(false)
+      return
+    }
     if (result?.error) {
       setError(result.error)
       setLoading(false)
@@ -296,6 +307,27 @@ export default function AddBookForm() {
           </CardFooter>
         </form>
       </Card>
+
+      {/* Book limit dialog */}
+      <Dialog open={showBookLimit} onOpenChange={open => !open && setShowBookLimit(false)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-stone-800">{t('bookLimitTitle')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-stone-600">{t('bookLimitMessage')}</p>
+          <DialogFooter className="flex gap-2 mt-2">
+            <Button variant="ghost" className="text-stone-500" onClick={() => setShowBookLimit(false)}>
+              {tc('cancel')}
+            </Button>
+            <Link
+              href="/profile#plans"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-stone-800 hover:bg-stone-700 text-white h-9 px-4 py-2 transition-colors"
+            >
+              {t('bookLimitUpgrade')}
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Duplicate confirmation dialog */}
       <Dialog open={showDuplicate} onOpenChange={open => !open && setShowDuplicate(false)}>

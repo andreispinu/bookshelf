@@ -218,7 +218,12 @@
     "keepGoing": "Продолжайте! Здесь вы увидите прочитанные книги.",
     "noReadingBooksYet": "Вы ещё не начали ни одной книги",
     "currentlyReadingLink": "Читаю сейчас",
-    "currentlyReadingSection": "Читаю сейчас"
+    "currentlyReadingSection": "Читаю сейчас",
+    "shelfFull": "Полка заполнена — обновитесь для большего",
+    "bookUsage": "{count}/{limit} книг использовано",
+    "bookLimitTitle": "Вы достигли лимита бесплатной полки",
+    "bookLimitMessage": "Бесплатные аккаунты могут хранить до 10 книг. Обновите аккаунт, чтобы добавлять книги — всего $1/месяц или $10/год.",
+    "bookLimitUpgrade": "Обновить аккаунт"
   },
   "friends": {
     "title": "Друзья",
@@ -451,7 +456,11 @@
     "profilePicture": "Фото профиля",
     "notificationsSection": "Уведомления",
     "messageDigest": "Ежедневный дайджест сообщений",
-    "messageDigestDesc": "Получать ежедневное письмо о непрочитанных сообщениях"
+    "messageDigestDesc": "Получать ежедневное письмо о непрочитанных сообщениях",
+    "freePlan": "Бесплатный план — до 10 книг",
+    "bookUsageOf": "{count} из {limit} книг использовано",
+    "upgradeForUnlimited": "Перейти на безлимит",
+    "getUnlimited": "Получить безлимит"
   },
   "notifications": {
     "title": "Уведомления",
@@ -582,6 +591,15 @@
     "pricingWhyHeading": "Почему мы берём плату?",
     "pricingWhyText": "BookShelf создан и поддерживается небольшой командой. Ваша подписка покрывает ИИ для сканирования обложек книг и создания ежедневных инсайтов, а также хостинг, доставку писем и всё, что обеспечивает работу платформы. Без рекламы. Без продажи данных. Просто честная цена за инструмент, которым мы пользуемся сами.",
     "pricingStartFreeTrial": "Попробовать бесплатно",
+    "pricingFree": "Бесплатно",
+    "pricingForever": "/ навсегда",
+    "pricingUpTo10Books": "До 10 книг",
+    "pricingUnlimitedBooks": "Неограниченное количество книг",
+    "pricingEverythingFree": "Всё из бесплатного",
+    "pricingPrioritySupport": "Приоритетная поддержка",
+    "pricingStartFree": "Начать бесплатно",
+    "pricingGetUnlimited": "Получить безлимит",
+    "pricingNoTimeLimit": "Без ограничения по времени",
     "pricingStripeNote": "Платежи безопасно обрабатываются через Stripe. Отмена в любое время.",
     "footerLogIn": "Войти",
     "footerSignUp": "Зарегистрироваться",

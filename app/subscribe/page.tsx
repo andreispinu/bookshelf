@@ -36,7 +36,8 @@ export default function SubscribePage() {
       <div className="max-w-lg w-full">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-semibold text-stone-800 tracking-tight"><Link href="/">BookShelf</Link></h1>
-          <p className="text-stone-500 mt-2">Your free trial has ended. Choose a plan to continue.</p>
+          <p className="text-stone-500 mt-2">Upgrade to unlimited books</p>
+          <p className="text-stone-400 text-sm mt-1">You&apos;ve used all 10 free book slots. Upgrade to add unlimited books and keep building your library.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -80,7 +81,7 @@ export default function SubscribePage() {
                     : 'bg-stone-800 text-white hover:bg-stone-700'
                 }`}
               >
-                {loading === plan.id ? 'Loading…' : 'Subscribe'}
+                {loading === plan.id ? 'Loading…' : 'Get unlimited'}
               </button>
             </div>
           ))}

@@ -1,6 +1,4 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import Nav from './nav'
 import MobileBottomNav from './mobile-bottom-nav'
@@ -15,22 +13,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, avatar_url, subscription_status, trial_ends_at, first_name, last_name, username, country, city, ui_language, email_confirmed')
+    .select('name, avatar_url, subscription_status, first_name, last_name, username, country, city, ui_language, email_confirmed')
     .eq('id', user.id)
     .single()
-
-  const now = new Date()
-  const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
-  const isTrialing = profile?.subscription_status === 'trialing' && !!trialEndsAt && trialEndsAt > now
-  const isActive = profile?.subscription_status === 'active'
-
-  if (!isTrialing && !isActive) {
-    redirect('/subscribe')
-  }
-
-  const msLeft = trialEndsAt ? trialEndsAt.getTime() - now.getTime() : 0
-  const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24))
-  const showBanner = isTrialing && daysLeft <= 3
 
   const missingCount = [
     profile?.first_name,
@@ -41,23 +26,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     profile?.avatar_url,
   ].filter(v => !v).length
 
-  const t = await getTranslations('profile')
-
   return (
     <div className="min-h-screen bg-stone-50">
       <LocaleSync uiLanguage={profile?.ui_language ?? null} />
       <Nav userName={profile?.name ?? user.email ?? ''} avatarUrl={profile?.avatar_url ?? null} missingCount={missingCount} />
-      {showBanner && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-sm text-amber-800">
-          {daysLeft <= 1
-            ? t('expiresToday')
-            : t('daysRemaining', { count: daysLeft })}
-          {' '}
-          <Link href="/subscribe" className="font-semibold underline underline-offset-2">
-            {t('subscribeNow').replace(' ↓', '')} →
-          </Link>
-        </div>
-      )}
       {profile?.email_confirmed === false && <EmailConfirmBanner />}
       <main className="max-w-4xl mx-auto px-4 pt-8 pb-24 sm:pb-8">
         {children}

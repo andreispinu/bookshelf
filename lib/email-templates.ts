@@ -794,7 +794,7 @@ export function firstBookReminderEmail(firstName: string): { subject: string; ht
         </ul>
 
         <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
-          Your free trial is 14 days — make the most of it.
+          Your free BookShelf holds up to 10 books — start filling it!
         </p>
 
         ${ctaButton('Add my first book →', BOOKS_URL)}
@@ -843,7 +843,7 @@ export function firstBookReminderEmailRo(firstName: string): { subject: string; 
         </ul>
 
         <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
-          Perioada ta de probă gratuită este de 14 zile — profită la maximum de ea.
+          BookShelf-ul tău gratuit poate stoca până la 10 cărți — începe să-l umpli!
         </p>
 
         ${ctaButton('Adaugă prima mea carte →', BOOKS_URL)}
@@ -892,7 +892,7 @@ export function firstBookReminderEmailRu(firstName: string): { subject: string; 
         </ul>
 
         <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
-          Ваш бесплатный пробный период — 14 дней. Используйте его по максимуму.
+          Ваша бесплатная полка BookShelf вмещает до 10 книг — начните заполнять её!
         </p>
 
         ${ctaButton('Добавить первую книгу →', BOOKS_URL)}
@@ -1061,6 +1061,30 @@ export function inviteFriendsReminderEmailRu(firstName: string, bookCount: numbe
 
         <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
           Вы получили это письмо, потому что недавно зарегистрировались в BookShelf.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function bookLimitNudgeEmail(firstName: string, bookCount: number): { subject: string; html: string } {
+  const subject = 'Your free BookShelf is almost full'
+  const html = wrapper(
+    `<tr>
+      <td style="padding:32px 40px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Your shelf is filling up, ${firstName}!</p>
+        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
+          You've added <strong>${bookCount} book${bookCount === 1 ? '' : 's'}</strong> to your BookShelf — great progress!
+          Free accounts hold up to 10 books. When you're ready for more, upgrading is just <strong>$1/month</strong> or
+          <strong>$10/year</strong> — unlimited books forever.
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          No rush — your existing books and all your data are safe. Upgrade whenever you're ready.
+        </p>
+        ${ctaButton('Upgrade to unlimited →', `${BASE_URL}/profile#plans`)}
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          You're receiving this because you have a free BookShelf account.
         </p>
       </td>
     </tr>

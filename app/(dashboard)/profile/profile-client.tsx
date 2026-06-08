@@ -23,6 +23,7 @@ type Props = {
   profile: Profile
   email: string
   missingFields: string[]
+  bookCount: number
 }
 
 const FIELD_SECTIONS: Record<string, string> = {
@@ -44,7 +45,7 @@ function scrollToPlans() {
   document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })
 }
 
-export default function ProfileClient({ profile, email, missingFields }: Props) {
+export default function ProfileClient({ profile, email, missingFields, bookCount }: Props) {
   const t = useTranslations('profile')
   const tc = useTranslations('common')
   const router = useRouter()
@@ -76,23 +77,14 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
   const [portalLoading, setPortalLoading] = useState(false)
 
   // Subscription state
-  const now = new Date()
-  const trialEndsAt = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null
-  const status = profile.subscription_status
-  const isTrialing = status === 'trialing' && !!trialEndsAt && trialEndsAt > now
-  const isActive = status === 'active'
-  const isExpired = !isTrialing && !isActive
-
-  const msLeft = trialEndsAt ? trialEndsAt.getTime() - now.getTime() : 0
-  const daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
+  const isActive = profile.subscription_status === 'active'
+  const FREE_LIMIT = 10
+  const bookUsagePct = Math.min((bookCount / FREE_LIMIT) * 100, 100)
 
   const planPrice = profile.subscription_plan === 'monthly' ? '$1/month' : '$10/year'
   const planTypeLabel = profile.subscription_plan === 'monthly' ? t('monthlyPlan') : t('annualPlan')
   const nextBilling = profile.subscription_ends_at
     ? new Date(profile.subscription_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : null
-  const trialEndDate = trialEndsAt
-    ? trialEndsAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -310,26 +302,32 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
         <h2 className="text-lg font-semibold text-stone-800 mb-4">{t('subscription')}</h2>
         <div className="bg-white rounded-xl border border-stone-200 p-6 space-y-4">
 
-          {isTrialing && (
+          {!isActive && (
             <>
               <div className="flex items-center gap-3">
-                <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
-                  {t('freeTrial')}
+                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100">
+                  {t('active')}
                 </Badge>
-                <span className="text-sm font-medium text-stone-700">
-                  {daysLeft === 0 ? t('expiresToday') : t('daysRemaining', { count: daysLeft })}
-                </span>
+                <span className="text-sm font-medium text-stone-700">{t('freePlan')}</span>
               </div>
-              {trialEndDate && (
-                <p className="text-sm text-stone-500">{t('trialEndsOn', { date: trialEndDate })}</p>
-              )}
-              <p className="text-sm text-stone-500">{t('afterTrialEnds')}</p>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-stone-500">
+                  <span>{t('bookUsageOf', { count: bookCount, limit: FREE_LIMIT })}</span>
+                  <span>{bookCount}/{FREE_LIMIT}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-stone-100 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${bookCount >= FREE_LIMIT ? 'bg-amber-400' : 'bg-emerald-400'}`}
+                    style={{ width: `${bookUsagePct}%` }}
+                  />
+                </div>
+              </div>
               <Button
                 variant="outline"
                 className="border-stone-300 text-stone-700 hover:bg-stone-50"
                 onClick={scrollToPlans}
               >
-                {t('viewPlans')}
+                {t('upgradeForUnlimited')}
               </Button>
             </>
           )}
@@ -353,23 +351,6 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
                 onClick={handleManageSubscription}
               >
                 {portalLoading ? t('managingSubscription') : t('manageSubscription')}
-              </Button>
-            </>
-          )}
-
-          {isExpired && (
-            <>
-              <div className="flex items-center gap-3">
-                <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
-                  {t('expired')}
-                </Badge>
-              </div>
-              <p className="text-sm text-stone-500">{t('trialExpiredMessage')}</p>
-              <Button
-                className="bg-stone-800 hover:bg-stone-700 text-white"
-                onClick={scrollToPlans}
-              >
-                {t('subscribeNow')}
               </Button>
             </>
           )}
@@ -404,7 +385,7 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
               disabled={subscribeLoading !== null || isActive}
               onClick={() => handleSubscribe('monthly')}
             >
-              {subscribeLoading === 'monthly' ? tc('loading') : isActive && profile.subscription_plan === 'monthly' ? t('currentPlan') : t('subscribe')}
+              {subscribeLoading === 'monthly' ? tc('loading') : isActive && profile.subscription_plan === 'monthly' ? t('currentPlan') : t('getUnlimited')}
             </Button>
           </div>
 
@@ -432,7 +413,7 @@ export default function ProfileClient({ profile, email, missingFields }: Props) 
               disabled={subscribeLoading !== null || isActive}
               onClick={() => handleSubscribe('annual')}
             >
-              {subscribeLoading === 'annual' ? tc('loading') : isActive && profile.subscription_plan === 'annual' ? t('currentPlan') : t('subscribe')}
+              {subscribeLoading === 'annual' ? tc('loading') : isActive && profile.subscription_plan === 'annual' ? t('currentPlan') : t('getUnlimited')}
             </Button>
           </div>
 

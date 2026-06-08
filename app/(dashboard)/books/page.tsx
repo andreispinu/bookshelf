@@ -18,10 +18,14 @@ export default async function BooksPage() {
   const [{ data: books, error }, { data: friends }, { data: profile }, { data: readingAIBooks }, { data: readingProgress }] = await Promise.all([
     getBooks(user.id),
     getFriends(user.id),
-    supabase.from('profiles').select('username, profile_visibility, name').eq('id', user.id).single(),
+    supabase.from('profiles').select('username, profile_visibility, name, subscription_status').eq('id', user.id).single(),
     supabase.from('reading_ai_books').select('id, book_id').eq('user_id', user.id),
     supabase.from('reading_progress').select('book_id').eq('user_id', user.id).eq('status', 'reading'),
   ])
+
+  const bookCount = books?.length ?? 0
+  const isPaid = profile?.subscription_status === 'active'
+  const FREE_LIMIT = 10
 
   const readingAIMap: Record<string, string> = {}
   for (const r of readingAIBooks ?? []) readingAIMap[r.book_id] = r.id
@@ -35,7 +39,7 @@ export default async function BooksPage() {
         <div>
           <h2 className="text-2xl font-semibold text-stone-800">{t('title')}</h2>
           <p className="text-stone-500 text-sm mt-0.5">
-            {t('booksCount', { count: books?.length ?? 0 })}
+            {t('booksCount', { count: bookCount })}
             {(readingProgress?.length ?? 0) > 0 && (
               <>
                 {' · '}
@@ -53,6 +57,22 @@ export default async function BooksPage() {
               </>
             )}
           </p>
+          {!isPaid && bookCount >= FREE_LIMIT && (
+            <>
+              {' · '}
+              <Link href="/profile#plans" className="text-amber-600 hover:text-amber-700 transition-colors font-medium">
+                {t('shelfFull')}
+              </Link>
+            </>
+          )}
+          {!isPaid && bookCount >= 8 && bookCount < FREE_LIMIT && (
+            <>
+              {' · '}
+              <Link href="/profile#plans" className="text-stone-400 hover:text-stone-600 transition-colors">
+                {t('bookUsage', { count: bookCount, limit: FREE_LIMIT })}
+              </Link>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ShareShelfButton
