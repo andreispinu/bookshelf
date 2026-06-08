@@ -191,6 +191,7 @@ reading_ai_email_notifications  boolean DEFAULT true  -- daily insight email opt
 message_digest_enabled          boolean DEFAULT true  -- daily message digest email opt-out
 first_book_email_sent_at        timestamptz           -- set after first-book reminder sent; guards against duplicates
 invite_friends_email_sent_at    timestamptz           -- set after invite-friends reminder sent; guards against duplicates
+email_confirmed                 boolean DEFAULT false -- synced from auth.users.email_confirmed_at via DB trigger
 ```
 
 ### `books`

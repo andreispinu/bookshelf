@@ -57,7 +57,11 @@
     "firstName": "First name",
     "yourFirstName": "Your first name",
     "lastName": "Last name",
-    "yourLastName": "Last name (optional)"
+    "yourLastName": "Last name (optional)",
+    "confirmEmailBanner": "Please confirm your email address to keep your account secure.",
+    "resendConfirmation": "Resend confirmation email",
+    "confirmationSent": "Confirmation email sent — check your inbox.",
+    "sending": "Sending…"
   },
   "books": {
     "title": "My Books",

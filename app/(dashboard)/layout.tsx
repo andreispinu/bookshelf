@@ -6,6 +6,7 @@ import Nav from './nav'
 import MobileBottomNav from './mobile-bottom-nav'
 import LocaleSync from './locale-sync'
 import SupportButton from './support-button'
+import EmailConfirmBanner from './email-confirm-banner'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -14,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, avatar_url, subscription_status, trial_ends_at, first_name, last_name, username, country, city, ui_language')
+    .select('name, avatar_url, subscription_status, trial_ends_at, first_name, last_name, username, country, city, ui_language, email_confirmed')
     .eq('id', user.id)
     .single()
 
@@ -57,6 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
         </div>
       )}
+      {profile?.email_confirmed === false && <EmailConfirmBanner />}
       <main className="max-w-4xl mx-auto px-4 pt-8 pb-24 sm:pb-8">
         {children}
       </main>

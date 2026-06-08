@@ -57,7 +57,11 @@
     "firstName": "Prenume",
     "yourFirstName": "Prenumele tău",
     "lastName": "Nume de familie",
-    "yourLastName": "Nume de familie (opțional)"
+    "yourLastName": "Nume de familie (opțional)",
+    "confirmEmailBanner": "Te rugăm să confirmi adresa de email pentru a-ți securiza contul.",
+    "resendConfirmation": "Retrimite emailul de confirmare",
+    "confirmationSent": "Email de confirmare trimis — verifică-ți căsuța.",
+    "sending": "Se trimite…"
   },
   "books": {
     "title": "Cărțile mele",
