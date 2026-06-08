@@ -367,7 +367,8 @@
     "receiptConfirmedToast": "Receipt confirmed — loan is now active",
     "returnInitiatedToast": "Book marked as returned",
     "returnConfirmedToast": "Return confirmed — loan completed",
-    "returnDeniedToast": "Return disputed"
+    "returnDeniedToast": "Return disputed",
+    "salesTab": "Sales"
   },
   "profile": {
     "title": "Profile",
