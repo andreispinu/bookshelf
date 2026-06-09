@@ -991,6 +991,9 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 **Files:**
 - `lib/email.ts` — `sendEmail({ to, subject, html })` wrapper around the Resend SDK
 - `lib/email-templates.ts` — template functions returning `{ subject, html }`:
+  - `welcomeEmail(firstName, confirmationUrl)` — EN welcome + email confirmation link, sent on signup
+  - `welcomeEmailRo(firstName, confirmationUrl)` — Romanian version
+  - `welcomeEmailRu(firstName, confirmationUrl)` — Russian version
   - `friendRequestEmail(senderName)`
   - `newMessageEmail(senderName, preview)`
   - `borrowRequestEmail(requesterName, bookTitle, message?)`
@@ -1018,6 +1021,7 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 
 | Event | File | Recipient | Debounce |
 |-------|------|-----------|----------|
+| Signup (welcome + confirm email) | `app/(auth)/actions.ts` → `signup()` | New user | None — fires once per signup. Confirmation link via `supabaseAdmin.auth.admin.generateLink({ type: 'signup', email, password })`. Language chosen from `NEXT_LOCALE` cookie (EN/RO/RU). |
 | Friend request sent | `app/(dashboard)/friends/actions.ts` → `sendFriendRequest()` | Addressee | None |
 | Message sent | `app/api/messages/route.ts` → POST | Receiver | Skip if unread `new_message` notification from same sender already exists |
 | Borrow request created | `app/api/borrow-requests/route.ts` → POST | Book owner | None |

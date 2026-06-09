@@ -1068,6 +1068,96 @@ export function inviteFriendsReminderEmailRu(firstName: string, bookCount: numbe
   return { subject, html }
 }
 
+export function welcomeEmail(firstName: string, confirmationUrl: string): { subject: string; html: string } {
+  const subject = `Welcome to BookShelf, ${firstName}! Confirm your email to get started`
+  const html = wrapper(`
+    <tr>
+      <td style="padding:32px 40px;">
+        <p style="margin:0 0 8px;font-size:18px;font-weight:bold;color:#292524;">Hi ${firstName},</p>
+        <p style="margin:0 0 20px;font-size:14px;color:#57534e;line-height:1.6;">
+          Welcome to BookShelf — your personal library, shared with friends.
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          You're all set and can start using the app right away. To secure your account, please confirm your email address:
+        </p>
+        ${ctaButton('Confirm my email address →', confirmationUrl)}
+        <p style="margin:32px 0 12px;font-size:14px;font-weight:bold;color:#292524;">Once you're in, here's what to do first:</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>1.</strong> <strong>Add your first book</strong> — scan the cover with AI or type the title</td></tr>
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>2.</strong> <strong>Set up your public profile</strong> — share your shelf at bookshelf.name/[username]</td></tr>
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>3.</strong> <strong>Invite friends</strong> — connect and start lending books to each other</td></tr>
+        </table>
+        <p style="margin:24px 0 20px;font-size:14px;color:#57534e;line-height:1.6;">Your BookShelf is waiting for you.</p>
+        <a href="${BOOKS_URL}" style="font-size:13px;color:#78716c;text-decoration:underline;">Go to my shelf →</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          You're receiving this because you just created a BookShelf account. If this wasn't you, you can safely ignore this email.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function welcomeEmailRo(firstName: string, confirmationUrl: string): { subject: string; html: string } {
+  const subject = `Bun venit pe BookShelf, ${firstName}! Confirmă-ți adresa de e-mail`
+  const html = wrapper(`
+    <tr>
+      <td style="padding:32px 40px;">
+        <p style="margin:0 0 8px;font-size:18px;font-weight:bold;color:#292524;">Salut, ${firstName},</p>
+        <p style="margin:0 0 20px;font-size:14px;color:#57534e;line-height:1.6;">
+          Bun venit pe BookShelf — biblioteca ta personală, împărțită cu prietenii.
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Poți folosi aplicația chiar acum. Pentru a-ți securiza contul, confirmă-ți adresa de e-mail:
+        </p>
+        ${ctaButton('Confirmă adresa de e-mail →', confirmationUrl)}
+        <p style="margin:32px 0 12px;font-size:14px;font-weight:bold;color:#292524;">Ce poți face pentru început:</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>1.</strong> <strong>Adaugă prima carte</strong> — scanează coperta cu AI sau scrie titlul</td></tr>
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>2.</strong> <strong>Configurează-ți profilul public</strong> — partajează-ți raftul la bookshelf.name/[username]</td></tr>
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>3.</strong> <strong>Invită prieteni</strong> — conectează-te și împrumutați cărți între voi</td></tr>
+        </table>
+        <p style="margin:24px 0 20px;font-size:14px;color:#57534e;line-height:1.6;">Raftul tău te așteaptă.</p>
+        <a href="${BOOKS_URL}" style="font-size:13px;color:#78716c;text-decoration:underline;">Mergi la raftul meu →</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          Primești acest e-mail deoarece tocmai ai creat un cont BookShelf. Dacă nu tu ai făcut asta, poți ignora acest mesaj.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function welcomeEmailRu(firstName: string, confirmationUrl: string): { subject: string; html: string } {
+  const subject = `Добро пожаловать на BookShelf, ${firstName}! Подтвердите email`
+  const html = wrapper(`
+    <tr>
+      <td style="padding:32px 40px;">
+        <p style="margin:0 0 8px;font-size:18px;font-weight:bold;color:#292524;">Привет, ${firstName},</p>
+        <p style="margin:0 0 20px;font-size:14px;color:#57534e;line-height:1.6;">
+          Добро пожаловать на BookShelf — ваша личная библиотека, которой можно делиться с друзьями.
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
+          Вы можете начать пользоваться приложением прямо сейчас. Чтобы защитить аккаунт, подтвердите адрес электронной почты:
+        </p>
+        ${ctaButton('Подтвердить email →', confirmationUrl)}
+        <p style="margin:32px 0 12px;font-size:14px;font-weight:bold;color:#292524;">С чего начать:</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>1.</strong> <strong>Добавьте первую книгу</strong> — отсканируйте обложку с помощью ИИ или введите название</td></tr>
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>2.</strong> <strong>Настройте публичный профиль</strong> — поделитесь полкой по адресу bookshelf.name/[username]</td></tr>
+          <tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><strong>3.</strong> <strong>Пригласите друзей</strong> — общайтесь и давайте книги друг другу</td></tr>
+        </table>
+        <p style="margin:24px 0 20px;font-size:14px;color:#57534e;line-height:1.6;">Ваша полка ждёт вас.</p>
+        <a href="${BOOKS_URL}" style="font-size:13px;color:#78716c;text-decoration:underline;">Перейти к моей полке →</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
+          Вы получили это письмо, потому что только что создали аккаунт BookShelf. Если это были не вы, просто проигнорируйте это сообщение.
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
 export function bookLimitNudgeEmail(firstName: string, bookCount: number): { subject: string; html: string } {
   const subject = 'Your free BookShelf is almost full'
   const html = wrapper(

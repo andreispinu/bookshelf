@@ -4,6 +4,9 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendEmail } from '@/lib/email'
+import { welcomeEmail, welcomeEmailRo, welcomeEmailRu } from '@/lib/email-templates'
 
 const VALID_LOCALES = ['en', 'ro', 'ru']
 
@@ -83,6 +86,21 @@ export async function signup(formData: FormData) {
         ...(uiLanguage && VALID_LOCALES.includes(uiLanguage) ? { ui_language: uiLanguage } : {}),
       })
       .eq('id', data.user.id)
+
+    // Fire-and-forget welcome email with confirmation link
+    const email = formData.get('email') as string
+    const lang = uiLanguage && VALID_LOCALES.includes(uiLanguage) ? uiLanguage : 'en'
+    ;(async () => {
+      const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        password: formData.get('password') as string,
+      })
+      const confirmationUrl = linkData?.properties?.action_link ?? 'https://bookshelf.name'
+      const template = lang === 'ro' ? welcomeEmailRo : lang === 'ru' ? welcomeEmailRu : welcomeEmail
+      const { subject, html } = template(firstName, confirmationUrl)
+      await sendEmail({ to: email, subject, html })
+    })().catch(console.error)
   }
 
   revalidatePath('/', 'layout')
