@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { BookOpen, Users, MessageSquare, ArrowLeftRight, ShoppingCart } from 'lucide-react'
+import { BookOpen, Users, Rss, MessageSquare, ArrowLeftRight, ShoppingCart } from 'lucide-react'
 
 type NavCounts = { unreadMessages: number; pendingRequests: number }
 
@@ -30,9 +30,9 @@ export default function MobileBottomNav() {
   const items = [
     { href: '/books',      label: t('myBooks'),   Icon: BookOpen,       badge: null as null | keyof NavCounts },
     { href: '/friends',    label: t('friends'),   Icon: Users,          badge: null as null | keyof NavCounts },
+    { href: '/feed',       label: t('feed'),      Icon: Rss,            badge: null as null | keyof NavCounts },
     { href: '/messages',   label: t('messages'),  Icon: MessageSquare,  badge: 'unreadMessages' as keyof NavCounts },
     { href: '/loans',      label: t('loans'),     Icon: ArrowLeftRight, badge: 'pendingRequests' as keyof NavCounts },
-    { href: '/bookstore',  label: t('bookstore'), Icon: ShoppingCart,   badge: null as null | keyof NavCounts },
   ]
 
   return (

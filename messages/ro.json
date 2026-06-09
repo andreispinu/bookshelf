@@ -19,6 +19,7 @@
   "nav": {
     "myBooks": "Cărțile mele",
     "friends": "Prieteni",
+    "feed": "Activitate",
     "messages": "Mesaje",
     "loans": "Împrumuturi",
     "profile": "Profil",
@@ -478,7 +479,26 @@
     "buyAccepted": "{name} a acceptat oferta ta pentru {title}",
     "buyDeclined": "{name} a refuzat oferta ta pentru {title}",
     "bookTransferred": "Achiziția ta pentru {title} este finalizată — e pe raftul tău!",
-    "friendFinishedBook": "{name} a terminat de citit {title}"
+    "friendFinishedBook": "{name} a terminat de citit {title}",
+    "feedLike": "{name} a apreciat activitatea ta",
+    "feedComment": "{name} a comentat activitatea ta"
+  },
+  "feed": {
+    "title": "Activitate",
+    "emptyTitle": "Nimic deocamdată",
+    "emptyMessage": "Când prietenii tăi adaugă cărți, încep să citească sau împrumută, vei vedea aici.",
+    "loadMore": "Încarcă mai mult",
+    "loading": "Se încarcă…",
+    "like": "Apreciez",
+    "liked": "Apreciat",
+    "comment": "Comentează",
+    "writeComment": "Scrie un comentariu…",
+    "send": "Trimite",
+    "bookAdded": "{name} a adăugat o carte nouă",
+    "bookLent": "{name} a împrumutat o carte unui prieten",
+    "bookBorrowed": "{name} a luat o carte cu împrumut",
+    "readingStarted": "{name} a început să citească",
+    "readingFinished": "{name} a terminat de citit"
   },
   "landing": {
     "navBooks": "Cărți",

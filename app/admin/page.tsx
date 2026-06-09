@@ -105,6 +105,7 @@ export default async function AdminPage() {
     qReadingStarted, qInsightsDelivered, qInsightsRead,
     qTotalSaleRequests, qAcceptedSales, qCompletedSales,
     qCurrentlyReading, qFinishedBooks, qRatedBooks,
+    qFeedEvents, qFeedLikes, qFeedComments,
     authResult,
   ] = await Promise.all([
     // ── User metrics ──
@@ -152,6 +153,10 @@ export default async function AdminPage() {
     supabaseAdmin.from('reading_progress').select('*', { count: 'exact', head: true }).eq('status', 'reading'),
     supabaseAdmin.from('reading_progress').select('*', { count: 'exact', head: true }).eq('status', 'finished'),
     supabaseAdmin.from('reading_progress').select('rating').eq('status', 'finished').not('rating', 'is', null),
+    // ── Social feed ──
+    supabaseAdmin.from('activity_feed').select('*', { count: 'exact', head: true }),
+    supabaseAdmin.from('feed_likes').select('*', { count: 'exact', head: true }),
+    supabaseAdmin.from('feed_comments').select('*', { count: 'exact', head: true }),
     // ── Auth users for emails ──
     supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
   ])
@@ -200,6 +205,9 @@ export default async function AdminPage() {
   const currentlyReadingCount = qCurrentlyReading.count ?? 0
   const finishedBooksCount = qFinishedBooks.count ?? 0
   const ratedBooks = qRatedBooks.data ?? []
+  const feedEventsCount  = qFeedEvents.count ?? 0
+  const feedLikesCount   = qFeedLikes.count ?? 0
+  const feedCommentsCount = qFeedComments.count ?? 0
   const avgRating = ratedBooks.length > 0
     ? (ratedBooks.reduce((sum, r) => sum + (r.rating ?? 0), 0) / ratedBooks.length).toFixed(1)
     : '—'
@@ -427,13 +435,22 @@ export default async function AdminPage() {
             </div>
           </div>
 
-          <div>
+          <div className="mb-10">
             <SubHeader>Currently Reading</SubHeader>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <MetricCard label="Currently Reading" value={c(currentlyReadingCount)} tint="green" />
               <MetricCard label="Books Finished" value={c(finishedBooksCount)} tint="green" />
               <MetricCard label="Books Rated" value={c(ratedBooks.length)} />
               <MetricCard label="Avg Rating" value={avgRating} sub={`of ${c(ratedBooks.length)} ratings`} />
+            </div>
+          </div>
+
+          <div>
+            <SubHeader>Social Feed</SubHeader>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <MetricCard label="Feed Events" value={c(feedEventsCount)} tint="green" />
+              <MetricCard label="Likes" value={c(feedLikesCount)} tint="green" />
+              <MetricCard label="Comments" value={c(feedCommentsCount)} tint="green" />
             </div>
           </div>
         </section>

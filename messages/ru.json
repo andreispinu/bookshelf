@@ -19,6 +19,7 @@
   "nav": {
     "myBooks": "Мои книги",
     "friends": "Друзья",
+    "feed": "Лента",
     "messages": "Сообщения",
     "loans": "Займы",
     "profile": "Профиль",
@@ -478,7 +479,26 @@
     "buyAccepted": "{name} принял ваше предложение о покупке {title}",
     "buyDeclined": "{name} отклонил ваше предложение о покупке {title}",
     "bookTransferred": "Ваша покупка {title} завершена — книга на полке!",
-    "friendFinishedBook": "{name} закончил читать {title}"
+    "friendFinishedBook": "{name} закончил читать {title}",
+    "feedLike": "{name} оценил вашу активность",
+    "feedComment": "{name} прокомментировал вашу активность"
+  },
+  "feed": {
+    "title": "Лента активности",
+    "emptyTitle": "Пока ничего нет",
+    "emptyMessage": "Когда друзья добавят книги, начнут читать или отдадут книгу, это появится здесь.",
+    "loadMore": "Загрузить ещё",
+    "loading": "Загрузка…",
+    "like": "Нравится",
+    "liked": "Нравится",
+    "comment": "Комментировать",
+    "writeComment": "Написать комментарий…",
+    "send": "Отправить",
+    "bookAdded": "{name} добавил новую книгу",
+    "bookLent": "{name} одолжил книгу другу",
+    "bookBorrowed": "{name} взял книгу у друга",
+    "readingStarted": "{name} начал читать",
+    "readingFinished": "{name} закончил читать"
   },
   "landing": {
     "navBooks": "Книги",

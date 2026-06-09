@@ -7,7 +7,7 @@ import { Bell } from 'lucide-react'
 
 type Notification = {
   id: string
-  type: 'friend_request' | 'friend_accepted' | 'friend_new_book' | 'friend_finished_book' | 'borrow_request' | 'borrow_approved' | 'borrow_rejected' | 'new_message' | 'support_reply' | 'buy_request' | 'buy_accepted' | 'buy_declined' | 'book_transferred'
+  type: 'friend_request' | 'friend_accepted' | 'friend_new_book' | 'friend_finished_book' | 'borrow_request' | 'borrow_approved' | 'borrow_rejected' | 'new_message' | 'support_reply' | 'buy_request' | 'buy_accepted' | 'buy_declined' | 'book_transferred' | 'feed_like' | 'feed_comment'
   read: boolean
   created_at: string
   actor: { id: string; name: string; avatar_url: string | null } | null
@@ -35,6 +35,7 @@ function notifHref(n: Notification): string {
   if (n.type === 'buy_request') return '/loans?tab=sales'
   if (n.type === 'buy_accepted' || n.type === 'buy_declined') return '/loans?tab=sales'
   if (n.type === 'book_transferred') return '/books'
+  if (n.type === 'feed_like' || n.type === 'feed_comment') return '/feed'
   return '/friends'
 }
 
@@ -67,6 +68,8 @@ export default function NotificationsBell() {
     if (n.type === 'buy_accepted') return t('buyAccepted', { name, title })
     if (n.type === 'buy_declined') return t('buyDeclined', { name, title })
     if (n.type === 'book_transferred') return t('bookTransferred', { title })
+    if (n.type === 'feed_like') return t('feedLike', { name })
+    if (n.type === 'feed_comment') return t('feedComment', { name })
     return ''
   }
 

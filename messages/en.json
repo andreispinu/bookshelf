@@ -19,6 +19,7 @@
   "nav": {
     "myBooks": "My Books",
     "friends": "Friends",
+    "feed": "Feed",
     "messages": "Messages",
     "loans": "Loans",
     "profile": "Profile",
@@ -478,7 +479,26 @@
     "buyAccepted": "{name} accepted your offer to buy {title}",
     "buyDeclined": "{name} declined your offer to buy {title}",
     "bookTransferred": "Your purchase of {title} is complete — it's on your shelf!",
-    "friendFinishedBook": "{name} finished reading {title}"
+    "friendFinishedBook": "{name} finished reading {title}",
+    "feedLike": "{name} liked your activity",
+    "feedComment": "{name} commented on your activity"
+  },
+  "feed": {
+    "title": "Activity Feed",
+    "emptyTitle": "Nothing here yet",
+    "emptyMessage": "When your friends add books, start reading, or lend books, it'll appear here.",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "like": "Like",
+    "liked": "Liked",
+    "comment": "Comment",
+    "writeComment": "Write a comment…",
+    "send": "Send",
+    "bookAdded": "{name} added a new book",
+    "bookLent": "{name} lent a book to a friend",
+    "bookBorrowed": "{name} borrowed a book from a friend",
+    "readingStarted": "{name} started reading",
+    "readingFinished": "{name} finished reading"
   },
   "landing": {
     "navBooks": "Books",

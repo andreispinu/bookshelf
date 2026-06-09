@@ -9,6 +9,7 @@ import {
   returnConfirmedEmail,
 } from '@/lib/email-templates'
 import { sendSystemMessage } from '@/lib/send-system-message'
+import { sendFeedEvent } from '@/lib/send-feed-event'
 
 export async function PATCH(request: NextRequest) {
   const supabase = await createClient()
@@ -102,6 +103,12 @@ export async function PATCH(request: NextRequest) {
       )
       await sendEmail({ to: borrowerEmail, subject, html })
     })().catch(console.error)
+
+    // Feed event: borrower borrowed a book
+    sendFeedEvent(loan.borrower_id, 'book_borrowed', loan.book_id, {
+      title: bookTitle,
+      lender_id: loan.lender_id,
+    }).catch(console.error)
 
   } else if (action === 'initiate_return') {
     if (loan.borrower_id !== user.id) return NextResponse.json({ error: 'Only the borrower can initiate return' }, { status: 403 })

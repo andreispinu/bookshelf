@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
 import { borrowRequestEmail, borrowRequestApprovedEmail, lenderHandoffReminderEmail } from '@/lib/email-templates'
 import { sendSystemMessage } from '@/lib/send-system-message'
+import { sendFeedEvent } from '@/lib/send-feed-event'
 
 export async function GET() {
   const supabase = await createClient()
@@ -169,6 +170,7 @@ export async function PATCH(request: NextRequest) {
       .update({ status: 'lent_out' })
       .eq('id', req.book_id)
       .eq('user_id', user.id)
+
   }
 
   // Always insert a borrow_response JSON message card into the thread
@@ -186,6 +188,14 @@ export async function PATCH(request: NextRequest) {
     receiver_id: req.requester_id,
     content: responseCardContent,
   })
+
+  // Feed event: lender lent a book
+  if (action === 'approve') {
+    sendFeedEvent(user.id, 'book_lent', req.book_id, {
+      title: bookTitle,
+      borrower_id: req.requester_id,
+    }).catch(console.error)
+  }
 
   // System message for approved/declined
   if (action === 'approve') {

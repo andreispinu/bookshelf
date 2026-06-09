@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendFeedEvent } from '@/lib/send-feed-event'
 
 export async function startReading(bookId: string) {
   const supabase = await createClient()
@@ -17,6 +18,13 @@ export async function startReading(bookId: string) {
     )
 
   if (error) return { error: error.message }
+
+  // Fire-and-forget feed event
+  ;(async () => {
+    const { data: book } = await supabaseAdmin.from('books').select('title, author, cover_url').eq('id', bookId).single()
+    if (book) await sendFeedEvent(user.id, 'reading_started', bookId, { title: book.title, author: book.author, cover_url: book.cover_url })
+  })().catch(console.error)
+
   revalidatePath('/books')
   revalidatePath('/books/currently-reading')
   return { ok: true }
@@ -79,6 +87,12 @@ export async function finishBook(bookId: string, rating?: number | null, review?
       )
     }
   }
+
+  // Fire-and-forget feed event
+  ;(async () => {
+    const { data: book } = await supabaseAdmin.from('books').select('title, author, cover_url').eq('id', bookId).single()
+    if (book) await sendFeedEvent(user.id, 'reading_finished', bookId, { title: book.title, author: book.author, cover_url: book.cover_url, rating: rating ?? null })
+  })().catch(console.error)
 
   revalidatePath('/books')
   revalidatePath('/books/currently-reading')
