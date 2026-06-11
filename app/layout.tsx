@@ -27,9 +27,15 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "BookShelf",
+  metadataBase: new URL("https://bookshelf.name"),
+  title: {
+    default: "BookShelf — Your personal library",
+    template: "BookShelf — %s | Your personal library",
+  },
   description: "Your personal lending library",
+  applicationName: "BookShelf",
   manifest: "/manifest.json",
+  formatDetection: { telephone: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -38,6 +44,20 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icons/icon-192.png",
     apple: "/icons/apple-touch-icon.png",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "BookShelf",
+    url: "https://bookshelf.name",
+    title: "BookShelf — Your personal library, shared with friends",
+    description:
+      "A free app to catalogue the books you own, lend and borrow with friends, and track your reading.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BookShelf — Your personal library, shared with friends",
+    description:
+      "A free app to catalogue the books you own, lend and borrow with friends, and track your reading.",
   },
 };
 

@@ -1,5 +1,6 @@
 export const revalidate = 300
 
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -11,6 +12,33 @@ import {
   Link as LinkIcon, Smartphone, UserPlus, ClipboardList, Bell, CreditCard,
   ArrowLeftRight,
 } from 'lucide-react'
+
+const SITE_URL = 'https://bookshelf.name'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('landing')
+  return {
+    title: { absolute: t('metaTitle') },
+    description: t('metaDescription'),
+    keywords: t('metaKeywords'),
+    alternates: {
+      canonical: SITE_URL,
+      languages: { 'x-default': SITE_URL },
+    },
+    openGraph: {
+      type: 'website',
+      url: SITE_URL,
+      siteName: 'BookShelf',
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+    },
+  }
+}
 
 const FEATURE_ICONS = [
   BookOpen, Camera, HandHelping, Users, Tag, Globe,
@@ -42,6 +70,42 @@ export default async function LandingPage() {
 
   const [t, locale] = await Promise.all([getTranslations('landing'), getLocale()])
   const year = new Date().getFullYear()
+
+  const faqs = [
+    { q: t('faqWhatQ'), a: t('faqWhatA') },
+    { q: t('faqFreeQ'), a: t('faqFreeA') },
+    { q: t('faqLendQ'), a: t('faqLendA') },
+    { q: t('faqMobileQ'), a: t('faqMobileA') },
+    { q: t('faqLangQ'), a: t('faqLangA') },
+    { q: t('faqAddQ'), a: t('faqAddA') },
+  ]
+
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: 'BookShelf',
+      url: SITE_URL,
+      applicationCategory: 'LifestyleApplication',
+      operatingSystem: 'Web, iOS, Android',
+      description: t('metaDescription'),
+      inLanguage: ['en', 'ro', 'ru'],
+      offers: [
+        { '@type': 'Offer', price: '0', priceCurrency: 'USD', description: 'Free forever for up to 10 books' },
+        { '@type': 'Offer', price: '1', priceCurrency: 'USD', description: 'Unlimited books — billed monthly' },
+        { '@type': 'Offer', price: '10', priceCurrency: 'USD', description: 'Unlimited books — billed annually' },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(f => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+  ]
 
   const features = FEATURE_KEYS.map((key, i) => ({
     Icon: FEATURE_ICONS[i],
@@ -94,6 +158,11 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-800">
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       <LandingNav isLoggedIn={isLoggedIn} currentLocale={locale} />
 
@@ -387,6 +456,32 @@ export default async function LandingPage() {
           </div>
 
           <p className="text-center text-xs text-stone-400 mt-8">{t('pricingStripeNote')}</p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-16 px-4 bg-stone-100 border-t border-stone-200">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-stone-800 text-center mb-10">{t('faqHeading')}</h2>
+          <div className="flex flex-col gap-4">
+            {faqs.map((f, i) => (
+              <details key={i} className="group rounded-xl border border-stone-200 bg-white p-5">
+                <summary className="flex items-center justify-between cursor-pointer list-none font-semibold text-stone-900">
+                  {f.q}
+                  <span className="ml-4 shrink-0 text-stone-400 transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-3 text-sm text-stone-600 leading-relaxed">{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About */}
+      <section id="about" className="py-14 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-xl font-bold text-stone-800 mb-3">{t('aboutHeading')}</h2>
+          <p className="text-sm text-stone-500 leading-relaxed">{t('aboutText')}</p>
         </div>
       </section>
 

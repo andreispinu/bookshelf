@@ -1,10 +1,15 @@
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase-server'
 import Nav from './nav'
 import MobileBottomNav from './mobile-bottom-nav'
 import LocaleSync from './locale-sync'
 import SupportButton from './support-button'
 import EmailConfirmBanner from './email-confirm-banner'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()

@@ -1,0 +1,27 @@
+# BookShelf
+
+> BookShelf is a free web app and Progressive Web App (PWA) for cataloging your personal book library and sharing books with friends.
+
+## What it does
+- Add books from your home library by photographing the cover, scanning the ISBN, or typing manually
+- AI-powered book recognition fills in title, author, description, and cover automatically
+- Lend books to friends and track the full lending workflow (request → approve → handoff → return)
+- Buy and sell books between friends in EUR, USD, GBP, RON, or MDL
+- Follow a social feed of what friends are reading
+- Track reading progress and receive daily AI-generated reading insights
+- Multilingual: English, Romanian, Russian
+
+## Who it's for
+People who own physical books and want to organize, share, and lend them to friends.
+
+## Pricing
+- Free forever: up to 10 books
+- Unlimited: $1/month or $10/year
+- No ads, no data selling
+
+## Technical
+- Web app installable as a PWA on iOS and Android
+- Available at https://bookshelf.name
+
+## Contact
+noreply@bookshelf.name

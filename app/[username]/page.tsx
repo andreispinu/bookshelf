@@ -17,14 +17,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('name, profile_visibility')
+    .select('id, name, profile_visibility')
     .eq('username', username)
     .single()
 
   if (!profile || profile.profile_visibility === 'private') {
-    return { title: 'Not Found' }
+    return { title: 'Not Found', robots: { index: false, follow: false } }
   }
-  return { title: `${profile.name}'s BookShelf` }
+
+  const { count } = await supabaseAdmin
+    .from('books')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', profile.id)
+  const bookCount = count ?? 0
+
+  const t = await getTranslations('landing')
+  const url = `https://bookshelf.name/${username}`
+  const title = `${profile.name}'s BookShelf — ${bookCount} ${bookCount === 1 ? 'book' : 'books'} shared`
+  const description = t('metaProfileDescription', { name: profile.name, count: bookCount })
+
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'profile',
+      url,
+      siteName: 'BookShelf',
+      title,
+      description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
 }
 
 export default async function PublicProfilePage({ params }: Props) {
@@ -80,8 +108,41 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const bookCount = books.length
 
+  const profileUrl = `https://bookshelf.name/${username}`
+  const jsonLd: Record<string, unknown>[] = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: profile.name,
+      url: profileUrl,
+      ...(profile.avatar_url ? { image: profile.avatar_url } : {}),
+    },
+  ]
+  if (visibility === 'public_full' && books.length > 0) {
+    jsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: `${profile.name}'s BookShelf`,
+      url: profileUrl,
+      numberOfItems: books.length,
+      itemListElement: books.slice(0, 100).map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Book',
+          name: b.title,
+          author: { '@type': 'Person', name: b.author },
+        },
+      })),
+    })
+  }
+
   return (
     <div className="min-h-screen bg-stone-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <main className="max-w-2xl mx-auto px-4 py-12">
 
         {/* Header */}

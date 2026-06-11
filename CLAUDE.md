@@ -1433,6 +1433,56 @@ Mobile (below 640px breakpoint) uses a **bottom navigation bar** instead of the 
 - `pb-24 sm:pb-8` on the dashboard `<main>` element gives 96px bottom clearance on mobile, 32px on desktop
 - Prevents page content from being obscured by the bottom nav
 
+## SEO & GEO
+
+Search engine optimization and Generative Engine Optimization (for AI search like ChatGPT, Perplexity, Gemini, Claude). Only public pages are indexable — everything behind auth is `noindex`.
+
+### Indexability map
+| Area | Indexable? | How |
+|------|-----------|-----|
+| `/` landing | ✅ yes | full metadata + JSON-LD |
+| `/[username]` public profiles | ✅ yes (unless `private`) | dynamic `generateMetadata` + JSON-LD |
+| `(auth)` login/signup/forgot/reset | ❌ noindex,nofollow | `metadata` in `app/(auth)/layout.tsx` |
+| `(dashboard)` all protected pages | ❌ noindex,nofollow | `metadata` in `app/(dashboard)/layout.tsx` |
+| `/admin` | ❌ noindex,nofollow | `metadata` in `app/admin/layout.tsx` |
+| `/subscribe` | ❌ noindex,nofollow | `metadata` in `app/subscribe/layout.tsx` (client page, so a server `layout` carries the metadata) |
+
+### Metadata architecture
+- **`app/layout.tsx`** sets `metadataBase: new URL('https://bookshelf.name')`, a title template `"BookShelf — %s | Your personal library"` (default `"BookShelf — Your personal library"`), and default OpenGraph/Twitter tags.
+- **Landing (`app/page.tsx`)** has `generateMetadata()` — **localized** via `getTranslations('landing')`, so EN/RO/RU each get translated title/description/keywords. Uses `title.absolute` (bypasses the template), `description` (≤155 chars), `keywords`, self-canonical, OG `type: website`, Twitter `summary_large_image`.
+- **Public profile (`app/[username]/page.tsx`)** `generateMetadata()` → `"[Name]'s BookShelf — [X] books shared"`, self-canonical `https://bookshelf.name/[username]`, OG `type: profile`. Returns `robots: noindex` for private/missing profiles.
+- All indexable pages emit a **self-referencing canonical**.
+
+### Localization / hreflang
+The app serves **all locales from one URL** (locale is the `NEXT_LOCALE` cookie — there are no `/ro` or `/ru` routes). So the landing page emits only a self-canonical + `hreflang="x-default"` → `https://bookshelf.name`. We deliberately do **not** emit `/ro` `/ru` hreflang alternates because those URLs don't exist (they'd fall through to the `[username]` catch-all and 404). Locale-specific metadata is still served per request (the cookie drives `getTranslations`), so a RU visitor's crawl sees RU title/description. To add true per-locale URLs later, introduce a `[locale]` routing layer and then emit full `en`/`ro`/`ru` alternates.
+
+### OpenGraph images (Next.js `ImageResponse`)
+- **`app/opengraph-image.tsx`** — static 1200×630 brand image (stone `#f5f0eb` background, "BookShelf" wordmark, tagline, `bookshelf.name`). Auto-wired as `og:image` + `twitter:image` site-wide via metadataBase.
+- **`app/[username]/opengraph-image.tsx`** — dynamic per-profile 1200×630 showing `[Name]'s BookShelf` + book count. Fetches via `supabaseAdmin`; falls back to brand text for private/missing profiles.
+
+### JSON-LD structured data
+Injected as `<script type="application/ld+json">` in the server components:
+- **Landing**: `WebApplication` (name, url, `applicationCategory: LifestyleApplication`, `operatingSystem: "Web, iOS, Android"`, three `Offer`s for free/$1/$10, `inLanguage: [en,ro,ru]`) + `FAQPage` (6 Q&A, **localized** from the `landing` namespace). No `aggregateRating` — we have no real ratings and fabricating them violates Google's guidelines.
+- **Public profile**: `Person` (name, url, avatar image) + `ItemList` of the user's books (each a `Book` with `author`), capped at 100 items, only for `public_full`.
+
+### sitemap & robots
+- **`app/sitemap.ts`** (`revalidate = 3600`): landing (`priority 1.0, daily`) + every profile where `profile_visibility != 'private'` AND `username IS NOT NULL` (`priority 0.7, weekly`, `lastModified` = `created_at`). Fetched with `supabaseAdmin`. Served at `/sitemap.xml`.
+- **`app/robots.ts`**: `allow: '/'`; `disallow` all private/auth areas (`/admin /api /books /friends /loans /messages /feed /support /bookstore /profile /subscribe /login /signup /forgot-password /reset-password`); declares the sitemap + host. Served at `/robots.txt`.
+- **Note**: auth pages are `noindex` AND robots-disallowed, so they are intentionally **excluded from the sitemap** (a sitemap should not list non-indexable URLs) — this overrides the original spec's suggestion to list `/login` `/signup` there.
+
+### GEO — Generative Engine Optimization
+- **`public/llms.txt`** — plain-language summary AI crawlers read to understand and cite the app (what it does, who it's for, pricing, technical, contact). Served at `/llms.txt`.
+- **Entity clarity** — a visible **About BookShelf** section (`#about`) states explicitly what it is ("a book library app"), that it's independently built, launched 2025, hosted on Vercel, and lives at bookshelf.name. A visible **FAQ** section (`#faq`, the same 6 Q&A as the FAQPage schema) gives AI engines extractable Q&A text. The footer prints `bookshelf.name` as text.
+- **Consistent naming** — always exactly **"BookShelf"** (capital B, capital S) across meta tags, OG, JSON-LD, llms.txt, and copy, so AI engines build a clean entity graph.
+
+### Adding new SEO copy
+The landing `metaTitle/metaDescription/metaKeywords/ogTitle/ogDescription/aboutHeading/aboutText/faqHeading/faq*Q/faq*A` and the profile `metaProfileDescription` keys live in the **`landing` namespace** of `messages/en.json`, `ro.json`, `ru.json` — keep all three in sync (see the Translations convention). The WebApplication/FAQPage/Person/ItemList JSON-LD is built from these same translated strings, so it's localized automatically.
+
+### Core Web Vitals (audited)
+- Fonts: Geist via `next/font/google` → `font-display: swap` automatically (no layout shift from fonts).
+- Landing hero is text-only — no LCP image, no CLS.
+- `recently-added-client.tsx` book covers already use `loading="lazy"` inside a fixed `aspectRatio: 2/3` container (no CLS). Remaining `<img>` thumbnails live on `noindex` dashboard pages, so they have negligible SEO impact; a future `next/image` migration would need `images.remotePatterns` for the Supabase Storage + OpenLibrary domains.
+
 ## Key decisions and why
 
 - **App Router over Pages Router** — App Router is the current Next.js standard; better for server components and server actions
