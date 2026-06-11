@@ -1,0 +1,16 @@
+<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- bottom book: amber -->
+  <rect x="4" y="27" width="30" height="6" rx="1.5" fill="#c4852a"/>
+  <rect x="32" y="27" width="3" height="6" rx="0.5" fill="#faf0dc"/>
+  <!-- book 3: navy -->
+  <rect x="3" y="20.5" width="28" height="5.5" rx="1.5" fill="#2c4a6e"/>
+  <rect x="29" y="20.5" width="3" height="5.5" rx="0.5" fill="#c8d8f0"/>
+  <!-- book 2: forest green -->
+  <rect x="5" y="14.5" width="27" height="5.5" rx="1.5" fill="#4a6741"/>
+  <rect x="30" y="14.5" width="3" height="5.5" rx="0.5" fill="#d0e8cc"/>
+  <!-- top book: parchment/cream -->
+  <rect x="6" y="8.5" width="25" height="5.5" rx="1.5" fill="#f5e6d0"/>
+  <rect x="29" y="8.5" width="3" height="5.5" rx="0.5" fill="#ffffff"/>
+  <!-- bookmark ribbon -->
+  <rect x="22" y="7" width="2.5" height="4" rx="0.5" fill="#c4852a"/>
+</svg>

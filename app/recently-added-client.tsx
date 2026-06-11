@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { translateCategory } from '@/lib/translate-category'
+import { getCategoryColor } from '@/lib/category-color'
 
 type Book = {
   id: string
@@ -73,12 +74,12 @@ export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
           {displayed.map(book => (
             <div key={book.id} className="bg-white rounded-xl border border-stone-200 p-3 flex flex-col gap-2">
               <div
-                className="w-full rounded-lg overflow-hidden bg-stone-100 flex items-center justify-center"
-                style={{ aspectRatio: '2/3' }}
+                className="w-full rounded-lg overflow-hidden flex items-center justify-center"
+                style={book.cover_url ? { aspectRatio: '2/3', backgroundColor: '#f5e6d0' } : { aspectRatio: '2/3', backgroundColor: getCategoryColor(book.category) }}
               >
                 {book.cover_url
                   ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
-                  : <span className="text-stone-500 font-semibold text-lg">{book.title.slice(0, 2).toUpperCase()}</span>
+                  : <span className="px-2 font-serif text-xs text-parchment/85 text-center leading-snug line-clamp-3">{book.title}</span>
                 }
               </div>
               <p className="text-sm font-medium text-stone-800 leading-snug line-clamp-2">{book.title}</p>
@@ -89,8 +90,8 @@ export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
               )}
               <span className={`inline-block text-[10px] font-medium rounded-full px-2 py-0.5 self-start border ${
                 book.status === 'available'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                  ? 'bg-forest-light text-forest border-forest/30'
+                  : 'bg-rust-light text-rust border-rust/30'
               }`}>
                 {book.status === 'available' ? t('bookAvailable') : t('bookLentOut')}
               </span>

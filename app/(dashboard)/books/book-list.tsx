@@ -25,6 +25,7 @@ import type { Book, Friend } from '@/types'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
 import { translateCategory } from '@/lib/translate-category'
+import { getCategoryColor } from '@/lib/category-color'
 import { PricePill } from '@/components/price-pill'
 import ViewToggle, { useViewMode } from './view-toggle'
 import Pagination from '../components/pagination'
@@ -455,11 +456,12 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
             <div key={book.id} className="flex flex-col rounded-xl border border-stone-200 bg-white">
               <button
                 onClick={() => router.push(`/books/${book.id}`)}
-                className="relative w-full aspect-[3/4] bg-stone-100 overflow-hidden rounded-t-xl hover:opacity-90 transition-opacity"
+                className="relative w-full aspect-[3/4] bg-amber-pale overflow-hidden rounded-t-xl hover:opacity-90 transition-opacity"
+                style={book.cover_url ? undefined : { backgroundColor: getCategoryColor(book.category) }}
               >
                 {book.cover_url
                   ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
-                  : <span className="absolute inset-0 flex items-center justify-center text-4xl text-stone-300">📖</span>
+                  : <span className="absolute inset-0 flex items-center justify-center p-3 font-serif text-sm text-parchment/85 text-center leading-snug line-clamp-3">{book.title}</span>
                 }
                 {localReadingProgressMap[book.id] && (
                   <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-sky-100 border border-sky-200 text-sky-700 text-[10px] font-medium leading-none">
@@ -467,7 +469,7 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
                   </span>
                 )}
                 {!localReadingProgressMap[book.id] && localReadingAIMap[book.id] && (
-                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-medium leading-none">
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-amber-light border border-amber/30 text-amber text-[10px] font-medium leading-none">
                     {t('aiReadingBadge')}
                   </span>
                 )}
@@ -486,8 +488,8 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
                     variant="outline"
                     className={`text-[10px] px-1.5 py-0 h-4 ${
                       book.status === 'available'
-                        ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                        : 'border-amber-200 text-amber-700 bg-amber-50'
+                        ? 'border-forest/30 text-forest bg-forest-light'
+                        : 'border-rust/30 text-rust bg-rust-light'
                     }`}
                   >
                     {book.status === 'available' ? t('available') : t('lentOut')}
@@ -515,10 +517,13 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
         <ul className="divide-y divide-stone-100">
           {paginatedBooks.map(book => (
             <li key={book.id} className="flex items-center gap-4 py-4">
-              <div className="shrink-0 w-10 h-14 rounded bg-stone-200 overflow-hidden flex items-center justify-center">
+              <div
+                className="shrink-0 w-10 h-14 rounded overflow-hidden flex items-center justify-center"
+                style={book.cover_url ? { backgroundColor: '#e8ddd0' } : { backgroundColor: getCategoryColor(book.category) }}
+              >
                 {book.cover_url
                   ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
-                  : <span className="text-stone-400 text-lg">📖</span>
+                  : <span className="px-1 font-serif text-[8px] text-parchment/85 text-center leading-tight line-clamp-3">{book.title}</span>
                 }
               </div>
 
@@ -535,7 +540,7 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
                 </Badge>
               )}
               {!localReadingProgressMap[book.id] && localReadingAIMap[book.id] && (
-                <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 text-xs shrink-0">
+                <Badge variant="outline" className="border-amber/30 text-amber bg-amber-light text-xs shrink-0">
                   {t('aiReadingBadge')}
                 </Badge>
               )}
@@ -543,8 +548,8 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
                 variant="outline"
                 className={
                   book.status === 'available'
-                    ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                    : 'border-amber-200 text-amber-700 bg-amber-50'
+                    ? 'border-forest/30 text-forest bg-forest-light'
+                    : 'border-rust/30 text-rust bg-rust-light'
                 }
               >
                 {book.status === 'available' ? t('available') : t('lentOut')}

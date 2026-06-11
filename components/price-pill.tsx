@@ -12,8 +12,8 @@ export function PricePill({
   if (!text) return null
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] sm:text-[11px] font-medium leading-none whitespace-nowrap shrink-0"
-      style={{ border: '0.5px solid #fcd34d' }}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-navy-light text-navy text-[10px] sm:text-[11px] font-medium leading-none whitespace-nowrap shrink-0"
+      style={{ border: '0.5px solid #2c4a6e' }}
     >
       <Tag className="h-2.5 w-2.5 shrink-0" />
       {text}

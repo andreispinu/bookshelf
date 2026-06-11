@@ -157,7 +157,7 @@ export default async function LandingPage() {
   )
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-800">
+    <div className="min-h-screen bg-parchment text-ink">
 
       <script
         type="application/ld+json"
@@ -167,29 +167,32 @@ export default async function LandingPage() {
       <LandingNav isLoggedIn={isLoggedIn} currentLocale={locale} />
 
       {/* Hero */}
-      <section className="py-20 px-4 text-center">
+      <section className="py-20 px-4 text-center bg-parchment">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-stone-800 leading-tight">
+          <span className="inline-block bg-amber-light text-amber text-xs font-medium px-3 py-1 rounded-full mb-5">
+            {t('heroBadge')}
+          </span>
+          <h1 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight text-ink-light leading-tight">
             {t('heroHeadline')}
           </h1>
-          <p className="mt-5 text-lg text-stone-500 leading-relaxed">
+          <p className="mt-5 text-lg text-walnut leading-relaxed">
             {t('heroSubheadline')}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/signup"
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-stone-800 text-white font-medium hover:bg-stone-700 transition-colors text-center"
+              className="w-full sm:w-auto px-6 py-3 rounded-md bg-ink text-parchment font-medium hover:bg-ink-light transition-colors text-center"
             >
               {t('heroStartFreeTrial')}
             </Link>
             <a
               href="#how-it-works"
-              className="w-full sm:w-auto px-6 py-3 rounded-xl border border-stone-300 text-stone-700 font-medium hover:bg-stone-100 transition-colors text-center"
+              className="w-full sm:w-auto px-6 py-3 text-walnut-mid font-medium underline underline-offset-4 hover:text-ink transition-colors text-center"
             >
               {t('heroSeeHowItWorks')}
             </a>
           </div>
-          <p className="mt-4 text-sm text-stone-400">{t('heroTrialNote')}</p>
+          <p className="mt-4 text-sm text-walnut-mid">{t('heroTrialNote')}</p>
         </div>
       </section>
 

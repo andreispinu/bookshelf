@@ -1366,11 +1366,57 @@ Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `g
 ## Design system
 
 - **Component library** — shadcn/ui (base-ui variant, not Radix — no `asChild` prop)
-- **Base color** — `stone` (warm grey, close to aged paper)
-- **Dark mode** — off
+- **Visual identity** — warm "library" palette (parchment + ink + amber), Playfair Display headings (see the **Design System** section below)
+- **Dark mode** — off (a `.dark` block remains in `globals.css` only for shadcn compatibility)
 - **Design principle** — warm, readable, minimal. Think a physical library, not a tech product.
 - To add a shadcn component: `npx shadcn@latest add <name>`
 - `buttonVariants` must be used with `<Link>` instead of `<Button asChild>` — this version of shadcn uses `@base-ui/react` which does not support `asChild`
+
+## Design System (visual identity)
+
+The BookShelf brand is a warm, paper-inspired "library" look. **Tailwind v4 (CSS-first)** — there is **no `tailwind.config.ts`**; all design tokens live in `@theme` blocks in `app/globals.css`, which auto-generates the utility classes (`bg-parchment`, `text-ink`, `border-linen`, `font-serif`, …). Do NOT create a `tailwind.config.ts` — add tokens to `@theme` instead.
+
+### Color tokens (`app/globals.css` → `@theme`)
+| Token / utility | Hex | Role |
+|------|-----|------|
+| `parchment` | `#faf6f0` | page background |
+| `parchment-card` | `#fdfaf6` | card / navbar background |
+| `ink` | `#2c1a0e` | primary text, CTA button bg |
+| `ink-light` | `#1e1008` | headings |
+| `walnut` | `#7a5c3e` | muted / secondary text |
+| `walnut-mid` | `#9c7a5b` | placeholder, labels, secondary links |
+| `amber` | `#c4852a` | accent, highlights, active states, **AI Reading** badge |
+| `amber-light` | `#f5e6d0` | tag / pill backgrounds |
+| `amber-pale` | `#faf0dc` | subtle tints |
+| `forest` / `forest-light` | `#4a6741` / `#d0e8cc` | **Available** status / success |
+| `navy` / `navy-light` | `#2c4a6e` / `#c8d8f0` | info, **For sale** badge |
+| `linen` | `#e8ddd0` | borders |
+| `rust` / `rust-light` | `#7a3b3b` / `#f5d0d0` | **Lent out** / warning |
+
+Use as `bg-*`, `text-*`, `border-*` (e.g. `bg-forest-light text-forest`). Opacity modifiers work: `border-forest/30`.
+
+**shadcn semantic mapping** (`:root` in `globals.css`, plain hex): `background`→parchment, `card`→parchment-card, `foreground`/`primary`→ink, `primary-foreground`→parchment, `secondary`→amber-light, `muted-foreground`→walnut, `accent`/`ring`→amber, `destructive`→rust, `border`/`input`→linen. So shadcn `<Button>`, `<Input>`, `<Card>` etc. pick up the palette automatically.
+
+### Typography
+- **Headings** — Playfair Display (serif). Loaded via `next/font/google` in `app/layout.tsx` as the `--font-playfair` variable; exposed as `font-serif` and applied to `h1–h4` globally in the `@layer base` block of `globals.css` (weight 600, color `ink-light`). Headings with an explicit `text-*` class keep that colour; the global rule only sets the default.
+- **Body / UI** — Inter (`--font-inter`), exposed as `font-sans`, applied to `body`. Both are variable fonts (no `weight` array) so `font-medium`/`font-semibold`/`font-bold` render without faux-bold.
+- Wordmarks use `font-serif text-xl/2xl font-semibold text-ink` next to the icon.
+- (Geist Mono kept as `--font-mono` / `font-mono`.)
+
+### Icons
+- **Source:** `public/icon.svg` — the stacked-books mark (amber / navy / forest / cream spines + amber bookmark ribbon). Used inline in navbars (`<img src="/icon.svg">`).
+- **Generated:** `scripts/generate-icons.mjs` (run `node scripts/generate-icons.mjs`, uses `sharp`) produces, in `public/`: `favicon-16x16.png`, `favicon-32x32.png` (transparent), `apple-touch-icon.png` (180), `icon-192x192.png`, `icon-512x512.png` (icon centered ~65% on a rounded `#2c1a0e` square), and `favicon.ico` (multi-size 16+32, PNG-encoded, built manually — `sharp` can't emit ICO). **Re-run the script whenever `icon.svg` changes.**
+- `app/layout.tsx` metadata: `icons: { icon: '/favicon-32x32.png', apple: '/apple-touch-icon.png' }`, `viewport.themeColor: '#2c1a0e'`. `public/manifest.json`: `theme_color`/`background_color` `#2c1a0e`, icons → `/icon-192x192.png` + `/icon-512x512.png`.
+- The old `public/icons/*` files are superseded (no longer referenced).
+
+### Book card spines (`lib/category-color.ts`)
+`getCategoryColor(category?: string | null): string` maps a book category (canonical English value from `lib/categories.ts`) to a spine colour, defaulting to ink (`#2c1a0e`). When a book has **no `cover_url`**, book cards render a colored spine in that colour with the title in light serif text instead of a grey placeholder. Applied in: `app/(dashboard)/books/book-list.tsx` (grid + list), `app/recently-added-client.tsx` (landing), `app/[username]/public-shelf.tsx` (public profile).
+
+### Status badges (palette)
+Available → `bg-forest-light text-forest`; Lent out → `bg-rust-light text-rust`; AI Reading → `bg-amber-light text-amber`; For sale → `bg-navy-light text-navy` (the shared `components/price-pill.tsx`). Applied across the book grids (My Books, landing recently-added, public profile, friend shelves). Other secondary surfaces (loan-list workflow badges, etc.) still use their prior colors and inherit the new tokens/typography — extend with the same palette as needed.
+
+### Adding new branded UI
+Prefer the semantic tokens (`bg-parchment`, `text-ink`, `border-linen`, `text-walnut` for muted, `text-amber` for accent). Headings get Playfair automatically. Keep "BookShelf" capitalized exactly.
 
 ## Next.js 16 specifics
 

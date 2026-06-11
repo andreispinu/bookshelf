@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
 import { PricePill } from '@/components/price-pill'
 import { translateCategory } from '@/lib/translate-category'
+import { getCategoryColor } from '@/lib/category-color'
 
 type Book = {
   id: string
@@ -103,10 +104,13 @@ export default function PublicShelf({ books }: { books: Book[] }) {
                 className="flex flex-col gap-2 p-3 bg-white rounded-xl border border-stone-200
                            sm:flex-row sm:items-center sm:gap-4 sm:py-4 sm:px-0 sm:bg-transparent sm:rounded-none sm:border-0"
               >
-                <div className="shrink-0 w-full aspect-[2/3] sm:w-10 sm:h-14 sm:aspect-auto rounded bg-stone-200 overflow-hidden flex items-center justify-center">
+                <div
+                  className="shrink-0 w-full aspect-[2/3] sm:w-10 sm:h-14 sm:aspect-auto rounded overflow-hidden flex items-center justify-center"
+                  style={book.cover_url ? { backgroundColor: '#e8ddd0' } : { backgroundColor: getCategoryColor(book.category) }}
+                >
                   {book.cover_url
                     ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
-                    : <span className="text-stone-400 text-2xl sm:text-lg">📖</span>
+                    : <span className="px-2 font-serif text-xs sm:text-[8px] text-parchment/85 text-center leading-snug line-clamp-3">{book.title}</span>
                   }
                 </div>
                 <div className="flex-1 min-w-0">
@@ -117,7 +121,7 @@ export default function PublicShelf({ books }: { books: Book[] }) {
                   )}
                   <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                     {isSellOnly ? (
-                      <Badge variant="outline" className="text-xs border-amber-300 text-amber-800 bg-amber-50">
+                      <Badge variant="outline" className="text-xs border-navy/30 text-navy bg-navy-light">
                         {tBooks('forSaleLabel')}
                       </Badge>
                     ) : (
@@ -125,8 +129,8 @@ export default function PublicShelf({ books }: { books: Book[] }) {
                         variant="outline"
                         className={`text-xs ${
                           book.status === 'available'
-                            ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                            : 'border-amber-200 text-amber-700 bg-amber-50'
+                            ? 'border-forest/30 text-forest bg-forest-light'
+                            : 'border-rust/30 text-rust bg-rust-light'
                         }`}
                       >
                         {book.status === 'available' ? tBooks('available') : tBooks('lentOut')}

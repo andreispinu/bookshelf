@@ -4,12 +4,40 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─────────────────────────────────────────────────────────────
+   BookShelf design tokens — warm "library" palette + typography.
+   Exposed as Tailwind utilities: bg-parchment, text-ink,
+   border-linen, text-amber, bg-forest-light, font-serif, etc.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  /* Brand palette */
+  --color-parchment: #faf6f0;       /* page background */
+  --color-parchment-card: #fdfaf6;  /* card / navbar background */
+  --color-ink: #2c1a0e;             /* primary text, CTA buttons */
+  --color-ink-light: #1e1008;       /* headings */
+  --color-walnut: #7a5c3e;          /* muted / secondary text */
+  --color-walnut-mid: #9c7a5b;      /* placeholder, labels */
+  --color-amber: #c4852a;           /* accent, highlights, active states */
+  --color-amber-light: #f5e6d0;     /* tag / pill backgrounds */
+  --color-amber-pale: #faf0dc;      /* subtle tints */
+  --color-forest: #4a6741;          /* available status, success */
+  --color-forest-light: #d0e8cc;    /* success background */
+  --color-navy: #2c4a6e;            /* info, AI Reading badge */
+  --color-navy-light: #c8d8f0;      /* info background */
+  --color-linen: #e8ddd0;           /* borders */
+  --color-rust: #7a3b3b;            /* lent out / warning */
+  --color-rust-light: #f5d0d0;      /* warning background */
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,41 +76,43 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* shadcn semantic theme — mapped to the BookShelf palette */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: #faf6f0;            /* parchment */
+  --foreground: #2c1a0e;            /* ink */
+  --card: #fdfaf6;                  /* parchment-card */
+  --card-foreground: #2c1a0e;
+  --popover: #fdfaf6;
+  --popover-foreground: #2c1a0e;
+  --primary: #2c1a0e;               /* ink — button bg */
+  --primary-foreground: #faf6f0;    /* parchment */
+  --secondary: #f5e6d0;             /* amber-light */
+  --secondary-foreground: #2c1a0e;
+  --muted: #f0e7d8;                 /* pale linen surface */
+  --muted-foreground: #7a5c3e;      /* walnut */
+  --accent: #c4852a;                /* amber */
+  --accent-foreground: #faf6f0;
+  --destructive: #7a3b3b;           /* rust */
+  --border: #e8ddd0;                /* linen */
+  --input: #e8ddd0;
+  --ring: #c4852a;                  /* amber focus ring */
+  --chart-1: #c4852a;
+  --chart-2: #4a6741;
+  --chart-3: #2c4a6e;
+  --chart-4: #7a3b3b;
+  --chart-5: #7a5c3e;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #fdfaf6;
+  --sidebar-foreground: #2c1a0e;
+  --sidebar-primary: #2c1a0e;
+  --sidebar-primary-foreground: #faf6f0;
+  --sidebar-accent: #f5e6d0;
+  --sidebar-accent-foreground: #2c1a0e;
+  --sidebar-border: #e8ddd0;
+  --sidebar-ring: #c4852a;
 }
 
+/* Dark mode is intentionally disabled in this app; kept for shadcn compatibility. */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -122,9 +152,15 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
   html {
     @apply font-sans;
+  }
+  /* Playfair Display for all headings */
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--color-ink-light);
   }
 }

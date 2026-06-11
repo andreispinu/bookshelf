@@ -62,8 +62,9 @@ export default function LandingNav({
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
 
         {/* Logo */}
-        <Link href="/" className="font-semibold text-stone-900 tracking-tight text-base shrink-0">
-          BookShelf
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <img src="/icon.svg" alt="" className="w-8 h-8" aria-hidden="true" />
+          <span className="font-serif text-2xl font-semibold text-ink tracking-tight">BookShelf</span>
         </Link>
 
         {/* Desktop center links */}

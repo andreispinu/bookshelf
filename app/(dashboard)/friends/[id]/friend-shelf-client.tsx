@@ -92,8 +92,8 @@ export default function FriendShelfClient({
                   variant="outline"
                   className={`text-xs ${
                     book.status === 'available'
-                      ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
-                      : 'border-amber-200 text-amber-700 bg-amber-50'
+                      ? 'border-forest/30 text-forest bg-forest-light'
+                      : 'border-rust/30 text-rust bg-rust-light'
                   }`}
                 >
                   {book.status === 'available' ? availableLabel : lentOutLabel}

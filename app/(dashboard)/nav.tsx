@@ -86,7 +86,10 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
 
         {/* Left: wordmark + desktop nav links */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-semibold text-stone-800 tracking-tight">BookShelf</Link>
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/icon.svg" alt="" className="w-7 h-7" aria-hidden="true" />
+            <span className="font-serif text-xl font-semibold text-ink tracking-tight">BookShelf</span>
+          </Link>
           <nav className="hidden sm:flex items-center gap-1">
             {NAV_LINKS.map(({ href, label, badge }) => {
               const count = badge ? counts[badge] : 0
