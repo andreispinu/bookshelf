@@ -192,7 +192,6 @@ export default async function LandingPage() {
               {t('heroSeeHowItWorks')}
             </a>
           </div>
-          <p className="mt-4 text-sm text-walnut-mid">{t('heroTrialNote')}</p>
         </div>
       </section>
 
