@@ -17,6 +17,7 @@
     "somethingWentWrong": "Что-то пошло не так"
   },
   "nav": {
+    "marketplace": "Маркетплейс",
     "myBooks": "Мои книги",
     "friends": "Друзья",
     "feed": "Лента",
@@ -26,6 +27,38 @@
     "signOut": "Выйти",
     "bookstore": "Магазин",
     "support": "Поддержка"
+  },
+  "marketplace": {
+    "title": "Маркетплейс BookShelf",
+    "tagline": "Покупайте книги у читателей рядом с вами.",
+    "goToShelf": "На мою полку",
+    "logIn": "Войти",
+    "signUp": "Регистрация",
+    "search_placeholder": "Поиск по названию или автору…",
+    "filters": "Фильтры",
+    "clearFilters": "Сбросить фильтры",
+    "filterCategory": "Категория",
+    "filterCountry": "Страна",
+    "filterCity": "Город",
+    "filterLanguage": "Язык",
+    "filterCurrency": "Валюта",
+    "filterMaxPrice": "Макс. цена",
+    "allCategories": "Все категории",
+    "anyCountry": "Любая страна",
+    "allLanguages": "Все языки",
+    "allCurrencies": "Любая валюта",
+    "loading": "Загрузка…",
+    "results_count": "Показано {shown} из {total} книг",
+    "empty": "Книги не найдены. Измените поиск или фильтры.",
+    "seller_in": "Продавец в {city}, {country}",
+    "buy_button": "Купить книгу",
+    "buy_message": "Сообщение (необязательно)",
+    "buy_message_placeholder": "Добавьте сообщение продавцу…",
+    "buy_send": "Отправить запрос",
+    "buy_sending": "Отправка…",
+    "buy_sent": "Запрос отправлен!",
+    "buy_error": "Что-то пошло не так",
+    "cancel": "Отмена"
   },
   "auth": {
     "signIn": "Войти",
@@ -501,6 +534,10 @@
     "readingFinished": "{name} закончил читать"
   },
   "landing": {
+    "navMarketplace": "Маркетплейс",
+    "marketplaceTeaserHeading": "Покупайте книги у читателей рядом с вами",
+    "marketplaceTeaserSubtext": "Просматривайте тысячи книг, выставленных читателями BookShelf.",
+    "marketplaceTeaserCta": "Открыть маркетплейс →",
     "metaTitle": "BookShelf — ваша личная библиотека, которой вы делитесь с друзьями",
     "metaDescription": "Каталогизируйте домашнюю библиотеку, давайте и берите книги у друзей и отслеживайте чтение. Бесплатно до 10 книг. Web, iOS и Android.",
     "metaKeywords": "приложение для библиотеки книг, личная библиотека, давать книги друзьям, каталог книг, дневник чтения, обмен книгами, организация домашней библиотеки",

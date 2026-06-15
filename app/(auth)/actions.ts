@@ -49,7 +49,11 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/books')
+
+  // Honour a `next` redirect target, but only safe relative paths (no open redirect).
+  const next = formData.get('next') as string | null
+  const target = next && next.startsWith('/') && !next.startsWith('//') ? next : '/books'
+  redirect(target)
 }
 
 export async function signup(formData: FormData) {

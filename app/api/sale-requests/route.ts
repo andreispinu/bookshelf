@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { bookId, sellerId, message } = await req.json()
-  if (!bookId || !sellerId) return NextResponse.json({ error: 'bookId and sellerId required' }, { status: 400 })
+  const { bookId, sellerId: sellerIdInput, message } = await req.json()
+  if (!bookId) return NextResponse.json({ error: 'bookId required' }, { status: 400 })
 
   // Get book info
   const { data: book } = await supabaseAdmin
@@ -52,8 +52,17 @@ export async function POST(req: NextRequest) {
     .eq('id', bookId)
     .single()
 
-  if (!book || book.user_id !== sellerId) {
+  if (!book) {
     return NextResponse.json({ error: 'Book not found' }, { status: 404 })
+  }
+  // The seller is always the book owner. An optional sellerId from the client
+  // (legacy callers) must match; the marketplace omits it entirely.
+  const sellerId = book.user_id
+  if (sellerIdInput && sellerIdInput !== sellerId) {
+    return NextResponse.json({ error: 'Book not found' }, { status: 404 })
+  }
+  if (sellerId === user.id) {
+    return NextResponse.json({ error: 'You cannot buy your own book' }, { status: 400 })
   }
   if (!['sell_only', 'lend_and_sell'].includes(book.availability_mode ?? '')) {
     return NextResponse.json({ error: 'Book is not available for sale' }, { status: 400 })

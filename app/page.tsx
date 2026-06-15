@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getTranslations, getLocale } from 'next-intl/server'
 import LandingNav from './landing-nav'
 import RecentlyAddedClient from './recently-added-client'
+import { formatPrice } from '@/lib/format-currency'
 import {
   BookOpen, Camera, HandHelping, Users, Tag, Globe,
   Link as LinkIcon, Smartphone, UserPlus, ClipboardList, Bell, CreditCard,
@@ -156,6 +157,17 @@ export default async function LandingPage() {
     Object.entries(rawCounts).filter(([, n]) => n >= 5)
   )
 
+  // Marketplace teaser — up to 6 for-sale books with covers
+  const { data: marketData } = await supabaseAdmin
+    .from('books')
+    .select('id, title, cover_url, sale_price, sale_currency')
+    .in('availability_mode', ['sell_only', 'lend_and_sell'])
+    .eq('status', 'available')
+    .not('cover_url', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(6)
+  const marketBooks = marketData ?? []
+
   return (
     <div className="min-h-screen bg-parchment text-ink">
 
@@ -220,6 +232,46 @@ export default async function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Marketplace teaser */}
+      <section className="py-16 px-4 bg-amber-pale border-y border-linen">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="font-serif text-2xl md:text-3xl font-semibold text-ink-light mb-2">
+              {t('marketplaceTeaserHeading')}
+            </h2>
+            <p className="text-walnut text-sm mb-5">{t('marketplaceTeaserSubtext')}</p>
+            <Link
+              href="/marketplace"
+              className="inline-block px-5 py-2.5 rounded-md bg-ink text-parchment text-sm font-medium hover:bg-ink-light transition-colors"
+            >
+              {t('marketplaceTeaserCta')}
+            </Link>
+          </div>
+          {marketBooks.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {marketBooks.map(b => {
+                const price = formatPrice(b.sale_price, b.sale_currency)
+                return (
+                  <Link key={b.id} href="/marketplace" className="block group">
+                    <div
+                      className="rounded-lg overflow-hidden relative shadow-sm group-hover:shadow-md transition-shadow"
+                      style={{ aspectRatio: '2/3', backgroundColor: '#f5e6d0' }}
+                    >
+                      <img src={b.cover_url!} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
+                      {price && (
+                        <span className="absolute top-1.5 right-1.5 bg-amber text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow">
+                          {price}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 

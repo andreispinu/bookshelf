@@ -29,6 +29,7 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
     { href: '/messages',   label: t('messages'),   badge: 'unreadMessages' as keyof NavCounts },
     { href: '/loans',      label: t('loans'),      badge: 'pendingRequests' as keyof NavCounts },
     { href: '/bookstore',  label: t('bookstore'),  badge: null as null | keyof NavCounts },
+    { href: '/marketplace', label: t('marketplace'), badge: null as null | keyof NavCounts },
   ]
 
   const fetchCounts = useCallback(async () => {
@@ -150,6 +151,13 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
                   {missingCount > 0 && (
                     <span className="h-2 w-2 rounded-full bg-amber-400 shrink-0" />
                   )}
+                </Link>
+                <Link
+                  href="/marketplace"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 sm:hidden"
+                >
+                  {t('marketplace')}
                 </Link>
                 <Link
                   href="/support"

@@ -17,6 +17,7 @@
     "somethingWentWrong": "Ceva a mers greșit"
   },
   "nav": {
+    "marketplace": "Magazin",
     "myBooks": "Cărțile mele",
     "friends": "Prieteni",
     "feed": "Activitate",
@@ -26,6 +27,38 @@
     "signOut": "Deconectare",
     "bookstore": "Librărie",
     "support": "Suport"
+  },
+  "marketplace": {
+    "title": "Magazin BookShelf",
+    "tagline": "Cumpără cărți de la cititori din apropiere.",
+    "goToShelf": "Mergi la raftul meu",
+    "logIn": "Autentificare",
+    "signUp": "Înregistrare",
+    "search_placeholder": "Caută după titlu sau autor…",
+    "filters": "Filtre",
+    "clearFilters": "Șterge toate filtrele",
+    "filterCategory": "Categorie",
+    "filterCountry": "Țară",
+    "filterCity": "Oraș",
+    "filterLanguage": "Limbă",
+    "filterCurrency": "Monedă",
+    "filterMaxPrice": "Preț maxim",
+    "allCategories": "Toate categoriile",
+    "anyCountry": "Orice țară",
+    "allLanguages": "Toate limbile",
+    "allCurrencies": "Orice monedă",
+    "loading": "Se încarcă…",
+    "results_count": "Se afișează {shown} din {total} cărți",
+    "empty": "Nicio carte găsită. Încearcă altă căutare sau alte filtre.",
+    "seller_in": "Vânzător în {city}, {country}",
+    "buy_button": "Cumpără cartea",
+    "buy_message": "Mesaj (opțional)",
+    "buy_message_placeholder": "Adaugă o notă pentru vânzător…",
+    "buy_send": "Trimite cererea de cumpărare",
+    "buy_sending": "Se trimite…",
+    "buy_sent": "Cerere de cumpărare trimisă!",
+    "buy_error": "A apărut o eroare",
+    "cancel": "Anulează"
   },
   "auth": {
     "signIn": "Conectare",
@@ -501,6 +534,10 @@
     "readingFinished": "{name} a terminat de citit"
   },
   "landing": {
+    "navMarketplace": "Magazin",
+    "marketplaceTeaserHeading": "Cumpără cărți de la cititori din apropiere",
+    "marketplaceTeaserSubtext": "Răsfoiește mii de cărți listate de cititorii BookShelf.",
+    "marketplaceTeaserCta": "Vezi magazinul →",
     "metaTitle": "BookShelf — Biblioteca ta personală, împărtășită cu prietenii",
     "metaDescription": "Cataloghează-ți biblioteca de acasă, împrumută cărți cu prietenii și urmărește-ți lecturile. Gratuit pentru până la 10 cărți. Web, iOS și Android.",
     "metaKeywords": "aplicație bibliotecă cărți, bibliotecă personală, împrumut cărți prieteni, catalogare cărți, jurnal de lectură, partajare cărți, organizare bibliotecă de acasă",

@@ -1264,6 +1264,50 @@ RLS: participants can read, buyer can insert, participants can update.
 - `app/api/sale-requests/[id]/route.ts` — PATCH accept/decline/complete
 - `app/admin/page.tsx` — Buy & Sell metrics section
 
+### Public Marketplace
+A public, no-auth `/marketplace` page that lists **all** for-sale books across all users (the Buy & Sell feature is friends-only; the marketplace makes for-sale listings public). Built entirely on the existing Buy & Sell infrastructure — no new tables.
+
+**"For sale" definition:** There is **no `for_sale` column**. A book is for sale when `availability_mode IN ('sell_only','lend_and_sell')` AND `status = 'available'`. The marketplace uses exactly that predicate everywhere.
+
+**Database** (run `supabase/add-marketplace.sql`):
+- Adds an anon SELECT policy on `books` for sale-enabled, available books (defense-in-depth; the API uses the service role so it works regardless).
+- **No `profiles` anon policy.** A blanket `profiles ... TO anon USING(true)` would expose every profile column (stripe ids, trial dates, etc.) to the public anon key, since RLS is row-level not column-level. Instead seller info is read server-side via `supabaseAdmin`, selecting only safe columns — same pattern as the public profile page (`app/[username]/page.tsx`).
+
+**API route** `GET /api/marketplace` (`app/api/marketplace/route.ts`) — public, uses `supabaseAdmin`, inner-joins the seller profile.
+- Query params: `q` (ilike on title+author), `category`, `country` (seller, ilike), `city` (seller, ilike), `language`, `currency` (sale_currency), `max_price`, `page` (default 1), `limit` (default 24, max 60)
+- `q` is sanitized (strips `,()*`) before being put in the PostgREST `or()` filter.
+- Returns `{ books, total, page, limit, totalPages }`. Each book: `id, title, author, cover_url, category, language, sale_price, sale_currency, seller: { name, avatar_url, city, country, username }`.
+
+**Page** `app/marketplace/page.tsx` (public, no auth — not in `proxy.ts` protected prefixes). SEO metadata (title "BookShelf Marketplace — Buy books from readers near you", canonical `/marketplace`, og:website). Server checks session to show "Go to my shelf" vs Log in/Sign up in the header. Hero header + `<MarketplaceClient>`.
+
+**Client** `app/marketplace/marketplace-client.tsx`:
+- Filter state lives in the URL (`useSearchParams` + `router.push`) so views are shareable/bookmarkable. Text search debounced 400ms.
+- Filters: category, country (dropdown from `lib/countries.ts`), city (text), language, currency, max price + "Clear all filters". Desktop sidebar / mobile drawer.
+- Results grid (2 cols mobile / 4 desktop), numbered windowed pagination (24/page), empty state, "Showing N of M books" count.
+- Card: cover (or category-color background), title/author, amber price badge, seller avatar+name+location (links to `/[username]` if the seller has a username), "Buy this book".
+- Buy: not logged in → `Link` to `/login?next=/marketplace`; logged in → modal that `POST`s to `/api/sale-requests` with just `{ bookId, message }` (reuses the existing sale-request flow).
+
+**`/login?next=` support:** `app/(auth)/login/page.tsx` reads `next` from the query (wrapped in `<Suspense>`), passes it as a hidden field; `login()` in `app/(auth)/actions.ts` redirects to `next` when it's a safe relative path (starts with `/`, not `//`), else `/books`.
+
+**`POST /api/sale-requests` hardening:** `sellerId` is now derived from the book's owner (client `sellerId`, if sent, must match); rejects buying your own book. Backward-compatible with the friend BuyButton.
+
+**Entry points:**
+- Landing nav: "Marketplace" link → `/marketplace` (desktop + mobile) in `app/landing-nav.tsx`.
+- Landing teaser section (below hero, above How it works) in `app/page.tsx`: heading/subtext/CTA + up to 6 for-sale book covers (ISR `revalidate=300`, fetched via `supabaseAdmin`).
+- Dashboard nav (`app/(dashboard)/nav.tsx`): "Marketplace" link in the desktop nav bar + in the account dropdown (`sm:hidden`) for mobile reach.
+
+**Translations:** `nav.marketplace`, `landing.navMarketplace` + `landing.marketplaceTeaser*`, and the full `marketplace.*` namespace — all in en/ro/ru.
+
+**Files:**
+- `supabase/add-marketplace.sql`
+- `app/api/marketplace/route.ts`
+- `app/marketplace/page.tsx`, `app/marketplace/marketplace-client.tsx`
+- `app/(auth)/login/page.tsx`, `app/(auth)/actions.ts` (next redirect)
+- `app/api/sale-requests/route.ts` (seller derived from book)
+- `app/landing-nav.tsx`, `app/page.tsx` (nav link + teaser)
+- `app/(dashboard)/nav.tsx` (dashboard link)
+- `messages/{en,ro,ru}.json`
+
 ### Currently Reading
 Users can track books they are currently reading, log progress (0–100%), and mark books as finished with a star rating and optional review.
 

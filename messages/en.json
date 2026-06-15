@@ -17,6 +17,7 @@
     "somethingWentWrong": "Something went wrong"
   },
   "nav": {
+    "marketplace": "Marketplace",
     "myBooks": "My Books",
     "friends": "Friends",
     "feed": "Feed",
@@ -26,6 +27,38 @@
     "signOut": "Sign out",
     "bookstore": "Bookstore",
     "support": "Support"
+  },
+  "marketplace": {
+    "title": "BookShelf Marketplace",
+    "tagline": "Buy books from readers near you.",
+    "goToShelf": "Go to my shelf",
+    "logIn": "Log in",
+    "signUp": "Sign up",
+    "search_placeholder": "Search by title or author…",
+    "filters": "Filters",
+    "clearFilters": "Clear all filters",
+    "filterCategory": "Category",
+    "filterCountry": "Country",
+    "filterCity": "City",
+    "filterLanguage": "Language",
+    "filterCurrency": "Currency",
+    "filterMaxPrice": "Max price",
+    "allCategories": "All categories",
+    "anyCountry": "Any country",
+    "allLanguages": "All languages",
+    "allCurrencies": "Any currency",
+    "loading": "Loading…",
+    "results_count": "Showing {shown} of {total} books",
+    "empty": "No books found. Try a different search or filters.",
+    "seller_in": "Seller in {city}, {country}",
+    "buy_button": "Buy this book",
+    "buy_message": "Message (optional)",
+    "buy_message_placeholder": "Add a note for the seller…",
+    "buy_send": "Send buy request",
+    "buy_sending": "Sending…",
+    "buy_sent": "Buy request sent!",
+    "buy_error": "Something went wrong",
+    "cancel": "Cancel"
   },
   "auth": {
     "signIn": "Sign in",
@@ -501,6 +534,10 @@
     "readingFinished": "{name} finished reading"
   },
   "landing": {
+    "navMarketplace": "Marketplace",
+    "marketplaceTeaserHeading": "Buy books from readers near you",
+    "marketplaceTeaserSubtext": "Browse thousands of books listed by BookShelf readers.",
+    "marketplaceTeaserCta": "Browse marketplace →",
     "metaTitle": "BookShelf — Your personal library, shared with friends",
     "metaDescription": "Catalogue your home book library, lend and borrow with friends, and track your reading. Free for up to 10 books. Web, iOS & Android.",
     "metaKeywords": "book library app, personal library, lend books to friends, book cataloguing, reading tracker, book sharing app, home library organiser",
