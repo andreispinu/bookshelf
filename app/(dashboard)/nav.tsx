@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, ShoppingBag } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -119,6 +119,13 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
         {/* Right: bell + refresh (mobile) + avatar */}
         <div className="flex items-center gap-1.5">
           <NotificationsBell />
+          <Link
+            href="/marketplace"
+            aria-label="Marketplace"
+            className="sm:hidden p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+          >
+            <ShoppingBag className="h-5 w-5" />
+          </Link>
           <button
             onClick={handleRefresh}
             aria-label="Refresh app"

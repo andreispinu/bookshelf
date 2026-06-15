@@ -32,10 +32,8 @@ export default function LandingNav({
   const navLinks = [
     { label: t('navBooks'), href: '#recent-books' },
     { label: t('navMarketplace'), href: '/marketplace' },
-    { label: t('navFeatures'), href: '#features' },
     { label: t('navHowItWorks'), href: '#how-it-works' },
     { label: t('navInstall'), href: '#install' },
-    { label: t('navPricing'), href: '#pricing' },
   ]
 
   useEffect(() => {
@@ -62,24 +60,26 @@ export default function LandingNav({
     <header className="sticky top-0 z-20 bg-white border-b border-stone-200">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <img src="/icon.svg" alt="" className="w-8 h-8" aria-hidden="true" />
-          <span className="font-serif text-2xl font-semibold text-ink tracking-tight">BookShelf</span>
-        </Link>
+        {/* Logo + desktop nav */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <img src="/icon.svg" alt="" className="w-8 h-8" aria-hidden="true" />
+            <span className="font-serif text-2xl font-semibold text-ink tracking-tight">BookShelf</span>
+          </Link>
 
-        {/* Desktop center links */}
-        <nav className="hidden md:flex items-center gap-6">
-          {navLinks.map(l => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="text-sm text-stone-500 hover:text-stone-900 transition-colors"
-            >
-              {l.label}
-            </a>
-          ))}
-        </nav>
+          {/* Desktop center links */}
+          <nav className="hidden md:flex items-center gap-6">
+            {navLinks.map(l => (
+              <a
+                key={l.href}
+                href={l.href}
+                className="text-sm text-stone-500 hover:text-stone-900 transition-colors whitespace-nowrap"
+              >
+                {l.label}
+              </a>
+            ))}
+          </nav>
+        </div>
 
         {/* Desktop right: lang switcher + CTAs */}
         <div className="hidden md:flex items-center gap-3">
@@ -100,7 +100,7 @@ export default function LandingNav({
                 </button>
               ))}
             </div>
-            {justSet && !isPending && (
+            {process.env.NODE_ENV === 'development' && justSet && !isPending && (
               <p className="text-xs text-stone-400 whitespace-nowrap">
                 {LANG_NAMES[justSet]} set — overrides auto-detection
               </p>
