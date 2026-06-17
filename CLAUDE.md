@@ -995,6 +995,7 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
   - `welcomeEmailRo(firstName, confirmationUrl)` — Romanian version
   - `welcomeEmailRu(firstName, confirmationUrl)` — Russian version
   - `friendRequestEmail(senderName)`
+  - `friendRequestAcceptedEmail(acceptorName, acceptorUsername)` — to the requester when their friend request is accepted (+ `…Ro` / `…Ru` localized variants). Primary CTA → acceptor's public shelf (`/[username]`, falls back to `/friends` if no username), secondary → `/friends`.
   - `newMessageEmail(senderName, preview)`
   - `borrowRequestEmail(requesterName, bookTitle, message?)`
   - `borrowRequestApprovedEmail(firstName, ownerName, bookTitle)` — sent to requester when owner approves
@@ -1023,6 +1024,7 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 |-------|------|-----------|----------|
 | Signup (welcome + confirm email) | `app/(auth)/actions.ts` → `signup()` | New user | None — fires once per signup. Confirmation link via `supabaseAdmin.auth.admin.generateLink({ type: 'signup', email, password })`. Language chosen from `NEXT_LOCALE` cookie (EN/RO/RU). |
 | Friend request sent | `app/(dashboard)/friends/actions.ts` → `sendFriendRequest()` | Addressee | None |
+| Friend request accepted | `app/(dashboard)/friends/actions.ts` → `respondToRequest()` (accept) | Requester | None — localized by requester's `ui_language` (ro/ru/en) |
 | Message sent | `app/api/messages/route.ts` → POST | Receiver | Skip if unread `new_message` notification from same sender already exists |
 | Borrow request created | `app/api/borrow-requests/route.ts` → POST | Book owner | None |
 | Borrow request approved | `app/api/borrow-requests/route.ts` → PATCH (approve) | Requester | None |

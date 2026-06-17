@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
-import { friendRequestEmail } from '@/lib/email-templates'
+import {
+  friendRequestEmail,
+  friendRequestAcceptedEmail,
+  friendRequestAcceptedEmailRo,
+  friendRequestAcceptedEmailRu,
+} from '@/lib/email-templates'
 
 export async function sendFriendRequest(addresseeId: string) {
   const supabase = await createClient()
@@ -50,6 +55,40 @@ export async function respondToRequest(friendshipId: string, response: 'accepted
   if (error) return { error: error.message }
 
   revalidatePath('/friends')
+
+  // Fire-and-forget email to the requester when their request was accepted.
+  // The acceptor is the current user (the addressee of the request).
+  if (response === 'accepted') {
+    ;(async () => {
+      const { data: friendship } = await supabaseAdmin
+        .from('friendships')
+        .select('requester_id')
+        .eq('id', friendshipId)
+        .single()
+      const requesterId = friendship?.requester_id
+      if (!requesterId) return
+
+      const [acceptorProfile, requesterProfile, requesterAuth] = await Promise.all([
+        supabaseAdmin.from('profiles').select('name, username').eq('id', user.id).single(),
+        supabaseAdmin.from('profiles').select('ui_language').eq('id', requesterId).single(),
+        supabaseAdmin.auth.admin.getUserById(requesterId),
+      ])
+
+      const acceptorName = acceptorProfile.data?.name
+      const acceptorUsername = acceptorProfile.data?.username ?? ''
+      const requesterEmail = requesterAuth.data?.user?.email
+      if (!acceptorName || !requesterEmail) return
+
+      const lang = requesterProfile.data?.ui_language
+      const template =
+        lang === 'ro' ? friendRequestAcceptedEmailRo
+        : lang === 'ru' ? friendRequestAcceptedEmailRu
+        : friendRequestAcceptedEmail
+
+      await sendEmail({ to: requesterEmail, ...template(acceptorName, acceptorUsername) })
+    })().catch(console.error)
+  }
+
   return { error: null }
 }
 

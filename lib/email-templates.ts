@@ -1181,3 +1181,66 @@ export function bookLimitNudgeEmail(firstName: string, bookCount: number): { sub
   `)
   return { subject, html }
 }
+
+export function friendRequestAcceptedEmail(acceptorName: string, acceptorUsername: string): { subject: string; html: string } {
+  const safeName = acceptorName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const shelfUrl = acceptorUsername ? `${BASE_URL}/${acceptorUsername}` : `${BASE_URL}/friends`
+  const subject = `${acceptorName} accepted your friend request on BookShelf`
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">${safeName} is now your friend on BookShelf!</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          You can now see each other's bookshelves, lend books, and send messages.
+        </p>
+        ${ctaButton('View their shelf →', shelfUrl)}
+        <p style="margin:24px 0 0;">
+          <a href="${BASE_URL}/friends" style="font-size:13px;color:#78716c;text-decoration:underline;">Go to my friends →</a>
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function friendRequestAcceptedEmailRo(acceptorName: string, acceptorUsername: string): { subject: string; html: string } {
+  const safeName = acceptorName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const shelfUrl = acceptorUsername ? `${BASE_URL}/${acceptorUsername}` : `${BASE_URL}/friends`
+  const subject = `${acceptorName} ți-a acceptat cererea de prietenie pe BookShelf`
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">${safeName} este acum prietenul tău pe BookShelf!</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          Acum puteți vedea rafturile celuilalt, vă puteți împrumuta cărți și trimite mesaje.
+        </p>
+        ${ctaButton('Vezi raftul lor →', shelfUrl)}
+        <p style="margin:24px 0 0;">
+          <a href="${BASE_URL}/friends" style="font-size:13px;color:#78716c;text-decoration:underline;">Mergi la prietenii mei →</a>
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
+
+export function friendRequestAcceptedEmailRu(acceptorName: string, acceptorUsername: string): { subject: string; html: string } {
+  const safeName = acceptorName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const shelfUrl = acceptorUsername ? `${BASE_URL}/${acceptorUsername}` : `${BASE_URL}/friends`
+  const subject = `${acceptorName} принял(а) ваш запрос в друзья на BookShelf`
+  const html = wrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">${safeName} теперь ваш друг на BookShelf!</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
+          Теперь вы можете видеть книжные полки друг друга, давать книги взаймы и обмениваться сообщениями.
+        </p>
+        ${ctaButton('Посмотреть их полку →', shelfUrl)}
+        <p style="margin:24px 0 0;">
+          <a href="${BASE_URL}/friends" style="font-size:13px;color:#78716c;text-decoration:underline;">Перейти к моим друзьям →</a>
+        </p>
+      </td>
+    </tr>
+  `)
+  return { subject, html }
+}
