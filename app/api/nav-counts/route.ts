@@ -7,9 +7,9 @@ const SUPPORT_BOT_ID = '00000000-0000-0000-0000-000000000001'
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ unreadMessages: 0, pendingRequests: 0, unreadSupportReplies: 0 })
+  if (!user) return NextResponse.json({ unreadMessages: 0, pendingRequests: 0, pendingFriendRequests: 0, unreadSupportReplies: 0 })
 
-  const [{ count: unreadMessages }, { count: pendingRequests }] = await Promise.all([
+  const [{ count: unreadMessages }, { count: pendingRequests }, { count: pendingFriendRequests }] = await Promise.all([
     supabaseAdmin
       .from('messages')
       .select('id', { count: 'exact', head: true })
@@ -20,6 +20,11 @@ export async function GET() {
       .from('borrow_requests')
       .select('id', { count: 'exact', head: true })
       .eq('owner_id', user.id)
+      .eq('status', 'pending'),
+    supabaseAdmin
+      .from('friendships')
+      .select('id', { count: 'exact', head: true })
+      .eq('addressee_id', user.id)
       .eq('status', 'pending'),
   ])
 
@@ -43,6 +48,7 @@ export async function GET() {
   return NextResponse.json({
     unreadMessages: unreadMessages ?? 0,
     pendingRequests: pendingRequests ?? 0,
+    pendingFriendRequests: pendingFriendRequests ?? 0,
     unreadSupportReplies: unreadSupportReplies ?? 0,
   })
 }
