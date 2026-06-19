@@ -51,6 +51,7 @@
     "results_count": "Showing {shown} of {total} books",
     "empty": "No books found. Try a different search or filters.",
     "seller_in": "Seller in {city}, {country}",
+    "login_to_see_seller": "Log in to see seller details",
     "buy_button": "Buy this book",
     "buy_message": "Message (optional)",
     "buy_message_placeholder": "Add a note for the seller…",

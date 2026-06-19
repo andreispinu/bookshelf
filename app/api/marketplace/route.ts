@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { createClient } from '@/lib/supabase-server'
 
 // GET /api/marketplace — public listing of books for sale across all users.
 //
@@ -30,6 +31,12 @@ function sanitize(s: string): string {
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams
+
+  // Seller identity (name, avatar, username) is only revealed to authenticated
+  // users. Anonymous visitors see location only — see the seller mapping below.
+  const supabaseAuth = await createClient()
+  const { data: { user } } = await supabaseAuth.auth.getUser()
+  const isAuthed = !!user
 
   const q = sanitize(sp.get('q') ?? '')
   const category = sp.get('category')?.trim() || ''
@@ -85,13 +92,19 @@ export async function GET(req: NextRequest) {
       sale_price: b.sale_price,
       sale_currency: b.sale_currency,
       seller: seller
-        ? {
-            name: seller.name,
-            avatar_url: seller.avatar_url,
-            city: seller.city,
-            country: seller.country,
-            username: seller.username,
-          }
+        ? isAuthed
+          ? {
+              name: seller.name,
+              avatar_url: seller.avatar_url,
+              city: seller.city,
+              country: seller.country,
+              username: seller.username,
+            }
+          : {
+              // Anonymous visitors: location only — hide name, avatar, username.
+              city: seller.city,
+              country: seller.country,
+            }
         : null,
     }
   })

@@ -51,6 +51,7 @@
     "results_count": "Se afișează {shown} din {total} cărți",
     "empty": "Nicio carte găsită. Încearcă altă căutare sau alte filtre.",
     "seller_in": "Vânzător în {city}, {country}",
+    "login_to_see_seller": "Conectează-te pentru a vedea vânzătorul",
     "buy_button": "Cumpără cartea",
     "buy_message": "Mesaj (opțional)",
     "buy_message_placeholder": "Adaugă o notă pentru vânzător…",

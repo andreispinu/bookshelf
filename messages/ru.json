@@ -51,6 +51,7 @@
     "results_count": "Показано {shown} из {total} книг",
     "empty": "Книги не найдены. Измените поиск или фильтры.",
     "seller_in": "Продавец в {city}, {country}",
+    "login_to_see_seller": "Войдите, чтобы увидеть продавца",
     "buy_button": "Купить книгу",
     "buy_message": "Сообщение (необязательно)",
     "buy_message_placeholder": "Добавьте сообщение продавцу…",

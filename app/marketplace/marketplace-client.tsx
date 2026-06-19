@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import {
-  Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, MapPin, Loader2,
+  Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, MapPin, Loader2, Lock,
 } from 'lucide-react'
 import { CATEGORIES } from '@/lib/categories'
 import { LANGUAGES } from '@/lib/languages'
@@ -16,12 +16,14 @@ import { translateCategory } from '@/lib/translate-category'
 import { getCategoryColor } from '@/lib/category-color'
 import { formatPrice } from '@/lib/format-currency'
 
+// Anonymous visitors receive only { city, country } — name/avatar_url/username
+// are omitted by the API and stay undefined.
 type Seller = {
-  name: string
-  avatar_url: string | null
+  name?: string
+  avatar_url?: string | null
   city: string | null
   country: string | null
-  username: string | null
+  username?: string | null
 }
 
 type MarketBook = {
@@ -369,7 +371,7 @@ function MarketCard({
 
         {/* Seller */}
         {seller && (
-          <SellerLine seller={seller} loc={loc} />
+          <SellerLine seller={seller} loc={loc} t={t} />
         )}
 
         <div className="mt-auto pt-1">
@@ -380,7 +382,33 @@ function MarketCard({
   )
 }
 
-function SellerLine({ seller, loc }: { seller: Seller; loc: string }) {
+function SellerLine({
+  seller, loc, t,
+}: {
+  seller: Seller
+  loc: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  // Anonymous view: the API omits name/avatar/username, so show location only
+  // plus a locked hint inviting the visitor to log in for full seller details.
+  if (!seller.name) {
+    return (
+      <div className="flex flex-col gap-1 text-walnut">
+        {loc && (
+          <span className="flex items-center gap-1 text-[11px] text-walnut-mid">
+            <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{loc}</span>
+          </span>
+        )}
+        <Link
+          href="/login?next=/marketplace"
+          className="flex items-center gap-1 text-[11px] text-walnut-mid hover:text-ink transition-colors"
+        >
+          <Lock className="h-3 w-3 shrink-0" /> <span className="truncate">{t('login_to_see_seller')}</span>
+        </Link>
+      </div>
+    )
+  }
+
   const initials = seller.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const inner = (
     <span className="flex items-center gap-1.5 min-w-0">

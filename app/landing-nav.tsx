@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -24,16 +24,22 @@ export default function LandingNav({
 }) {
   const t = useTranslations('landing')
   const router = useRouter()
+  const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [justSet, setJustSet] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  const onLanding = pathname === '/'
+
+  // Section anchors live on the landing page; when the nav is shown on another
+  // public page (e.g. /marketplace) prefix them with "/" so they navigate back
+  // to the landing page section instead of a non-existent in-page anchor.
   const navLinks = [
-    { label: t('navBooks'), href: '#recent-books' },
+    { label: t('navBooks'), href: onLanding ? '#recent-books' : '/#recent-books' },
     { label: t('navMarketplace'), href: '/marketplace' },
-    { label: t('navHowItWorks'), href: '#how-it-works' },
-    { label: t('navInstall'), href: '#install' },
+    { label: t('navHowItWorks'), href: onLanding ? '#how-it-works' : '/#how-it-works' },
+    { label: t('navInstall'), href: onLanding ? '#install' : '/#install' },
   ]
 
   useEffect(() => {
@@ -73,7 +79,11 @@ export default function LandingNav({
               <a
                 key={l.href}
                 href={l.href}
-                className="text-sm text-stone-500 hover:text-stone-900 transition-colors whitespace-nowrap"
+                className={`text-sm transition-colors whitespace-nowrap ${
+                  l.href === pathname
+                    ? 'font-medium text-stone-900'
+                    : 'text-stone-500 hover:text-stone-900'
+                }`}
               >
                 {l.label}
               </a>
@@ -159,7 +169,11 @@ export default function LandingNav({
                 key={l.href}
                 href={l.href}
                 onClick={() => setMenuOpen(false)}
-                className="px-3 py-2.5 rounded-lg text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                className={`px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  l.href === pathname
+                    ? 'font-medium text-stone-900 bg-stone-50'
+                    : 'text-stone-700 hover:bg-stone-50'
+                }`}
               >
                 {l.label}
               </a>
