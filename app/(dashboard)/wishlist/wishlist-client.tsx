@@ -49,7 +49,7 @@ function WishlistMenu({
   onCheckFriends: () => void
   onDelete: () => void
 }) {
-  const t = useTranslations('bookstore')
+  const t = useTranslations('wishlist')
   const tc = useTranslations('common')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -109,8 +109,8 @@ function WishlistMenu({
   )
 }
 
-export default function BookstoreClient({ items: initial }: { items: WishlistItem[] }) {
-  const t = useTranslations('bookstore')
+export default function WishlistClient({ items: initial }: { items: WishlistItem[] }) {
+  const t = useTranslations('wishlist')
   const tc = useTranslations('common')
   const tCat = useTranslations('categories')
 

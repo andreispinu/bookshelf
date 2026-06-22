@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: new Date().toISOString().split('T')[0],
   },
+  async redirects() {
+    // The Bookstore feature was renamed to Wishlist; keep old URLs working.
+    return [
+      { source: '/bookstore', destination: '/wishlist', permanent: true },
+      { source: '/bookstore/:path*', destination: '/wishlist/:path*', permanent: true },
+    ]
+  },
 };
 
 export default withNextIntl(

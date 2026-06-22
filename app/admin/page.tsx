@@ -3,6 +3,7 @@ export const revalidate = 300
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import AdminTabs from './admin-tabs'
 import AdminRefreshButton from './admin-refresh'
+import AdminUsersTable from './admin-users-table'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -225,6 +226,27 @@ export default async function AdminPage() {
   const authUsers = authResult.data?.users ?? []
   const emailMap = new Map(authUsers.map(u => [u.id, u.email ?? '']))
 
+  // ── Per-user book counts (for the recent registrations table) ───────────────
+  // Book count is the conversion signal now: free tier caps at 10 books.
+  const recentIds = recentProfiles.map(p => p.id)
+  const { data: recentBookRows } = recentIds.length
+    ? await supabaseAdmin.from('books').select('user_id').in('user_id', recentIds)
+    : { data: [] as { user_id: string }[] }
+  const bookCountByUser = new Map<string, number>()
+  for (const b of recentBookRows ?? []) {
+    bookCountByUser.set(b.user_id, (bookCountByUser.get(b.user_id) ?? 0) + 1)
+  }
+
+  const userRows = recentProfiles.slice(0, 10).map(p => ({
+    id: p.id,
+    name: p.name,
+    email: emailMap.get(p.id) ?? '',
+    joined: p.created_at,
+    plan: p.subscription_plan,
+    isPaid: p.subscription_status === 'active',
+    bookCount: bookCountByUser.get(p.id) ?? 0,
+  }))
+
   const lastUpdated = now.toLocaleString('en-US', {
     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   })
@@ -298,33 +320,8 @@ export default async function AdminPage() {
           </div>
 
           <div className="mb-10">
-            <SubHeader>Recent Registrations (last 10)</SubHeader>
-            <div className="rounded-xl border border-stone-200 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-stone-50 border-b border-stone-200">
-                    {['Name', 'Email', 'Joined', 'Status', 'Plan'].map(h => (
-                      <th key={h} className="text-left px-4 py-3 text-xs text-stone-400 font-medium uppercase tracking-wide">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {recentProfiles.slice(0, 10).map(p => (
-                    <tr key={p.id} className="hover:bg-stone-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-stone-800 whitespace-nowrap">{p.name ?? '—'}</td>
-                      <td className="px-4 py-3 text-stone-500">{emailMap.get(p.id) ?? '—'}</td>
-                      <td className="px-4 py-3 text-stone-400 whitespace-nowrap">
-                        {new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={p.subscription_status} trialEndsAt={p.trial_ends_at} />
-                      </td>
-                      <td className="px-4 py-3 text-stone-500 capitalize">{p.subscription_plan ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <SubHeader>Recent Registrations (last 10) — click “Books” to sort by most active</SubHeader>
+            <AdminUsersTable users={userRows} />
           </div>
 
           <div>

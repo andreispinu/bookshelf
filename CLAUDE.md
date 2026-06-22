@@ -1054,10 +1054,10 @@ A daily cron collects unread messages and sends one digest email per user instea
 - `app/(dashboard)/profile/notifications-section.tsx` — toggle UI
 - `supabase/add-message-digest-field.sql` — migration
 
-### Bookstore (Wishlist)
+### Wishlist (formerly Bookstore)
 Users can maintain a wishlist of books they want to read or buy. When adding a book, the app immediately checks if any accepted friend owns it.
 
-**Route:** `/bookstore`
+**Route:** `/wishlist` (old `/bookstore` and `/bookstore/*` URLs permanently redirect to `/wishlist` via `next.config.ts` `redirects()`). Nav label uses the `nav.wishlist` translation key (EN "Wishlist", RO "Listă de dorințe", RU "Список желаний"); feature strings live in the `wishlist` translation namespace. A `<BookMarked>` icon links to `/wishlist` in the mobile top bar (next to the notifications bell).
 
 **Database table: `wishlist`** (run `supabase/add-wishlist.sql`):
 ```sql
@@ -1077,7 +1077,7 @@ created_at      timestamptz DEFAULT now()
 RLS: user can read/insert/update/delete only their own rows.
 
 **Add flow:**
-1. "Add a book" dropdown: Add manually (`/bookstore/add`) or Add with AI (photo scan → `/bookstore/add?params`)
+1. "Add a book" dropdown: Add manually (`/wishlist/add`) or Add with AI (photo scan → `/wishlist/add?params`)
 2. User fills/reviews form (title, author, ISBN, category, language, description)
 3. On submit: `addToWishlistAndCheck(data)` inserts row AND checks friend availability
 4. If any friend owns the book: sets `has_friend_copy = true` on the row
@@ -1097,17 +1097,17 @@ RLS: user can read/insert/update/delete only their own rows.
 - ⋯ menu: Edit, Mark as purchased, Check friends again, Delete
 - "Check friends again" re-runs the availability check and updates `has_friend_copy`
 
-**Add with AI:** reuses `PhotoModal` with `redirectTo="/bookstore/add"` prop (added to PhotoModal signature)
+**Add with AI:** reuses `PhotoModal` with `redirectTo="/wishlist/add"` prop (added to PhotoModal signature)
 
 **Files:**
 - `supabase/add-wishlist.sql` — migration
 - `types/index.ts` — `WishlistItem` and `FriendMatch` types
-- `app/(dashboard)/bookstore/page.tsx` — server component, fetches wishlist
-- `app/(dashboard)/bookstore/bookstore-client.tsx` — list UI, edit/delete/check dialogs
-- `app/(dashboard)/bookstore/photo-button.tsx` — add dropdown (reuses PhotoModal with redirectTo)
-- `app/(dashboard)/bookstore/actions.ts` — `addToWishlistAndCheck`, `checkFriendAvailability`, `updateWishlistItem`, `markAsPurchased`, `deleteWishlistItem`
-- `app/(dashboard)/bookstore/add/page.tsx` — add page wrapper (Suspense)
-- `app/(dashboard)/bookstore/add/add-wishlist-form.tsx` — add form with Fill with AI, friend availability modal
+- `app/(dashboard)/wishlist/page.tsx` — server component, fetches wishlist
+- `app/(dashboard)/wishlist/wishlist-client.tsx` — list UI, edit/delete/check dialogs
+- `app/(dashboard)/wishlist/photo-button.tsx` — add dropdown (reuses PhotoModal with redirectTo)
+- `app/(dashboard)/wishlist/actions.ts` — `addToWishlistAndCheck`, `checkFriendAvailability`, `updateWishlistItem`, `markAsPurchased`, `deleteWishlistItem`
+- `app/(dashboard)/wishlist/add/page.tsx` — add page wrapper (Suspense)
+- `app/(dashboard)/wishlist/add/add-wishlist-form.tsx` — add form with Fill with AI, friend availability modal
 - `app/(dashboard)/books/photo-modal.tsx` — added `redirectTo?: string` prop (defaults to `/books/add`)
 
 ### Read with AI
@@ -1559,7 +1559,7 @@ Injected as `<script type="application/ld+json">` in the server components:
 
 ### sitemap & robots
 - **`app/sitemap.ts`** (`revalidate = 3600`): landing (`priority 1.0, daily`) + every profile where `profile_visibility != 'private'` AND `username IS NOT NULL` (`priority 0.7, weekly`, `lastModified` = `created_at`). Fetched with `supabaseAdmin`. Served at `/sitemap.xml`.
-- **`app/robots.ts`**: `allow: '/'`; `disallow` all private/auth areas (`/admin /api /books /friends /loans /messages /feed /support /bookstore /profile /subscribe /login /signup /forgot-password /reset-password`); declares the sitemap + host. Served at `/robots.txt`.
+- **`app/robots.ts`**: `allow: '/'`; `disallow` all private/auth areas (`/admin /api /books /friends /loans /messages /feed /support /wishlist /profile /subscribe /login /signup /forgot-password /reset-password`); declares the sitemap + host. Served at `/robots.txt`.
 - **Note**: auth pages are `noindex` AND robots-disallowed, so they are intentionally **excluded from the sitemap** (a sitemap should not list non-indexable URLs) — this overrides the original spec's suggestion to list `/login` `/signup` there.
 
 ### GEO — Generative Engine Optimization

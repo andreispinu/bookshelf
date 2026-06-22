@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import PhotoModal from '../books/photo-modal'
 
 export default function AddWishlistButton() {
-  const t = useTranslations('bookstore')
+  const t = useTranslations('wishlist')
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -38,7 +38,7 @@ export default function AddWishlistButton() {
           <div className="absolute right-0 top-full mt-1.5 w-64 rounded-xl border border-stone-200 bg-white shadow-lg py-1.5 z-10">
             <button
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-stone-50 text-left"
-              onClick={() => { setDropdownOpen(false); router.push('/bookstore/add') }}
+              onClick={() => { setDropdownOpen(false); router.push('/wishlist/add') }}
             >
               <div className="shrink-0 h-9 w-9 rounded-lg border border-stone-200 bg-stone-50 flex items-center justify-center text-stone-600">
                 <Pencil className="h-4 w-4" />
@@ -68,7 +68,7 @@ export default function AddWishlistButton() {
       <PhotoModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        redirectTo="/bookstore/add"
+        redirectTo="/wishlist/add"
       />
     </>
   )

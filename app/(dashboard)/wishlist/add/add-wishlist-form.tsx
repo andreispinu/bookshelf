@@ -29,7 +29,7 @@ function initials(name: string) {
 }
 
 export default function AddWishlistForm() {
-  const t = useTranslations('bookstore')
+  const t = useTranslations('wishlist')
   const tc = useTranslations('common')
   const tCat = useTranslations('categories')
   const searchParams = useSearchParams()
@@ -143,7 +143,7 @@ export default function AddWishlistForm() {
     <>
       <Card className="max-w-lg mx-auto border-stone-200">
         <CardHeader>
-          <CardTitle className="text-stone-800">{t('addToBookstore')}</CardTitle>
+          <CardTitle className="text-stone-800">{t('addToWishlist')}</CardTitle>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -266,7 +266,7 @@ export default function AddWishlistForm() {
               type="button"
               variant="ghost"
               className="text-stone-500"
-              onClick={() => router.push('/bookstore')}
+              onClick={() => router.push('/wishlist')}
             >
               {tc('cancel')}
             </Button>
@@ -275,7 +275,7 @@ export default function AddWishlistForm() {
               disabled={loading || !fields.title.trim() || !fields.author.trim()}
               className="bg-stone-800 hover:bg-stone-700 text-white"
             >
-              {loading ? tc('saving') : t('addToBookstore')}
+              {loading ? tc('saving') : t('addToWishlist')}
             </Button>
           </CardFooter>
         </form>
@@ -285,7 +285,7 @@ export default function AddWishlistForm() {
       <Dialog
         open={!!friendResult}
         onOpenChange={open => {
-          if (!open) { setFriendResult(null); router.push('/bookstore') }
+          if (!open) { setFriendResult(null); router.push('/wishlist') }
         }}
       >
         <DialogContent className="sm:max-w-sm">
@@ -344,7 +344,7 @@ export default function AddWishlistForm() {
           <DialogFooter>
             <Button
               className="bg-stone-800 hover:bg-stone-700 text-white"
-              onClick={() => { setFriendResult(null); router.push('/bookstore') }}
+              onClick={() => { setFriendResult(null); router.push('/wishlist') }}
             >
               {tc('close')}
             </Button>

@@ -83,7 +83,7 @@ export async function addToWishlistAndCheck(data: WishlistData) {
     await supabase.from('wishlist').update({ has_friend_copy: true }).eq('id', item.id)
   }
 
-  revalidatePath('/bookstore')
+  revalidatePath('/wishlist')
   return { error: null, id: item.id as string, matches }
 }
 
@@ -108,7 +108,7 @@ export async function checkFriendAvailability(wishlistItemId: string) {
     .update({ has_friend_copy: matches.length > 0 })
     .eq('id', wishlistItemId)
 
-  revalidatePath('/bookstore')
+  revalidatePath('/wishlist')
   return { error: null, matches }
 }
 
@@ -124,7 +124,7 @@ export async function updateWishlistItem(id: string, data: Partial<WishlistData>
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-  revalidatePath('/bookstore')
+  revalidatePath('/wishlist')
   return { error: null }
 }
 
@@ -140,7 +140,7 @@ export async function markAsPurchased(id: string) {
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-  revalidatePath('/bookstore')
+  revalidatePath('/wishlist')
   return { error: null }
 }
 
@@ -156,6 +156,6 @@ export async function deleteWishlistItem(id: string) {
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-  revalidatePath('/bookstore')
+  revalidatePath('/wishlist')
   return { error: null }
 }

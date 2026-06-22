@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { RefreshCw, ShoppingBag, Users, MessageCircle, type LucideIcon } from 'lucide-react'
+import { RefreshCw, ShoppingBag, BookMarked, Users, MessageCircle, type LucideIcon } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -27,7 +27,7 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
     { href: '/books',       label: t('myBooks'),     badge: null as null | keyof NavCounts },
     { href: '/feed',        label: t('feed'),        badge: null as null | keyof NavCounts },
     { href: '/loans',       label: t('loans'),       badge: 'pendingRequests' as keyof NavCounts },
-    { href: '/bookstore',   label: t('bookstore'),   badge: null as null | keyof NavCounts },
+    { href: '/wishlist',    label: t('wishlist'),    badge: null as null | keyof NavCounts },
     { href: '/marketplace', label: t('marketplace'), badge: null as null | keyof NavCounts },
   ]
 
@@ -133,6 +133,13 @@ export default function Nav({ userName, avatarUrl, missingCount = 0 }: { userNam
             active={pathname.startsWith('/messages')}
           />
           <NotificationsBell />
+          <Link
+            href="/wishlist"
+            aria-label={t('wishlist')}
+            className="sm:hidden p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+          >
+            <BookMarked className="h-5 w-5" />
+          </Link>
           <Link
             href="/marketplace"
             aria-label="Marketplace"

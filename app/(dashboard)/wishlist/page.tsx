@@ -1,16 +1,16 @@
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
-import BookstoreClient from './bookstore-client'
+import WishlistClient from './wishlist-client'
 import AddWishlistButton from './photo-button'
 import type { WishlistItem } from '@/types'
 
-export default async function BookstorePage() {
+export default async function WishlistPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const t = await getTranslations('bookstore')
+  const t = await getTranslations('wishlist')
 
   const { data: items } = await supabase
     .from('wishlist')
@@ -27,7 +27,7 @@ export default async function BookstorePage() {
         </div>
         <AddWishlistButton />
       </div>
-      <BookstoreClient items={(items ?? []) as WishlistItem[]} />
+      <WishlistClient items={(items ?? []) as WishlistItem[]} />
     </div>
   )
 }

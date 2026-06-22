@@ -17,7 +17,7 @@ export default function robots(): MetadataRoute.Robots {
           '/messages',
           '/feed',
           '/support',
-          '/bookstore',
+          '/wishlist',
           '/profile',
           '/subscribe',
           '/login',

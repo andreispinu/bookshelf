@@ -441,6 +441,7 @@ export default async function LandingPage() {
                 <span className="text-3xl font-bold text-stone-800">$0</span>
                 <span className="text-sm text-stone-400 ml-1">{t('pricingForever')}</span>
               </div>
+              <p className="text-xs text-stone-500 -mt-2">{t('pricingFreeDescription')}</p>
               <ul className="space-y-1.5 text-sm text-stone-600 flex-1">
                 {freeFeatures.map((f, i) => (
                   <li key={i} className="flex items-start gap-2">
