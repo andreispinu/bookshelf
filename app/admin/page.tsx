@@ -18,35 +18,7 @@ function pct(num: number | null | undefined, den: number | null | undefined): st
   return ((n / d) * 100).toFixed(1) + '%'
 }
 
-function timeAgo(dateStr: string): string {
-  const secs = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (secs < 60) return `${secs}s ago`
-  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
-  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
-  return `${Math.floor(secs / 86400)}d ago`
-}
-
-function initials(name: string | null): string {
-  if (!name) return '?'
-  return name.split(' ').map(p => p[0] ?? '').join('').slice(0, 2).toUpperCase() || '?'
-}
-
 // ── Components ────────────────────────────────────────────────────────────────
-
-function StatusBadge({ status, trialEndsAt }: { status: string | null; trialEndsAt: string | null }) {
-  const expired = status === 'trialing' && trialEndsAt && new Date(trialEndsAt) < new Date()
-  const label = expired ? 'Expired'
-    : status === 'active' ? 'Active'
-    : status === 'trialing' ? 'Trial'
-    : status === 'canceled' ? 'Canceled'
-    : (status ?? '—')
-  const cls = (expired || status === 'canceled')
-    ? 'bg-red-100 text-red-700'
-    : status === 'active' ? 'bg-green-100 text-green-700'
-    : status === 'trialing' ? 'bg-amber-100 text-amber-700'
-    : 'bg-stone-100 text-stone-500'
-  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>{label}</span>
-}
 
 function MetricCard({ label, value, tint = 'neutral', sub }: {
   label: string
@@ -125,7 +97,7 @@ export default async function AdminPage() {
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_plan', 'annual').not('subscribed_at', 'is', null),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'canceled').gte('updated_at', startOfMonth),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).not('subscribed_at', 'is', null).gte('subscribed_at', startOfMonth),
-    supabaseAdmin.from('profiles').select('id, name, created_at, subscription_status, subscription_plan, trial_ends_at').order('created_at', { ascending: false }).limit(20),
+    supabaseAdmin.from('profiles').select('id, name, created_at, subscription_status').order('created_at', { ascending: false }),
     // ── Activity ──
     supabaseAdmin.from('books').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('books').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
@@ -179,7 +151,7 @@ export default async function AdminPage() {
   const annualEverPaid   = qAnnualEver.count ?? 0
   const canceledThisMonth = qCanceledMonth.count ?? 0
   const newSubsThisMonth = qNewSubsMonth.count ?? 0
-  const recentProfiles   = qRecentProfiles.data ?? []
+  const allProfiles      = qRecentProfiles.data ?? []
 
   const totalBooks       = qTotalBooks.count ?? 0
   const booksThisMonth   = qBooksMonth.count ?? 0
@@ -226,23 +198,19 @@ export default async function AdminPage() {
   const authUsers = authResult.data?.users ?? []
   const emailMap = new Map(authUsers.map(u => [u.id, u.email ?? '']))
 
-  // ── Per-user book counts (for the recent registrations table) ───────────────
+  // ── Per-user book counts (for the All Users table) ──────────────────────────
   // Book count is the conversion signal now: free tier caps at 10 books.
-  const recentIds = recentProfiles.map(p => p.id)
-  const { data: recentBookRows } = recentIds.length
-    ? await supabaseAdmin.from('books').select('user_id').in('user_id', recentIds)
-    : { data: [] as { user_id: string }[] }
+  const { data: allBookRows } = await supabaseAdmin.from('books').select('user_id')
   const bookCountByUser = new Map<string, number>()
-  for (const b of recentBookRows ?? []) {
+  for (const b of allBookRows ?? []) {
     bookCountByUser.set(b.user_id, (bookCountByUser.get(b.user_id) ?? 0) + 1)
   }
 
-  const userRows = recentProfiles.slice(0, 10).map(p => ({
+  const userRows = allProfiles.map(p => ({
     id: p.id,
     name: p.name,
     email: emailMap.get(p.id) ?? '',
     joined: p.created_at,
-    plan: p.subscription_plan,
     isPaid: p.subscription_status === 'active',
     bookCount: bookCountByUser.get(p.id) ?? 0,
   }))
@@ -319,31 +287,8 @@ export default async function AdminPage() {
             </div>
           </div>
 
-          <div className="mb-10">
-            <SubHeader>Recent Registrations (last 10) — click “Books” to sort by most active</SubHeader>
-            <AdminUsersTable users={userRows} />
-          </div>
-
           <div>
-            <SubHeader>Recent Signups Feed (last 20)</SubHeader>
-            <div className="space-y-1.5">
-              {recentProfiles.map(p => (
-                <div key={p.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-stone-100 hover:border-stone-200 transition-colors">
-                  <div className="h-9 w-9 rounded-full bg-stone-200 flex items-center justify-center shrink-0 text-xs font-semibold text-stone-600">
-                    {initials(p.name)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-stone-800 text-sm truncate">{p.name ?? '—'}</p>
-                    <p className="text-xs text-stone-400 truncate">{emailMap.get(p.id) ?? ''}</p>
-                  </div>
-                  <span className="text-xs text-stone-400 whitespace-nowrap shrink-0">{timeAgo(p.created_at)}</span>
-                  <StatusBadge status={p.subscription_status} trialEndsAt={p.trial_ends_at} />
-                  {p.subscription_plan && (
-                    <span className="text-xs text-stone-500 capitalize shrink-0">{p.subscription_plan}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+            <AdminUsersTable users={userRows} />
           </div>
         </section>
 
