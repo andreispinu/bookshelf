@@ -83,6 +83,13 @@ export default async function RootLayout({
       lang={locale}
       className={`${inter.variable} ${playfair.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
+      <head>
+        {/* Warm up the Supabase Storage origin early — book covers (the landing
+            LCP element) are served from there, so opening the connection before
+            render shaves the TLS/DNS handshake off image load time. */}
+        <link rel="preconnect" href="https://njyugygdhkegagnapbcy.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://njyugygdhkegagnapbcy.supabase.co" />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}

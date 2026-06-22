@@ -71,14 +71,16 @@ export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {displayed.map(book => (
+          {displayed.map((book, i) => (
             <div key={book.id} className="bg-white rounded-xl border border-stone-200 p-3 flex flex-col gap-2">
               <div
                 className="w-full rounded-lg overflow-hidden flex items-center justify-center"
                 style={book.cover_url ? { aspectRatio: '2/3', backgroundColor: '#f5e6d0' } : { aspectRatio: '2/3', backgroundColor: getCategoryColor(book.category) }}
               >
                 {book.cover_url
-                  ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
+                  // First row (up to 5 covers) is above the fold and an LCP
+                  // candidate — load eagerly with high priority; lazy-load the rest.
+                  ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" loading={i < 5 ? 'eager' : 'lazy'} fetchPriority={i < 5 ? 'high' : 'auto'} />
                   : <span className="px-2 font-serif text-xs text-parchment/85 text-center leading-snug line-clamp-3">{book.title}</span>
                 }
               </div>
