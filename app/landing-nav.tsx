@@ -98,9 +98,10 @@ export default function LandingNav({
               {LANGUAGES.map(lang => (
                 <button
                   key={lang.code}
+                  type="button"
                   onClick={() => handleLocale(lang.code)}
                   disabled={isPending}
-                  className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                  className={`px-2 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                     currentLocale === lang.code
                       ? 'bg-stone-800 text-white'
                       : 'text-stone-500 hover:text-stone-800 disabled:opacity-50'
@@ -143,9 +144,11 @@ export default function LandingNav({
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden p-2 rounded-lg text-stone-600 hover:bg-stone-100 transition-colors"
+          type="button"
+          className="md:hidden p-2 rounded-lg text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
           onClick={() => setMenuOpen(v => !v)}
-          aria-label="Open menu"
+          aria-label={t('navOpenMenu')}
+          aria-expanded={menuOpen}
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -156,9 +159,10 @@ export default function LandingNav({
         <div ref={menuRef} className="md:hidden border-t border-stone-100 bg-white px-4 pb-4">
           <div className="flex justify-end pt-3 pb-1">
             <button
-              className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 transition-colors"
+              type="button"
+              className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 transition-colors cursor-pointer"
               onClick={() => setMenuOpen(false)}
-              aria-label="Close menu"
+              aria-label={t('navCloseMenu')}
             >
               <X className="h-4 w-4" />
             </button>
@@ -185,9 +189,10 @@ export default function LandingNav({
             {LANGUAGES.map(lang => (
               <button
                 key={lang.code}
+                type="button"
                 onClick={() => { handleLocale(lang.code); setMenuOpen(false) }}
                 disabled={isPending}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                   currentLocale === lang.code
                     ? 'bg-stone-800 text-white'
                     : 'border border-stone-200 text-stone-600 hover:bg-stone-50'
