@@ -74,7 +74,10 @@ export async function GET(req: NextRequest) {
       const conversations = senderIds.map(id => ({
         senderName: senderNameMap[id] ?? 'Someone',
         messageCount: bySender[id]!.count,
-        lastMessagePreview: bySender[id]!.lastPreview.slice(0, 60),
+        // Pass raw content — messageDigestEmail() runs getMessagePreview() to
+        // turn internal prefixes (SALE_REQUEST: etc.) into readable text. Slicing
+        // here would truncate the JSON and break that parsing.
+        lastMessagePreview: bySender[id]!.lastPreview,
       }))
 
       // Fetch recipient's email

@@ -69,8 +69,9 @@ export async function POST(request: NextRequest) {
       const senderName = senderProfile.data?.name
       const recipientEmail = recipientAuth.data?.user?.email
       if (!senderName || !recipientEmail) return
-      const preview = trimmed.slice(0, 100) + (trimmed.length > 100 ? '…' : '')
-      const { subject, html } = newMessageEmail(senderName, preview)
+      // Pass raw content — newMessageEmail() runs getMessagePreview() to handle
+      // internal prefixes (SALE_REQUEST: etc.) and truncation.
+      const { subject, html } = newMessageEmail(senderName, trimmed)
       await sendEmail({ to: recipientEmail, subject, html })
     })().catch(console.error)
   }

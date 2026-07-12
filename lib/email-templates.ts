@@ -43,6 +43,59 @@ function ctaButton(label: string, href: string): string {
   return `<a href="${href}" style="display:inline-block;padding:12px 24px;background:#292524;color:#ffffff;font-family:Georgia,serif;font-size:14px;font-weight:bold;text-decoration:none;border-radius:8px;">${label}</a>`
 }
 
+function truncate(text: string, max: number): string {
+  const t = text.trim()
+  return t.length > max ? t.slice(0, max) + '…' : t
+}
+
+/**
+ * Convert a raw message body into human-readable preview text for emails.
+ * Messages may carry internal prefixes (see CLAUDE.md → Messaging):
+ *   SALE_REQUEST:{json}  SALE_RESPONSE:{json}  SUPPORT:{json}  SUPPORT_REPLY:…  SYSTEM:…
+ * Without this, the digest/notification emails leak raw JSON into the preview.
+ * Never throws — malformed JSON falls back to a generic, friendly line.
+ */
+export function getMessagePreview(content: string): string {
+  const raw = (content ?? '').trim()
+
+  if (raw.startsWith('SALE_REQUEST:')) {
+    try {
+      const data = JSON.parse(raw.slice('SALE_REQUEST:'.length))
+      const title = data?.bookTitle
+      return title ? `Sent a request to buy "${title}"` : 'Sent you a purchase request'
+    } catch {
+      return 'Sent you a purchase request'
+    }
+  }
+
+  if (raw.startsWith('SALE_RESPONSE:')) {
+    try {
+      const data = JSON.parse(raw.slice('SALE_RESPONSE:'.length))
+      // action: 'accept' | 'complete' | 'decline'
+      if (data?.action === 'decline') return 'Declined your sale request'
+      return 'Accepted your sale request'
+    } catch {
+      return 'Responded to your sale request'
+    }
+  }
+
+  if (raw.startsWith('SUPPORT_REPLY:')) {
+    return 'New reply from BookShelf Support'
+  }
+
+  if (raw.startsWith('SUPPORT:')) {
+    return 'Sent a support message'
+  }
+
+  if (raw.startsWith('SYSTEM:')) {
+    const text = raw.slice('SYSTEM:'.length).trim()
+    return text ? truncate(text, 100) : 'System notification'
+  }
+
+  // Plain text — show as-is, truncated.
+  return raw ? truncate(raw, 100) : 'Sent you a message'
+}
+
 export function friendRequestEmail(senderName: string): { subject: string; html: string } {
   const subject = `${senderName} wants to connect on BookShelf`
   const html = wrapper(`
@@ -62,7 +115,7 @@ export function friendRequestEmail(senderName: string): { subject: string; html:
 
 export function newMessageEmail(senderName: string, preview: string): { subject: string; html: string } {
   const subject = `${senderName} sent you a message on BookShelf`
-  const safePreview = preview.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const safePreview = getMessagePreview(preview).replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const html = wrapper(`
     <tr>
       <td style="padding:24px 0 20px;">
@@ -215,7 +268,7 @@ export function messageDigestEmail(
 
   const conversationRows = conversations.map(c => {
     const safeName = c.senderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const safePreview = c.lastMessagePreview.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const safePreview = getMessagePreview(c.lastMessagePreview).replace(/</g, '&lt;').replace(/>/g, '&gt;')
     const truncated = safePreview.length > 60 ? safePreview.slice(0, 60) + '…' : safePreview
     const countLabel = c.messageCount === 1 ? '1 message' : `${c.messageCount} messages`
     return `<p style="margin:0 0 10px;font-size:14px;color:#57534e;line-height:1.6;">
