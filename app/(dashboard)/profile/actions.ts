@@ -101,6 +101,20 @@ export async function updateMessageDigestEnabled(enabled: boolean): Promise<{ er
   return { error: null }
 }
 
+export async function updateMarketingEmailsEnabled(enabled: boolean): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ marketing_emails_enabled: enabled })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  return { error: null }
+}
+
 export async function updateUiLanguage(lang: string): Promise<{ error: string | null }> {
   const LOCALES = ['en', 'ro', 'ru']
   if (!LOCALES.includes(lang)) return { error: 'Invalid language' }

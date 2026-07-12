@@ -150,6 +150,12 @@ npm run build     # production build (webpack, generates service worker)
   /api/cron/message-digest   → GET (cron, 18:00 UTC) — sends daily unread message digest emails
   /api/cron/trial-emails     → GET (cron, 09:00 UTC) — 5-day, 1-day, expired trial reminder emails
   /api/cron/overdue-loans    → GET (cron, 09:00 UTC) — marks active loans past due_date as overdue, sends email
+  /api/cron/first-book-reminder     → GET (cron, 10:00 UTC) — day-after-signup nudge if 0 books
+  /api/cron/invite-friends-reminder → GET (cron, 10:00 UTC) — day-5 nudge if <3 friends
+  /api/cron/weekly-friend-digest    → GET (cron, Mon 09:00 UTC) — friends' new books to lapsed users
+  /api/cron/add-books-reminder      → GET (cron, 10:00 UTC) — Email A (14d,<3 books) + B (30d,<5 books)
+  /api/cron/invite-friends-followup → GET (cron, 10:00 UTC) — Email A (10d,<2 friends) + B (21d,<2 friends)
+  /api/cron/monthly-tips            → GET (cron, 1st 10:00 UTC) — rotating tips (6) to all opted-in users
   /api/loans/workflow        → PATCH — loan lifecycle transitions (confirm_handoff, confirm_receipt, initiate_return, confirm_return, deny_return)
   /api/loan-extensions       → POST create extension request | PATCH approve/decline
   /api/loan-recalls          → POST create recall | PATCH acknowledge
@@ -193,6 +199,15 @@ first_book_email_sent_at        timestamptz           -- set after first-book re
 invite_friends_email_sent_at    timestamptz           -- set after invite-friends reminder sent; guards against duplicates
 email_confirmed                 boolean DEFAULT false -- synced from auth.users.email_confirmed_at via DB trigger
 book_limit_email_sent_at        timestamptz           -- set after book-limit nudge email sent (at 9 or 10 books, free tier only)
+last_active_at                  timestamptz           -- updated once/day by proxy.ts (drives weekly friend digest "inactive 7d" rule)
+weekly_digest_sent_at           timestamptz           -- guards weekly friend activity digest (re-send after 6 days)
+add_books_reminder_a_sent_at    timestamptz           -- guards Add Books reminder A (14d, <3 books)
+add_books_reminder_b_sent_at    timestamptz           -- guards Add Books reminder B (30d, <5 books)
+invite_reminder_a_sent_at       timestamptz           -- guards Invite follow-up A (10d, <2 friends) — separate from invite_friends_email_sent_at
+invite_reminder_b_sent_at       timestamptz           -- guards Invite follow-up B (21d, <2 friends)
+last_tip_email_sent_at          timestamptz           -- timestamp of last monthly tip email
+last_tip_number                 int DEFAULT 0         -- which tip (1..6) was last sent, for rotation
+marketing_emails_enabled        boolean DEFAULT true  -- master opt-out for all 4 lifecycle/marketing crons
 ```
 
 ### `books`
@@ -1015,6 +1030,13 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
   - `recallRequestEmail(firstName, lenderName, bookTitle, reason?)` — to borrower
   - `returnInitiatedEmail(firstName, borrowerName, bookTitle)` — to lender
   - `returnConfirmedEmail(firstName, lenderName, bookTitle)` — to borrower
+  - **Lifecycle/marketing templates** (take an `EmailLang` param `'en'|'ro'|'ru'`, wrapped by `marketingWrapper()` which adds a "manage preferences" footer link → `/profile`):
+    - `weeklyFriendDigestEmail(firstName, books: DigestBook[], lang)` — up to 5 friend books added this week
+    - `addBooksReminderAEmail(firstName, categories[], lang)` — 14d nudge with popular-category suggestions
+    - `addBooksReminderBEmail(firstName, bookCount, lang)` — 30d nudge
+    - `inviteReminderAEmail(firstName, lang)` — 10d invite nudge
+    - `inviteReminderBEmail(firstName, username|null, lang)` — 21d invite nudge (CTA → shelf link, falls back to `/profile`)
+    - `monthlyTipEmail(firstName, tipNumber, username|null, lang)` — one of `MONTHLY_TIP_COUNT` (6) rotating tips
 - Templates use inline HTML/CSS with the BookShelf stone brand (Georgia serif, stone-800 background CTA button, warm grey palette)
 - Recipient email fetched via `supabaseAdmin.auth.admin.getUserById(userId)` (only auth.users has email)
 
@@ -1755,6 +1777,31 @@ Three automated emails sent at key moments in the trial lifecycle. A single cron
 1. Run `supabase/add-trial-email-fields.sql` in Supabase SQL Editor
 2. Add `CRON_SECRET` to Vercel environment variables (generate with `openssl rand -hex 32`)
 3. Add same `CRON_SECRET` to `.env.local` for local testing
+
+### Lifecycle & marketing email crons
+Four re-engagement/education email crons. All localized EN/RO/RU by `profiles.ui_language`, all respect the master opt-out `profiles.marketing_emails_enabled` (default true), and all use `marketingWrapper()` templates whose footer links to `/profile` ("manage email preferences"). Migration: `supabase/add-lifecycle-emails.sql` (adds tracking fields + `last_active_at` + `marketing_emails_enabled`, backfills `last_active_at = now()` and the opt-out to true).
+
+**Activity tracking:** `proxy.ts` writes `profiles.last_active_at` at most once/day per device, throttled by a `bs_active=YYYY-MM-DD` cookie (no read on the hot path; relies on the `profiles: owner update` RLS policy). This is the source of truth for the weekly digest's "inactive" rule.
+
+**Opt-out UI:** `/profile` → Notifications → "Tips & updates" toggle (`notifications-section.tsx` → `updateMarketingEmailsEnabled()`), alongside the existing message-digest toggle.
+
+| Cron | Schedule | Recipients | Guard flag |
+|------|----------|-----------|------------|
+| `weekly-friend-digest` | `0 9 * * 1` (Mon) | ≥1 friend, inactive 7d, not sent in 6d; up to 5 friend books added in past 7d — **skips (no flag write) if no fresh books** | `weekly_digest_sent_at` |
+| `add-books-reminder` | `0 10 * * *` | Email A: ~14d signup & <3 books (with popular-category suggestions). Email B: ~30d signup, <5 books, A already sent | `add_books_reminder_a_sent_at`, `add_books_reminder_b_sent_at` |
+| `invite-friends-followup` | `0 10 * * *` | Email A: ~10d signup & <2 friends. Email B: ~21d signup, <2 friends, A sent. **Separate sequence** from the day-5 `invite-friends-reminder` cron (own flags) | `invite_reminder_a_sent_at`, `invite_reminder_b_sent_at` |
+| `monthly-tips` | `0 10 1 * *` (1st) | All opted-in users; rotates through 6 tips via `last_tip_number`. 25-day guard makes it retry-safe. Collects all candidates first, then sends in bounded-concurrency batches (avoids mutate-while-paginate skips + fits the 60s cap) | `last_tip_email_sent_at`, `last_tip_number` |
+
+**Vercel Hobby plan constraints (this project runs on Hobby):** crons run **at most once per day** (weekly/monthly schedules are fine; sub-daily would fail deploy), fire within a ±59 min window, and functions are capped at **`maxDuration = 60`s**. `monthly-tips` is the only cron that iterates *all* users, so it batches sends (`CONCURRENCY = 10`); if a very large user base can't be cleared in 60s, the unreached users keep their flag unset and are picked up next month. 100 crons/project are allowed on all plans, so cron count is not a concern.
+
+**Files:**
+- `supabase/add-lifecycle-emails.sql` — migration
+- `proxy.ts` — throttled `last_active_at` write
+- `lib/email-templates.ts` — `EmailLang` type, `marketingWrapper()`, `weeklyFriendDigestEmail`, `addBooksReminder{A,B}Email`, `inviteReminder{A,B}Email`, `monthlyTipEmail`, `MONTHLY_TIP_COUNT`, `DigestBook`
+- `app/api/cron/{weekly-friend-digest,add-books-reminder,invite-friends-followup,monthly-tips}/route.ts`
+- `app/(dashboard)/profile/notifications-section.tsx` + `actions.ts` (`updateMarketingEmailsEnabled`) + `page.tsx`
+- `messages/{en,ro,ru}.json` — `profile.marketingEmails` + `profile.marketingEmailsDesc`
+- `vercel.json` — 4 cron entries
 
 ### In-app support system
 Users can contact support via a floating button present on every dashboard page. Conversations are tracked in dedicated DB tables. Admin replies from the admin panel.

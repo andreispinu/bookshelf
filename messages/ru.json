@@ -492,6 +492,8 @@
     "notificationsSection": "Уведомления",
     "messageDigest": "Ежедневный дайджест сообщений",
     "messageDigestDesc": "Получать ежедневное письмо о непрочитанных сообщениях",
+    "marketingEmails": "Советы и новости",
+    "marketingEmailsDesc": "Иногда — письма с советами, напоминаниями и тем, что добавляют ваши друзья",
     "freePlan": "Бесплатный план — до 10 книг",
     "bookUsageOf": "{count} из {limit} книг использовано",
     "upgradeForUnlimited": "Перейти на безлимит",

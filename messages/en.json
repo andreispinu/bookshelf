@@ -492,6 +492,8 @@
     "notificationsSection": "Notifications",
     "messageDigest": "Daily message digest",
     "messageDigestDesc": "Get a once-daily email when you have unread messages",
+    "marketingEmails": "Tips & updates",
+    "marketingEmailsDesc": "Occasional emails with tips, reminders and what your friends are adding",
     "freePlan": "Free plan — up to 10 books",
     "bookUsageOf": "{count} of {limit} books used",
     "upgradeForUnlimited": "Upgrade for unlimited",

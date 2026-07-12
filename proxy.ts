@@ -28,6 +28,25 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Track last-active once per day per device (drives the weekly friend digest's
+  // "inactive for 7 days" rule). A date cookie throttles this to a single DB write
+  // per user per day — no read needed on the hot path. RLS "profiles: owner update"
+  // (auth.uid() = id) allows the authed client to write its own row. Best-effort.
+  if (user) {
+    const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD (UTC)
+    if (request.cookies.get('bs_active')?.value !== today) {
+      supabaseResponse.cookies.set('bs_active', today, {
+        maxAge: 24 * 60 * 60,
+        path: '/',
+        sameSite: 'lax',
+      })
+      await supabase
+        .from('profiles')
+        .update({ last_active_at: new Date().toISOString() })
+        .eq('id', user.id)
+    }
+  }
+
   const { pathname } = request.nextUrl
 
   // Auto-detect locale on first visit — only runs when NEXT_LOCALE cookie is absent

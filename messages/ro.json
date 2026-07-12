@@ -492,6 +492,8 @@
     "notificationsSection": "Notificări",
     "messageDigest": "Rezumat zilnic de mesaje",
     "messageDigestDesc": "Primești un email zilnic când ai mesaje necitite",
+    "marketingEmails": "Sfaturi și noutăți",
+    "marketingEmailsDesc": "Emailuri ocazionale cu sfaturi, memento-uri și ce adaugă prietenii tăi",
     "freePlan": "Plan gratuit — până la 10 cărți",
     "bookUsageOf": "{count} din {limit} cărți folosite",
     "upgradeForUnlimited": "Upgrade pentru nelimitat",
