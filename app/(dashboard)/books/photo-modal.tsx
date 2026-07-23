@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
@@ -11,7 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 type Props = {
   open: boolean
@@ -22,10 +23,6 @@ type Props = {
 export default function PhotoModal({ open, onClose, redirectTo = '/books/add' }: Props) {
   const t = useTranslations('books')
   const router = useRouter()
-  const coverCameraRef = useRef<HTMLInputElement>(null)
-  const coverUploadRef = useRef<HTMLInputElement>(null)
-  const versoCameraRef = useRef<HTMLInputElement>(null)
-  const versoUploadRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [versoFile, setVersoFile] = useState<File | null>(null)
@@ -127,75 +124,72 @@ export default function PhotoModal({ open, onClose, redirectTo = '/books/add' }:
 
               {/* Front cover slot */}
               <div className="flex flex-col gap-1.5">
-                <div
-                  className="aspect-[2/3] border-2 border-stone-300 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50 cursor-pointer"
-                  onClick={() => !coverPreview && coverUploadRef.current?.click()}
-                >
-                  {coverPreview ? (
+                {coverPreview ? (
+                  <div className="aspect-[2/3] border-2 border-stone-300 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50">
                     <img src={coverPreview} alt="Front cover" className="w-full h-full object-cover" />
-                  ) : (
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="pm-cover-upload"
+                    className="aspect-[2/3] border-2 border-stone-300 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50 cursor-pointer"
+                  >
                     <Camera className="h-7 w-7 text-stone-400" />
-                  )}
-                </div>
+                  </label>
+                )}
                 <p className="text-xs text-center text-stone-600 font-medium">{t('frontCover')}</p>
                 <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    className="flex-1 h-7 text-xs bg-stone-800 hover:bg-stone-700 text-white px-1.5"
-                    onClick={() => coverCameraRef.current?.click()}
+                  <label
+                    htmlFor="pm-cover-camera"
+                    className={cn(buttonVariants({ size: 'sm' }), 'flex-1 h-7 text-xs bg-stone-800 hover:bg-stone-700 text-white px-1.5 cursor-pointer')}
                   >
                     {t('takePhoto')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-7 text-xs border-stone-200 text-stone-700 px-1.5"
-                    onClick={() => coverUploadRef.current?.click()}
+                  </label>
+                  <label
+                    htmlFor="pm-cover-upload"
+                    className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'flex-1 h-7 text-xs border-stone-200 text-stone-700 px-1.5 cursor-pointer')}
                   >
                     {t('uploadPhoto')}
-                  </Button>
+                  </label>
                 </div>
               </div>
 
               {/* Back cover slot */}
               <div className="flex flex-col gap-1.5">
-                <div
-                  className="aspect-[2/3] border-2 border-dashed border-stone-200 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50 cursor-pointer"
-                  onClick={() => !versoPreview && versoUploadRef.current?.click()}
-                >
-                  {versoPreview ? (
-                    <>
-                      <img src={versoPreview} alt="Back cover" className="w-full h-full object-cover" />
-                      <button
-                        className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center"
-                        onClick={e => { e.stopPropagation(); removeVerso() }}
-                        aria-label="Remove back cover"
-                      >
-                        <X className="h-3 w-3 text-white" />
-                      </button>
-                    </>
-                  ) : (
+                {versoPreview ? (
+                  <div className="aspect-[2/3] border-2 border-dashed border-stone-200 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50">
+                    <img src={versoPreview} alt="Back cover" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 flex items-center justify-center"
+                      onClick={removeVerso}
+                      aria-label="Remove back cover"
+                    >
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <label
+                    htmlFor="pm-verso-upload"
+                    className="aspect-[2/3] border-2 border-dashed border-stone-200 rounded-lg overflow-hidden relative flex items-center justify-center bg-stone-50 cursor-pointer"
+                  >
                     <Plus className="h-7 w-7 text-stone-300" />
-                  )}
-                </div>
+                  </label>
+                )}
                 <p className="text-xs text-center text-stone-400">{t('backCoverOptional')}</p>
                 {!versoPreview && (
                   <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      className="flex-1 h-7 text-xs bg-stone-800 hover:bg-stone-700 text-white px-1.5"
-                      onClick={() => versoCameraRef.current?.click()}
+                    <label
+                      htmlFor="pm-verso-camera"
+                      className={cn(buttonVariants({ size: 'sm' }), 'flex-1 h-7 text-xs bg-stone-800 hover:bg-stone-700 text-white px-1.5 cursor-pointer')}
                     >
                       {t('takePhotoBack')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 h-7 text-xs border-stone-200 text-stone-700 px-1.5"
-                      onClick={() => versoUploadRef.current?.click()}
+                    </label>
+                    <label
+                      htmlFor="pm-verso-upload"
+                      className={cn(buttonVariants({ size: 'sm', variant: 'outline' }), 'flex-1 h-7 text-xs border-stone-200 text-stone-700 px-1.5 cursor-pointer')}
                     >
                       {t('uploadBack')}
-                    </Button>
+                    </label>
                   </div>
                 )}
               </div>
@@ -211,10 +205,10 @@ export default function PhotoModal({ open, onClose, redirectTo = '/books/add' }:
           </div>
         )}
 
-        <input ref={coverCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onCoverChange} />
-        <input ref={coverUploadRef} type="file" accept="image/*" className="hidden" onChange={onCoverChange} />
-        <input ref={versoCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onVersoChange} />
-        <input ref={versoUploadRef} type="file" accept="image/*" className="hidden" onChange={onVersoChange} />
+        <input id="pm-cover-camera" type="file" accept="image/*" capture="environment" className="sr-only" onChange={onCoverChange} />
+        <input id="pm-cover-upload" type="file" accept="image/*" className="sr-only" onChange={onCoverChange} />
+        <input id="pm-verso-camera" type="file" accept="image/*" capture="environment" className="sr-only" onChange={onVersoChange} />
+        <input id="pm-verso-upload" type="file" accept="image/*" className="sr-only" onChange={onVersoChange} />
       </DialogContent>
     </Dialog>
   )

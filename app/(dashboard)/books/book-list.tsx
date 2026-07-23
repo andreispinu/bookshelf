@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -158,8 +159,6 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
   const [editCoverFile, setEditCoverFile] = useState<File | null>(null)
   const [editCoverPreview, setEditCoverPreview] = useState<string | null>(null)
   const [editCoverRemoved, setEditCoverRemoved] = useState(false)
-  const editCameraRef = useRef<HTMLInputElement>(null)
-  const editUploadRef = useRef<HTMLInputElement>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [lending, setLending] = useState<Book | null>(null)
   const [lendError, setLendError] = useState<string | null>(null)
@@ -723,16 +722,14 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
                       }
                     </div>
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" size="sm"
-                        className="text-stone-600 border-stone-200"
-                        onClick={() => editCameraRef.current?.click()}>
+                      <label htmlFor="edit-cover-camera"
+                        className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'text-stone-600 border-stone-200 cursor-pointer')}>
                         {t('takePhoto')}
-                      </Button>
-                      <Button type="button" variant="outline" size="sm"
-                        className="text-stone-600 border-stone-200"
-                        onClick={() => editUploadRef.current?.click()}>
+                      </label>
+                      <label htmlFor="edit-cover-upload"
+                        className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'text-stone-600 border-stone-200 cursor-pointer')}>
                         {t('uploadPhoto')}
-                      </Button>
+                      </label>
                     </div>
                     {(editCoverPreview || (!editCoverRemoved && editing.cover_url)) && (
                       <button type="button"
@@ -742,9 +739,9 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
                       </button>
                     )}
                   </div>
-                  <input ref={editCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+                  <input id="edit-cover-camera" type="file" accept="image/*" capture="environment" className="sr-only"
                     onChange={e => { const f = e.target.files?.[0]; if (f) handleEditCoverSelect(f) }} />
-                  <input ref={editUploadRef} type="file" accept="image/*" className="hidden"
+                  <input id="edit-cover-upload" type="file" accept="image/*" className="sr-only"
                     onChange={e => { const f = e.target.files?.[0]; if (f) handleEditCoverSelect(f) }} />
                 </div>
                 <div className="space-y-1.5">
