@@ -72,20 +72,28 @@ export async function POST(request: NextRequest) {
         .eq('id', userId)
         .is('subscribed_at', null)
 
-      // Confirmation email (fire-and-forget — never block or fail the webhook)
+      // Confirmation email — awaited (server-to-server, latency is fine) so it isn't
+      // killed by the serverless runtime freezing after the response. Wrapped in
+      // try/catch: a send failure must NOT return non-2xx, or Stripe would retry.
       if (!error) {
-        ;(async () => {
+        try {
           const [{ data: profile }, { data: authUser }] = await Promise.all([
             supabaseAdmin.from('profiles').select('first_name, ui_language').eq('id', userId).single(),
             supabaseAdmin.auth.admin.getUserById(userId),
           ])
           const to = authUser?.user?.email
-          if (!to) return
-          const firstName = profile?.first_name || 'there'
-          const lang = (profile?.ui_language as EmailLang) || 'en'
-          const { subject, html } = subscriptionConfirmedEmail(firstName, plan, periodEnd, lang)
-          await sendEmail({ to, subject, html })
-        })().catch((e) => console.error('[webhook] confirmation email failed:', e))
+          if (to) {
+            const firstName = profile?.first_name || 'there'
+            const lang = (profile?.ui_language as EmailLang) || 'en'
+            const { subject, html } = subscriptionConfirmedEmail(firstName, plan, periodEnd, lang)
+            await sendEmail({ to, subject, html })
+            console.log('[webhook] confirmation email sent to', to)
+          } else {
+            console.warn('[webhook] no email on auth user, skipping confirmation email')
+          }
+        } catch (e) {
+          console.error('[webhook] confirmation email failed:', e)
+        }
       }
 
       break
