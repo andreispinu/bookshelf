@@ -1315,6 +1315,83 @@ function pick<T>(lang: EmailLang, table: Record<EmailLang, T>): T {
   return table[lang] ?? table.en
 }
 
+// Sent by the Stripe webhook (checkout.session.completed) once a subscription is active.
+// Transactional (not marketing) — uses the standard wrapper/footer, no opt-out link.
+export function subscriptionConfirmedEmail(
+  firstName: string,
+  plan: 'monthly' | 'annual',
+  periodEndIso: string | null,
+  lang: EmailLang,
+): { subject: string; html: string } {
+  const locale = pick(lang, { en: 'en-US', ro: 'ro-RO', ru: 'ru-RU' })
+  const nextBilling = periodEndIso
+    ? new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(periodEndIso))
+    : null
+
+  const t = pick(lang, {
+    en: {
+      subject: "You're all set — your BookShelf subscription is active 🎉",
+      greeting: `Hi ${firstName},`,
+      intro: 'Thank you for subscribing to BookShelf! Your payment went through and your account is now active.',
+      planLabel: 'Plan',
+      amountLabel: 'Amount',
+      nextLabel: 'Next billing date',
+      planName: plan === 'monthly' ? 'Monthly' : 'Annual',
+      amount: plan === 'monthly' ? '$1 / month' : '$10 / year',
+      perk: 'You now have <strong>unlimited books</strong> — add as many as you like, with no shelf limit.',
+      cta: 'Go to my shelf →',
+      note: 'You can manage or cancel your subscription anytime from your profile.',
+    },
+    ro: {
+      subject: 'Gata — abonamentul tău BookShelf este activ 🎉',
+      greeting: `Salut, ${firstName},`,
+      intro: 'Îți mulțumim că te-ai abonat la BookShelf! Plata a fost efectuată, iar contul tău este acum activ.',
+      planLabel: 'Plan',
+      amountLabel: 'Sumă',
+      nextLabel: 'Următoarea plată',
+      planName: plan === 'monthly' ? 'Lunar' : 'Anual',
+      amount: plan === 'monthly' ? '1 $ / lună' : '10 $ / an',
+      perk: 'Ai acum <strong>cărți nelimitate</strong> — adaugă câte vrei, fără nicio limită.',
+      cta: 'Mergi la raftul meu →',
+      note: 'Îți poți gestiona sau anula abonamentul oricând din profilul tău.',
+    },
+    ru: {
+      subject: 'Готово — ваша подписка BookShelf активна 🎉',
+      greeting: `Привет, ${firstName},`,
+      intro: 'Спасибо за оформление подписки BookShelf! Платёж прошёл, и ваш аккаунт теперь активен.',
+      planLabel: 'Тариф',
+      amountLabel: 'Сумма',
+      nextLabel: 'Следующее списание',
+      planName: plan === 'monthly' ? 'Ежемесячная' : 'Годовая',
+      amount: plan === 'monthly' ? '$1 / месяц' : '$10 / год',
+      perk: 'Теперь у вас <strong>неограниченное количество книг</strong> — добавляйте сколько угодно, без лимита полки.',
+      cta: 'Перейти к моей полке →',
+      note: 'Вы можете изменить или отменить подписку в любой момент в своём профиле.',
+    },
+  })
+
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:6px 0;font-size:14px;color:#57534e;line-height:1.5;"><span style="color:#a8a29e;">${label}:</span> <strong>${value}</strong></td></tr>`
+
+  const html = wrapper(`
+    <tr>
+      <td style="padding:32px 40px;">
+        <p style="margin:0 0 8px;font-size:18px;font-weight:bold;color:#292524;">${t.greeting}</p>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">${t.intro}</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+          ${row(t.planLabel, t.planName)}
+          ${row(t.amountLabel, t.amount)}
+          ${nextBilling ? row(t.nextLabel, nextBilling) : ''}
+        </table>
+        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">${t.perk}</p>
+        ${ctaButton(t.cta, BOOKS_URL)}
+        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">${t.note}</p>
+      </td>
+    </tr>
+  `)
+  return { subject: t.subject, html }
+}
+
 // Footer link back to the notification preferences on the profile page.
 function marketingFooter(lang: EmailLang): string {
   const label = pick(lang, {
