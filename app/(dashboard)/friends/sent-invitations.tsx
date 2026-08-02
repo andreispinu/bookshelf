@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { X } from 'lucide-react'
 import { FriendAvatar } from './friend-avatar'
 
 export type Invitation = {
@@ -29,9 +30,15 @@ function isInCooldown(updatedAt: string) {
 export default function SentInvitations({ invitations }: { invitations: Invitation[] }) {
   const t = useTranslations('friends')
   const router = useRouter()
+  const [items, setItems] = useState(invitations)
   const [resentIds, setResentIds] = useState<Set<string>>(new Set())
 
-  if (invitations.length === 0) return null
+  if (items.length === 0) return null
+
+  // Client-only removal — just drops the row from this widget, nothing persisted.
+  function remove(id: string) {
+    setItems(prev => prev.filter(i => i.id !== id))
+  }
 
   async function handleResend(id: string) {
     const res = await fetch('/api/invitations/resend', {
@@ -49,7 +56,7 @@ export default function SentInvitations({ invitations }: { invitations: Invitati
     <div className="bg-white rounded-xl border-[0.5px] border-[#d4c4b0] p-4">
       <h3 className="font-serif text-lg text-[#2c1a0e] mb-3">{t('sentInvitations')}</h3>
       <ul className="flex flex-col divide-y divide-[#f0e8e0]">
-        {invitations.map(inv =>
+        {items.map(inv =>
           inv.status === 'accepted' && inv.accepted_user ? (
             <li key={inv.id} className="py-2.5 first:pt-0 last:pb-0">
               <div className="flex items-center gap-2.5">
@@ -58,6 +65,14 @@ export default function SentInvitations({ invitations }: { invitations: Invitati
                   <p className="text-sm text-[#2c1a0e] truncate">{inv.accepted_user.name}</p>
                   <p className="text-xs text-[#b8a898]">{formatDate(inv.updated_at)}</p>
                 </div>
+                <button
+                  onClick={() => remove(inv.id)}
+                  aria-label={t('remove')}
+                  title={t('remove')}
+                  className="shrink-0 h-7 w-7 flex items-center justify-center rounded-md text-[#b8a898] hover:text-[#7a5c3e] hover:bg-[#f0e8de] transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
               <span className="inline-block mt-1.5 text-xs rounded-md px-2 py-0.5 border bg-[#eef4ec] border-[#b8d4b4] text-[#4a6741]">
                 {t('joinedBookShelf')}
@@ -65,7 +80,17 @@ export default function SentInvitations({ invitations }: { invitations: Invitati
             </li>
           ) : (
             <li key={inv.id} className="py-2.5 first:pt-0 last:pb-0">
-              <p className="text-sm text-[#2c1a0e] truncate">{inv.email}</p>
+              <div className="flex items-start gap-2">
+                <p className="text-sm text-[#2c1a0e] truncate flex-1">{inv.email}</p>
+                <button
+                  onClick={() => remove(inv.id)}
+                  aria-label={t('remove')}
+                  title={t('remove')}
+                  className="shrink-0 h-7 w-7 -mt-1 flex items-center justify-center rounded-md text-[#b8a898] hover:text-[#7a5c3e] hover:bg-[#f0e8de] transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs text-[#b8a898] flex-1 truncate">{formatDate(inv.created_at)}</span>
                 <span className="shrink-0 text-xs rounded-md px-2 py-0.5 border bg-[#faf0dc] border-[#e8d0a0] text-[#c4852a]">
