@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { X } from 'lucide-react'
+import { deleteSentInvitation } from './actions'
 import { FriendAvatar } from './friend-avatar'
 
 export type Invitation = {
@@ -32,12 +33,21 @@ export default function SentInvitations({ invitations }: { invitations: Invitati
   const router = useRouter()
   const [items, setItems] = useState(invitations)
   const [resentIds, setResentIds] = useState<Set<string>>(new Set())
+  const [, startTransition] = useTransition()
 
   if (items.length === 0) return null
 
-  // Client-only removal — just drops the row from this widget, nothing persisted.
+  // Optimistically drop the row, then delete the invitation record so it stays
+  // gone after a refresh. Restore the row if the delete fails.
   function remove(id: string) {
+    const removed = items.find(i => i.id === id)
     setItems(prev => prev.filter(i => i.id !== id))
+    startTransition(async () => {
+      const result = await deleteSentInvitation(id)
+      if (result?.error && removed) {
+        setItems(prev => (prev.some(i => i.id === id) ? prev : [...prev, removed]))
+      }
+    })
   }
 
   async function handleResend(id: string) {

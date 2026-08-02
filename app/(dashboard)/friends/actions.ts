@@ -92,6 +92,24 @@ export async function respondToRequest(friendshipId: string, response: 'accepted
   return { error: null }
 }
 
+export async function deleteSentInvitation(invitationId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Scoped to the current user's own invitations.
+  const { error } = await supabaseAdmin
+    .from('invitations')
+    .delete()
+    .eq('id', invitationId)
+    .eq('inviter_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/friends')
+  return { error: null }
+}
+
 export async function cancelOrRemoveFriend(friendshipId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
