@@ -95,8 +95,7 @@
     "yourLastName": "Nume de familie (opțional)",
     "confirmEmailBanner": "Te rugăm să confirmi adresa de email pentru a-ți securiza contul.",
     "resendConfirmation": "Retrimite emailul de confirmare",
-    "confirmationSent": "Email de confirmare trimis — verifică-ți căsuța.",
-    "sending": "Se trimite…"
+    "confirmationSent": "Email de confirmare trimis — verifică-ți căsuța."
   },
   "books": {
     "title": "Cărțile mele",
@@ -304,7 +303,25 @@
     "ctaSubtext": "Împărtășește dragostea pentru cărți — invită prieteni să se alăture și să vă conectați bibliotecile",
     "ctaProgress": "{count} din 5 prieteni invitați",
     "ctaButton": "Invită un prieten",
-    "joinedBookShelf": "S-a alăturat pe BookShelf"
+    "joinedBookShelf": "S-a alăturat pe BookShelf",
+    "pageTitle": "Prieteni",
+    "subtitle": "{count, plural, =0 {niciun prieten} one {# prieten} few {# prieteni} other {# de prieteni}} · {requests, plural, =0 {nicio cerere nouă} one {# cerere nouă} few {# cereri noi} other {# de cereri noi}}",
+    "activitySection": "Activitate recentă",
+    "activityBookAdded": "{name} a adăugat o carte nouă",
+    "activityFinishedReading": "{name} a terminat de citit",
+    "activityLent": "{name} a împrumutat o carte lui {borrower}",
+    "available": "Disponibilă",
+    "lentOut": "Împrumutată",
+    "booksCount": "{count, plural, one {# carte} few {# cărți} other {# de cărți}}",
+    "availableCount": "{count, plural, one {# disponibilă} few {# disponibile} other {# disponibile}}",
+    "noneAvailable": "0 disponibile",
+    "noRecentReading": "Nicio carte citită recent",
+    "message": "Mesaj",
+    "suggestedTitle": "Poate îi cunoști",
+    "friendsShelfTitle": "Raftul prietenilor",
+    "seeAll": "Vezi toate",
+    "inviteTitle": "Invită un prieten",
+    "pendingRequestBanner": "{name} ți-a trimis o cerere de prietenie"
   },
   "messages": {
     "title": "Mesaje",

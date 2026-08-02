@@ -95,8 +95,7 @@
     "yourLastName": "Фамилия (необязательно)",
     "confirmEmailBanner": "Пожалуйста, подтвердите адрес электронной почты для безопасности аккаунта.",
     "resendConfirmation": "Отправить письмо повторно",
-    "confirmationSent": "Письмо с подтверждением отправлено — проверьте почту.",
-    "sending": "Отправка…"
+    "confirmationSent": "Письмо с подтверждением отправлено — проверьте почту."
   },
   "books": {
     "title": "Мои книги",
@@ -304,7 +303,25 @@
     "ctaSubtext": "Поделитесь любовью к книгам — пригласите друзей присоединиться и объедините библиотеки",
     "ctaProgress": "{count} из 5 друзей приглашено",
     "ctaButton": "Пригласить друга",
-    "joinedBookShelf": "Присоединился к BookShelf"
+    "joinedBookShelf": "Присоединился к BookShelf",
+    "pageTitle": "Друзья",
+    "subtitle": "{count, plural, =0 {нет друзей} one {# друг} few {# друга} many {# друзей} other {# друзей}} · {requests, plural, =0 {нет новых заявок} one {# новая заявка} few {# новые заявки} many {# новых заявок} other {# заявок}}",
+    "activitySection": "Недавняя активность",
+    "activityBookAdded": "{name} добавил(а) новую книгу",
+    "activityFinishedReading": "{name} дочитал(а) книгу",
+    "activityLent": "{name} одолжил(а) книгу — {borrower}",
+    "available": "Доступна",
+    "lentOut": "Выдана",
+    "booksCount": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}}",
+    "availableCount": "{count, plural, one {# доступна} few {# доступны} many {# доступно} other {# доступно}}",
+    "noneAvailable": "0 доступно",
+    "noRecentReading": "Нет недавнего чтения",
+    "message": "Сообщение",
+    "suggestedTitle": "Возможно, вы знакомы",
+    "friendsShelfTitle": "Полка друзей",
+    "seeAll": "Смотреть все",
+    "inviteTitle": "Пригласить друга",
+    "pendingRequestBanner": "{name} отправил(а) вам заявку в друзья"
   },
   "messages": {
     "title": "Сообщения",
