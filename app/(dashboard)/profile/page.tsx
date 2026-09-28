@@ -6,6 +6,7 @@ import UsernameSection from './username-section'
 import LocationSection from './location-section'
 import LanguageSection from './language-section'
 import NotificationsSection from './notifications-section'
+import PasswordSection from './password-section'
 import type { Profile } from '@/types'
 
 export default async function ProfilePage() {
@@ -68,6 +69,7 @@ export default async function ProfilePage() {
           initialMessageDigestEnabled={profile.message_digest_enabled ?? true}
           initialMarketingEmailsEnabled={profile.marketing_emails_enabled ?? true}
         />
+        <PasswordSection />
         {process.env.NEXT_PUBLIC_BUILD_ID && (
           <p className="text-xs text-stone-300 text-center pt-2">
             Version: {process.env.NEXT_PUBLIC_BUILD_ID}

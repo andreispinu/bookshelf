@@ -115,6 +115,31 @@ export async function updateMarketingEmailsEnabled(enabled: boolean): Promise<{ 
   return { error: null }
 }
 
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+  if (!user.email) return { error: 'No email on account' }
+
+  if (newPassword.length < 8) return { error: 'password_too_short' }
+
+  // Verify the current password by re-authenticating. Supabase has no
+  // "verify password" endpoint, so we sign in again with the same user.
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  })
+  if (signInError) return { error: 'wrong_current_password' }
+
+  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+  if (updateError) return { error: updateError.message }
+
+  return { error: null }
+}
+
 export async function updateUiLanguage(lang: string): Promise<{ error: string | null }> {
   const LOCALES = ['en', 'ro', 'ru']
   if (!LOCALES.includes(lang)) return { error: 'Invalid language' }
