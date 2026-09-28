@@ -46,7 +46,11 @@ export async function POST(req: NextRequest) {
 
   if (profile) {
     const { subject, html } = invitationEmail((profile as { name: string }).name, inv.token)
-    sendEmail({ to: inv.email, subject, html }).catch(console.error)
+    try {
+      await sendEmail({ to: inv.email, subject, html })
+    } catch (e) {
+      console.error('[invitations resend] email send failed', e)
+    }
   }
 
   return NextResponse.json({ resent: true })

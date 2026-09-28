@@ -80,10 +80,15 @@ export async function POST(req: NextRequest) {
   const userName = profile?.name ?? 'Unknown'
   const userEmail = authUser.user?.email ?? ''
 
-  sendEmail({
-    to: ADMIN_EMAIL,
-    ...newTicketAdminEmail(userName, userEmail, type, subject.trim(), message.trim(), ticket.id),
-  }).catch(console.error)
+  // Awaited so the send completes before the serverless function returns.
+  try {
+    await sendEmail({
+      to: ADMIN_EMAIL,
+      ...newTicketAdminEmail(userName, userEmail, type, subject.trim(), message.trim(), ticket.id),
+    })
+  } catch (e) {
+    console.error('[support new ticket] admin email send failed', e)
+  }
 
   return NextResponse.json({ ticket: { id: ticket.id } })
 }

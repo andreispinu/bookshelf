@@ -128,10 +128,15 @@ export async function POST(req: NextRequest) {
   const sellerEmail = sellerAuthUser.user?.email
   if (sellerEmail) {
     const firstName = sellerProfile?.first_name ?? sellerProfile?.name ?? 'there'
-    sendEmail({
-      to: sellerEmail,
-      ...buyRequestEmail(firstName, buyerProfile?.name ?? 'Someone', book.title, message?.trim()),
-    }).catch(console.error)
+    // Awaited so the send completes before the serverless function returns.
+    try {
+      await sendEmail({
+        to: sellerEmail,
+        ...buyRequestEmail(firstName, buyerProfile?.name ?? 'Someone', book.title, message?.trim()),
+      })
+    } catch (e) {
+      console.error('[sale-requests] seller email send failed', e)
+    }
   }
 
   return NextResponse.json({ saleRequest })

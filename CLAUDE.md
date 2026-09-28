@@ -353,6 +353,24 @@ created_at   timestamptz DEFAULT now()
 - `app/(auth)/forgot-password/page.tsx` — email form, calls resetPasswordForEmail
 - `app/(auth)/reset-password/page.tsx` — new password form, calls updateUser
 
+### Change password (logged in)
+Logged-in users change their password from the **Password** section on `/profile` (below Notifications). Separate from the forgot/reset flow — no email round-trip.
+
+1. User enters current password, new password, and confirm new password
+2. Client validates: new password ≥ 8 chars and matches confirm (else a sonner toast)
+3. Calls the `changePassword(currentPassword, newPassword)` server action (`profile/actions.ts`)
+4. The action **verifies the current password** by re-authenticating: `supabase.auth.signInWithPassword({ email: user.email, password: currentPassword })` — Supabase has no dedicated verify-password endpoint. On failure returns `{ error: 'wrong_current_password' }`
+5. Re-auth issues a fresh session for the same user (harmless / expected). Then calls `supabase.auth.updateUser({ password: newPassword })`
+6. Returns the standard `{ error }` shape — error codes `wrong_current_password`, `password_too_short` are mapped to localized toasts client-side; on success the fields clear and a "Password changed" toast shows
+
+No DB migration — Supabase Auth stores the password.
+
+**Files:**
+- `app/(dashboard)/profile/password-section.tsx` — client form (3 password inputs)
+- `app/(dashboard)/profile/actions.ts` — `changePassword()` server action
+- `app/(dashboard)/profile/page.tsx` — renders `<PasswordSection />` below Notifications
+- i18n keys in the `profile` namespace of `messages/{en,ro,ru}.json`: `passwordSection`, `currentPassword`, `newPasswordLabel`, `confirmPasswordLabel`, `changePassword`, `passwordChanged`, `wrongCurrentPassword`, `passwordTooShort`, `passwordMismatch`
+
 ## Subscription system
 
 ### Plans
@@ -508,6 +526,9 @@ Route: `/profile` — account info and subscription management.
    - **Active** (green badge): plan name (Monthly/Annual), next billing date, amount, "Manage subscription →" button (calls `/api/stripe/portal` → redirects to Stripe Customer Portal)
    - **Expired** (red badge): expired message, "Subscribe now ↓" button (scrolls to plans)
 3. **Plans** — two cards (Monthly $1/mo, Annual $10/yr with "Best value" badge). Subscribe buttons call `/api/stripe/checkout`. Current plan button is disabled when already subscribed to that plan.
+4. **Password** — change password form (see "Change password (logged in)" under Auth conventions)
+
+The page also renders Public Profile / username, Location, Language, and Notifications sections (each documented in its own feature section).
 
 **Files:**
 - `app/(dashboard)/profile/page.tsx` — server component, fetches full profile + passes price IDs from server env
@@ -1001,7 +1022,9 @@ Every workflow action automatically posts a system event message to the messages
 | 12 | Return confirmed | loans/workflow confirm_return | lender → borrower | 🎉 [Lender] confirmed receiving "[Book]" back. Loan complete! |
 
 ### Email notifications
-Transactional emails are sent via **Resend** (domain: bookshelf.name, from: noreply@bookshelf.name). All sends are fire-and-forget — never awaited in the request handler, always `.catch(console.error)` so failures never break the main flow.
+Transactional emails are sent via **Resend** (domain: bookshelf.name, from: noreply@bookshelf.name).
+
+**Always `await` the send inside a `try/catch` in route handlers and server actions** — do the mutation/insert first, then await the email at the end, catching errors so a mail failure never breaks the main flow. Do **not** fire-and-forget (`sendEmail(...).catch(console.error)` without `await`): on Vercel serverless the execution context is frozen the moment the response is returned, so an un-awaited promise is dropped and the email is never actually sent. (This was the cause of support-reply / invitation / sale-request emails silently not arriving.) The app has no `waitUntil`, so `await` is the correct approach; if truly deferred sending is ever needed, use `waitUntil` from `@vercel/functions` instead.
 
 **Files:**
 - `lib/email.ts` — `sendEmail({ to, subject, html })` wrapper around the Resend SDK

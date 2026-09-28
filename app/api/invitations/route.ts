@@ -61,9 +61,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
   }
 
-  // Send email (fire-and-forget)
+  // Awaited so the send completes before the serverless function returns.
   const { subject, html } = invitationEmail(inviterProfile.name, (invitation as { id: string; token: string }).token)
-  sendEmail({ to: normalizedEmail, subject, html }).catch(console.error)
+  try {
+    await sendEmail({ to: normalizedEmail, subject, html })
+  } catch (e) {
+    console.error('[invitations] email send failed', e)
+  }
 
   return NextResponse.json({ sent: true, id: (invitation as { id: string; token: string }).id })
 }

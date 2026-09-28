@@ -102,13 +102,18 @@ export async function PATCH(
   const buyerEmail = buyerAuthUser.user?.email
   const buyerFirstName = buyer.first_name ?? buyer.name ?? 'there'
 
+  // Awaited so the send completes before the serverless function returns.
   if (buyerEmail) {
-    if (action === 'accept') {
-      sendEmail({ to: buyerEmail, ...buyAcceptedEmail(buyerFirstName, seller.name, book.title) }).catch(console.error)
-    } else if (action === 'decline') {
-      sendEmail({ to: buyerEmail, ...buyDeclinedEmail(buyerFirstName, seller.name, book.title) }).catch(console.error)
-    } else if (action === 'complete') {
-      sendEmail({ to: buyerEmail, ...bookTransferredEmail(buyerFirstName, seller.name, book.title) }).catch(console.error)
+    try {
+      if (action === 'accept') {
+        await sendEmail({ to: buyerEmail, ...buyAcceptedEmail(buyerFirstName, seller.name, book.title) })
+      } else if (action === 'decline') {
+        await sendEmail({ to: buyerEmail, ...buyDeclinedEmail(buyerFirstName, seller.name, book.title) })
+      } else if (action === 'complete') {
+        await sendEmail({ to: buyerEmail, ...bookTransferredEmail(buyerFirstName, seller.name, book.title) })
+      }
+    } catch (e) {
+      console.error('[sale-requests] buyer email send failed', e)
     }
   }
 

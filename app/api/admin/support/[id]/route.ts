@@ -77,10 +77,15 @@ export async function PATCH(
     const userEmail = authUser.user?.email
     if (userEmail) {
       const firstName = profile?.first_name ?? profile?.name ?? 'there'
-      sendEmail({
-        to: userEmail,
-        ...ticketSolvedEmail(firstName, ticket.subject),
-      }).catch(console.error)
+      try {
+        await sendEmail({
+          to: userEmail,
+          ...ticketSolvedEmail(firstName, ticket.subject),
+        })
+      } catch (e) {
+        // Status is already updated; don't fail the request over a mail error.
+        console.error('[admin/support resolve] email send failed', e)
+      }
     }
   }
 
@@ -141,16 +146,23 @@ export async function POST(
     actor_id: SUPPORT_BOT_ID,
   })
 
-  // Send email to user
+  // Send email to user. Must be awaited — on Vercel serverless a
+  // fire-and-forget promise is dropped when the response returns and the
+  // execution context is frozen, so the email would never actually send.
   const profile = ticket.profiles as unknown as { name: string; first_name: string | null } | null
   const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(ticket.user_id)
   const userEmail = authUser.user?.email
   if (userEmail) {
     const firstName = profile?.first_name ?? profile?.name ?? 'there'
-    sendEmail({
-      to: userEmail,
-      ...adminReplyEmail(firstName, content.trim(), ticket.subject),
-    }).catch(console.error)
+    try {
+      await sendEmail({
+        to: userEmail,
+        ...adminReplyEmail(firstName, content.trim(), ticket.subject),
+      })
+    } catch (e) {
+      // Reply is already saved; don't fail the request over a mail error.
+      console.error('[admin/support reply] email send failed', e)
+    }
   }
 
   return NextResponse.json({ reply })
