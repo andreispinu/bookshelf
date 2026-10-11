@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: new Date().toISOString().split('T')[0],
   },
+  images: {
+    // Book covers come from Supabase Storage, OpenLibrary, and arbitrary
+    // AI-suggested URLs — allow any https host so next/image never 500s on a
+    // public catalogue page because of an unconfigured remote host.
+    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+  },
   async redirects() {
     // The Bookstore feature was renamed to Wishlist; keep old URLs working.
     return [

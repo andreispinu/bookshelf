@@ -116,6 +116,7 @@ export async function addBook(formData: FormData) {
 
   revalidatePath('/books')
   revalidatePath('/')
+  revalidatePath('/catalog')
   redirect('/books')
 }
 
@@ -132,6 +133,7 @@ export async function addBookForce(formData: FormData) {
 
   revalidatePath('/books')
   revalidatePath('/')
+  revalidatePath('/catalog')
   redirect('/books')
 }
 

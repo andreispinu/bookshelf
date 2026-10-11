@@ -718,6 +718,7 @@
     "filterAll": "All ({count})",
     "bookAvailable": "Available",
     "bookLentOut": "Lent out",
+    "recentlyViewAll": "View all {count} books →",
     "publicProfileTitle": "{name}'s BookShelf",
     "publicProfileBookCount": "{count, plural, one {# book} other {# books}} on their shelf",
     "publicProfileMinimalCount": "{name} has {count, plural, one {# book} other {# books}} on their shelf.",

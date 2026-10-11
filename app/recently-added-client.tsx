@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { translateCategory } from '@/lib/translate-category'
 import { getCategoryColor } from '@/lib/category-color'
@@ -16,9 +17,10 @@ type Book = {
 type Props = {
   books: Book[]
   categoryCounts: Record<string, number>
+  totalCount: number
 }
 
-export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
+export default function RecentlyAddedClient({ books, categoryCounts, totalCount }: Props) {
   const t = useTranslations('landing')
   const tCat = useTranslations('categories')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -99,6 +101,15 @@ export default function RecentlyAddedClient({ books, categoryCounts }: Props) {
               </span>
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <Link
+            href="/catalog"
+            className="text-sm font-medium text-stone-600 hover:text-stone-900 underline underline-offset-4 transition-colors"
+          >
+            {t('recentlyViewAll', { count: totalCount })}
+          </Link>
         </div>
       </div>
     </section>

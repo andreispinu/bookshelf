@@ -718,6 +718,7 @@
     "filterAll": "Все ({count})",
     "bookAvailable": "Доступна",
     "bookLentOut": "Выдана",
+    "recentlyViewAll": "Посмотреть все книги ({count}) →",
     "publicProfileTitle": "Полка {name}",
     "publicProfileBookCount": "{count, plural, one {# книга} few {# книги} many {# книг} other {# книги}} на полке",
     "publicProfileMinimalCount": "У {name} {count, plural, one {# книга} few {# книги} many {# книг} other {# книги}} на полке.",

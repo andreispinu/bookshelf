@@ -1063,7 +1063,7 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 - Templates use inline HTML/CSS with the BookShelf stone brand (Georgia serif, stone-800 background CTA button, warm grey palette)
 - Recipient email fetched via `supabaseAdmin.auth.admin.getUserById(userId)` (only auth.users has email)
 
-**Transactional triggers (fire-and-forget):**
+**Transactional triggers** (all **awaited** in a `try/catch` — see the "await the send" rule above; never fire-and-forget):
 
 | Event | File | Recipient | Debounce |
 |-------|------|-----------|----------|
@@ -1073,6 +1073,12 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
 | Message sent | `app/api/messages/route.ts` → POST | Receiver | Skip if unread `new_message` notification from same sender already exists |
 | Borrow request created | `app/api/borrow-requests/route.ts` → POST | Book owner | None |
 | Borrow request approved | `app/api/borrow-requests/route.ts` → PATCH (approve) | Requester | None |
+| Sale request created | `app/api/sale-requests/route.ts` → POST | Seller | None |
+| Sale request accepted / declined / completed | `app/api/sale-requests/[id]/route.ts` → PATCH | Buyer | None |
+| Invitation sent / resent | `app/api/invitations/route.ts` + `resend/route.ts` | Invitee | Resend: 24h cooldown |
+| Support ticket created | `app/api/support/route.ts` → POST | Admin | None |
+| Support admin reply | `app/api/admin/support/[id]/route.ts` → POST | Ticket owner | None |
+| Support ticket resolved | `app/api/admin/support/[id]/route.ts` → PATCH (`status='resolved'`) | Ticket owner | None |
 
 **Message email debounce:** Before sending, checks if a `new_message` notification already exists (`read = false`, same `actor_id`) — if so, user is likely actively chatting and email is skipped. Also skips JSON borrow card messages (content starts with `{`).
 
@@ -1579,6 +1585,8 @@ Search engine optimization and Generative Engine Optimization (for AI search lik
 |------|-----------|-----|
 | `/` landing | ✅ yes | full metadata + JSON-LD |
 | `/[username]` public profiles | ✅ yes (unless `private`) | dynamic `generateMetadata` + JSON-LD |
+| `/catalog` catalogue index | ✅ yes | `generateMetadata` (filter-aware canonical) + `CollectionPage` JSON-LD |
+| `/catalog/[id]` book pages | ✅ yes | dynamic `generateMetadata` + `Book` JSON-LD |
 | `(auth)` login/signup/forgot/reset | ❌ noindex,nofollow | `metadata` in `app/(auth)/layout.tsx` |
 | `(dashboard)` all protected pages | ❌ noindex,nofollow | `metadata` in `app/(dashboard)/layout.tsx` |
 | `/admin` | ❌ noindex,nofollow | `metadata` in `app/admin/layout.tsx` |
@@ -1603,7 +1611,7 @@ Injected as `<script type="application/ld+json">` in the server components:
 - **Public profile**: `Person` (name, url, avatar image) + `ItemList` of the user's books (each a `Book` with `author`), capped at 100 items, only for `public_full`.
 
 ### sitemap & robots
-- **`app/sitemap.ts`** (`revalidate = 3600`): landing (`priority 1.0, daily`) + every profile where `profile_visibility != 'private'` AND `username IS NOT NULL` (`priority 0.7, weekly`, `lastModified` = `created_at`). Fetched with `supabaseAdmin`. Served at `/sitemap.xml`.
+- **`app/sitemap.ts`** (`revalidate = 3600`): landing (`priority 1.0, daily`) + `/catalog` (`priority 0.9, daily`) + every profile where `profile_visibility != 'private'` AND `username IS NOT NULL` (`priority 0.7, weekly`, `lastModified` = `created_at`) + every book as `/catalog/[id]` (`priority 0.7, weekly`, `lastModified` = `created_at`, via `getAllBooksForSitemap()`). Fetched with `supabaseAdmin`. Served at `/sitemap.xml`. (If the library ever exceeds ~50k books, split into a sitemap index.)
 - **`app/robots.ts`**: `allow: '/'`; `disallow` all private/auth areas (`/admin /api /books /friends /loans /messages /feed /support /wishlist /profile /subscribe /login /signup /forgot-password /reset-password`); declares the sitemap + host. Served at `/robots.txt`.
 - **Note**: auth pages are `noindex` AND robots-disallowed, so they are intentionally **excluded from the sitemap** (a sitemap should not list non-indexable URLs) — this overrides the original spec's suggestion to list `/login` `/signup` there.
 
@@ -1618,7 +1626,29 @@ The landing `metaTitle/metaDescription/metaKeywords/ogTitle/ogDescription/aboutH
 ### Core Web Vitals (audited)
 - Fonts: Geist via `next/font/google` → `font-display: swap` automatically (no layout shift from fonts).
 - Landing hero is text-only — no LCP image, no CLS.
-- `recently-added-client.tsx` book covers already use `loading="lazy"` inside a fixed `aspectRatio: 2/3` container (no CLS). Remaining `<img>` thumbnails live on `noindex` dashboard pages, so they have negligible SEO impact; a future `next/image` migration would need `images.remotePatterns` for the Supabase Storage + OpenLibrary domains.
+- `recently-added-client.tsx` book covers already use `loading="lazy"` inside a fixed `aspectRatio: 2/3` container (no CLS). Remaining `<img>` thumbnails live on `noindex` dashboard pages, so they have negligible SEO impact.
+- **`next/image` is enabled for remote covers** via `images.remotePatterns: [{ protocol: 'https', hostname: '**' }]` in `next.config.ts` (covers come from Supabase Storage, OpenLibrary, and arbitrary AI-suggested URLs — the wildcard means `next/image` never 500s a public page on an unconfigured host). The `/catalog` pages use `next/image`; the landing/marketplace still use `<img>` (unchanged).
+
+### Public book catalogue (`/catalog`)
+A public, no-auth, crawler-oriented catalogue of **all** books across all users — the SEO/GEO surface for individual books. Separate from the private dashboard `/books` (which is per-user and auth-gated) and from the landing page's "recently added" section. Copy/metadata are **Romanian** (deliberate — the primary SEO target), unlike the tri-lingual rest of the app; the shared nav/footer remain locale-aware.
+
+**Why `/catalog` and not `/books`:** `/books` is already the authenticated dashboard route (`app/(dashboard)/books/`), so a public page there is an impossible App-Router collision. `/catalog` is public by default (not in `proxy.ts` `protectedPrefixes`, same as `/marketplace`) — no proxy change needed.
+
+**Data access:** all catalogue reads use the **service-role client** (`supabaseAdmin`) server-side with whitelisted columns (never name/avatar/email/user_id — only owner city/country on the detail page). Anon can't be used: `books` RLS only exposes *for-sale* books to anon (see `add-marketplace.sql`), and a blanket anon policy would leak `user_id`/all columns via the public key. Same pattern as the public profile page and landing.
+
+**Pages:**
+- **`app/catalog/page.tsx`** (`revalidate = 300`) — paginated index, 48/page. All filters are crawlable `<a>` links (no client-side JS filtering): `?category=` (exact, validated against `CATEGORIES`), `?status=available|all`, `?author=` (exact), `?page=N`. `h1` = "Biblioteca BookShelf — {total} cărți disponibile", category pills wrap (`flex flex-wrap`), numbered prev/next pagination, filter-aware self-canonical, `CollectionPage` JSON-LD (`hasPart` = books on the page).
+- **`app/catalog/[id]/page.tsx`** (`revalidate = 3600`, `generateStaticParams` = top 500 by `created_at`) — breadcrumb (Acasă → Cărți → title), `next/image` cover (`priority`, 300×450), author link → `/catalog?author=`, category + status badges, owner location ("Disponibilă în: City, Country", omitted if none), amber CTA → `/login`, related-books strip (`getBooksByCategory`), `Book` JSON-LD (`offers` InStock/OutOfStock, price 0 RON, ISBN/image omitted when null). `notFound()` for unknown ids.
+- **`app/catalog/catalog-book-card.tsx`** — shared presentational card (landing card style, `next/image`).
+- **`app/site-footer.tsx`** — shared public footer (mirrors landing footer, localized), used by `/catalog` pages. Header is the existing `LandingNav` (locale + `isLoggedIn`).
+
+**DB helpers** (`lib/db/books.ts`, all `supabaseAdmin`, server-only — never import into client components): `getPublicBooks({page,category,status,author})` → `{books,total}`; `getPublicBook(id)` (+ owner city/country); `getBooksByCategory(category,excludeId,limit)`; `getAllBooksForSitemap()`. Exported types `PublicBookCard`, `PublicBookDetail`.
+
+**Landing integration** (`app/page.tsx` + `recently-added-client.tsx`): added an `ItemList` JSON-LD (numberOfItems = total book count, first 10 as `ListItem`s → `/catalog/[id]`) and a "view all N books" link (`landing.recentlyViewAll`, EN/RO/RU) below the existing grid. **No visual/ISR change** to the recently-added section itself.
+
+**Freshness:** `addBook()` / `addBookForce()` call `revalidatePath('/catalog')` (alongside `/` and `/books`).
+
+**Caveat — static vs dynamic:** because locale is cookie-based (`i18n/request.ts` reads `cookies()`), every page calling `getTranslations` renders dynamically. So the `revalidate`/`generateStaticParams` on the catalogue pages are effectively no-ops (same as the landing/marketplace pages). To get true static ISR for crawlers, decouple these pages from the locale cookie (the copy is already hardcoded Romanian).
 
 ## Key decisions and why
 
@@ -1849,6 +1879,10 @@ Users can contact support via a floating button present on every dashboard page.
 **Unread badge:**
 - Floating support button: polls `/api/nav-counts` → `unreadSupportReplies` (from_admin replies with read_at IS NULL)
 - `read_at` is set when user opens the ticket thread (`GET /api/support/[id]`)
+
+**Email notifications:** New ticket → admin (`newTicketAdminEmail`); admin reply → ticket owner (`adminReplyEmail`); ticket resolved → owner (`ticketSolvedEmail`). All are **awaited** in their route handlers (see the email "await the send" rule — un-awaited sends were silently dropped on serverless and never reached the user). Support emails are English-only (not localized).
+
+**Known gap:** a **user** replying to an existing ticket (`app/api/support/[id]` POST) sends **no email to the admin** — there's no template for it yet. The admin only learns of the reply from the panel / unread badge.
 
 **Database tables** (run `supabase/add-support.sql`):
 - `support_tickets`: id, user_id, type, subject, status (open/in_progress/resolved), created_at, updated_at

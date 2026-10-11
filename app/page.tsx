@@ -147,6 +147,26 @@ export default async function LandingPage() {
 
   const allBooks = booksData ?? []
 
+  // Total book count across all users — drives the ItemList schema + "view all" link.
+  const { count: totalBooksCount } = await supabaseAdmin
+    .from('books')
+    .select('id', { count: 'exact', head: true })
+  const totalBooks = totalBooksCount ?? allBooks.length
+
+  const recentItemListLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Cărți adăugate recent pe BookShelf',
+    url: SITE_URL,
+    numberOfItems: totalBooks,
+    itemListElement: allBooks.slice(0, 10).map((b, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${SITE_URL}/catalog/${b.id}`,
+      name: b.title,
+    })),
+  }
+
   const rawCounts: Record<string, number> = {}
   for (const book of allBooks) {
     if (book.category) {
@@ -210,7 +230,11 @@ export default async function LandingPage() {
       {/* Recently Added Books */}
       {allBooks.length >= 3 && (
         <div id="recent-books">
-          <RecentlyAddedClient books={allBooks} categoryCounts={categoryCounts} />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(recentItemListLd) }}
+          />
+          <RecentlyAddedClient books={allBooks} categoryCounts={categoryCounts} totalCount={totalBooks} />
         </div>
       )}
 

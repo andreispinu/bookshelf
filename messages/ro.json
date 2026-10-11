@@ -718,6 +718,7 @@
     "filterAll": "Toate ({count})",
     "bookAvailable": "Disponibilă",
     "bookLentOut": "Împrumutată",
+    "recentlyViewAll": "Vezi toate cele {count} cărți →",
     "publicProfileTitle": "Raftul lui {name}",
     "publicProfileBookCount": "{count, plural, one {# carte} other {# cărți}} pe raft",
     "publicProfileMinimalCount": "{name} are {count, plural, one {# carte} other {# cărți}} pe raft.",

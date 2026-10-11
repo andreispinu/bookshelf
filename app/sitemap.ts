@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getAllBooksForSitemap } from '@/lib/db/books'
 
 const SITE_URL = 'https://bookshelf.name'
 
-// Regenerate hourly so newly-public profiles get picked up.
+// Regenerate hourly so newly-public profiles and books get picked up.
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -21,6 +22,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
+  // Every book gets its own public catalogue page.
+  const books = await getAllBooksForSitemap()
+  const bookUrls: MetadataRoute.Sitemap = books.map((b) => ({
+    url: `${SITE_URL}/catalog/${b.id}`,
+    lastModified: b.created_at ? new Date(b.created_at) : new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }))
+
   return [
     {
       url: SITE_URL,
@@ -28,6 +38,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 1.0,
     },
+    {
+      url: `${SITE_URL}/catalog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
     ...profileUrls,
+    ...bookUrls,
   ]
 }
