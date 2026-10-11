@@ -1630,7 +1630,7 @@ The landing `metaTitle/metaDescription/metaKeywords/ogTitle/ogDescription/aboutH
 - **`next/image` is enabled for remote covers** via `images.remotePatterns: [{ protocol: 'https', hostname: '**' }]` in `next.config.ts` (covers come from Supabase Storage, OpenLibrary, and arbitrary AI-suggested URLs — the wildcard means `next/image` never 500s a public page on an unconfigured host). The `/catalog` pages use `next/image`; the landing/marketplace still use `<img>` (unchanged).
 
 ### Public book catalogue (`/catalog`)
-A public, no-auth, crawler-oriented catalogue of **all** books across all users — the SEO/GEO surface for individual books. Separate from the private dashboard `/books` (which is per-user and auth-gated) and from the landing page's "recently added" section. Copy/metadata are **Romanian** (deliberate — the primary SEO target), unlike the tri-lingual rest of the app; the shared nav/footer remain locale-aware.
+A public, no-auth, crawler-oriented catalogue of **all** books across all users — the SEO/GEO surface for individual books. Separate from the private dashboard `/books` (which is per-user and auth-gated) and from the landing page's "recently added" section. Fully localized EN/RO/RU via the **`catalog` message namespace** (page copy, metadata titles/descriptions, status/pagination labels — including ICU plurals on the index heading); category labels reuse `translateCategory`/the `categories` namespace. Nav/footer are the locale-aware `LandingNav` + `SiteFooter`.
 
 **Why `/catalog` and not `/books`:** `/books` is already the authenticated dashboard route (`app/(dashboard)/books/`), so a public page there is an impossible App-Router collision. `/catalog` is public by default (not in `proxy.ts` `protectedPrefixes`, same as `/marketplace`) — no proxy change needed.
 
@@ -1648,7 +1648,7 @@ A public, no-auth, crawler-oriented catalogue of **all** books across all users 
 
 **Freshness:** `addBook()` / `addBookForce()` call `revalidatePath('/catalog')` (alongside `/` and `/books`).
 
-**Caveat — static vs dynamic:** because locale is cookie-based (`i18n/request.ts` reads `cookies()`), every page calling `getTranslations` renders dynamically. So the `revalidate`/`generateStaticParams` on the catalogue pages are effectively no-ops (same as the landing/marketplace pages). To get true static ISR for crawlers, decouple these pages from the locale cookie (the copy is already hardcoded Romanian).
+**Caveat — static vs dynamic:** because locale is cookie-based (`i18n/request.ts` reads `cookies()`), every page calling `getTranslations` renders dynamically. So the `revalidate`/`generateStaticParams` on the catalogue pages are effectively no-ops (same as the landing/marketplace pages). Crawlers still get fully-rendered HTML with correct metadata/JSON-LD per request; this only means the pages aren't served from a static ISR cache. True static ISR would require decoupling these pages from the locale cookie (e.g. a `[locale]` routing layer).
 
 ## Key decisions and why
 

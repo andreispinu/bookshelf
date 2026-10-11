@@ -1,18 +1,21 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { getTranslations } from 'next-intl/server'
 import { getCategoryColor } from '@/lib/category-color'
 import type { PublicBookCard } from '@/lib/db/books'
 
 // Presentational card used by the catalogue index grid and the related-books
-// strip. Matches the landing "recently added" card style. Server component —
-// `categoryLabel` is passed already-translated so no client hook is needed.
-export default function CatalogBookCard({
+// strip. Matches the landing "recently added" card style. Async server
+// component — `categoryLabel` is passed already-translated; status label is
+// localized here via the `catalog` namespace.
+export default async function CatalogBookCard({
   book,
   categoryLabel,
 }: {
   book: PublicBookCard
   categoryLabel: string | null
 }) {
+  const t = await getTranslations('catalog')
   const available = book.status === 'available'
   return (
     <Link
@@ -56,7 +59,7 @@ export default function CatalogBookCard({
             : 'bg-rust-light text-rust border-rust/30'
         }`}
       >
-        {available ? 'Disponibilă' : 'Împrumutată'}
+        {available ? t('available') : t('lentOut')}
       </span>
     </Link>
   )

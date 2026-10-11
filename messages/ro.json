@@ -828,5 +828,31 @@
     "adminReplied": "Echipa de suport a răspuns",
     "viewInSupport": "Vezi în suport",
     "support": "Suport"
+  },
+  "catalog": {
+    "metaTitle": "Biblioteca BookShelf — cărți pentru împrumut",
+    "metaTitleCategory": "Cărți din categoria {category} — BookShelf",
+    "metaPageSuffix": " — Pagina {page}",
+    "metaDescription": "Răsfoiește cărțile adăugate de comunitatea BookShelf și împrumută-le de la prietenii tăi.",
+    "heading": "Biblioteca BookShelf — {count, plural, one {# carte disponibilă} other {# cărți disponibile}}",
+    "subheading": "Răsfoiește cărțile adăugate de comunitatea BookShelf. Împrumută cărți de la prietenii tăi.",
+    "statusAll": "Toate",
+    "statusAvailable": "Disponibile",
+    "categoryAll": "Toate categoriile",
+    "empty": "Nu am găsit cărți pentru acest filtru.",
+    "paginationPrev": "← Înapoi",
+    "paginationNext": "Înainte →",
+    "available": "Disponibilă",
+    "lentOut": "Împrumutată",
+    "breadcrumbHome": "Acasă",
+    "breadcrumbBooks": "Cărți",
+    "byAuthorPrefix": "de",
+    "detailMetaTitle": "{title} de {author} — BookShelf",
+    "detailMetaDescription": "Cartea {title} de {author} este disponibilă pentru împrumut pe BookShelf. Găsește cărți la prietenii tăi.",
+    "notFoundTitle": "Carte negăsită — BookShelf",
+    "availableIn": "Disponibilă în:",
+    "ctaHeading": "Vrei să împrumuți această carte?",
+    "ctaButton": "Conectează-te pe BookShelf",
+    "relatedHeading": "Mai multe cărți din {category}"
   }
 }

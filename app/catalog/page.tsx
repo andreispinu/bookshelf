@@ -45,16 +45,16 @@ export async function generateMetadata({
   searchParams: Promise<SearchParams>
 }): Promise<Metadata> {
   const { page, category, status, author } = parseFilters(await searchParams)
-  const tCat = await getTranslations('categories')
+  const [t, tCat] = await Promise.all([getTranslations('catalog'), getTranslations('categories')])
 
-  let title = 'Biblioteca BookShelf — cărți pentru împrumut'
-  if (category) title = `Cărți din categoria ${translateCategory(category, tCat)} — BookShelf`
-  if (page > 1) title += ` — Pagina ${page}`
+  let title = category
+    ? t('metaTitleCategory', { category: translateCategory(category, tCat) })
+    : t('metaTitle')
+  if (page > 1) title += t('metaPageSuffix', { page })
 
   return {
     title: { absolute: title },
-    description:
-      'Răsfoiește cărțile adăugate de comunitatea BookShelf și împrumută-le de la prietenii tăi.',
+    description: t('metaDescription'),
     alternates: { canonical: `${SITE_URL}${catalogHref({ page, category, status, author })}` },
     openGraph: {
       type: 'website',
@@ -72,8 +72,9 @@ export default async function CatalogPage({
 }) {
   const { page, category, status, author } = parseFilters(await searchParams)
   const supabase = await createClient()
-  const [{ data: { user } }, tCat, locale] = await Promise.all([
+  const [{ data: { user } }, t, tCat, locale] = await Promise.all([
     supabase.auth.getUser(),
+    getTranslations('catalog'),
     getTranslations('categories'),
     getLocale(),
   ])
@@ -84,8 +85,8 @@ export default async function CatalogPage({
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Biblioteca BookShelf',
-    description: 'Cărți disponibile pentru împrumut în comunitatea BookShelf',
+    name: t('metaTitle'),
+    description: t('metaDescription'),
     url: `${SITE_URL}/catalog`,
     hasPart: books.map((b) => ({
       '@type': 'Book',
@@ -114,10 +115,10 @@ export default async function CatalogPage({
       <div className="max-w-5xl mx-auto px-4 py-10">
         <header className="mb-8 text-center">
           <h1 className="font-serif text-3xl md:text-4xl font-semibold text-ink-light">
-            Biblioteca BookShelf — {total} cărți disponibile
+            {t('heading', { count: total })}
           </h1>
           <p className="mt-3 text-walnut max-w-2xl mx-auto">
-            Răsfoiește cărțile adăugate de comunitatea BookShelf. Împrumută cărți de la prietenii tăi.
+            {t('subheading')}
           </p>
         </header>
 
@@ -129,7 +130,7 @@ export default async function CatalogPage({
               status === 'all' ? 'bg-ink text-parchment' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            Toate
+            {t('statusAll')}
           </Link>
           <Link
             href={catalogHref({ category, author, status: 'available' })}
@@ -137,7 +138,7 @@ export default async function CatalogPage({
               status === 'available' ? 'bg-ink text-parchment' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            Disponibile
+            {t('statusAvailable')}
           </Link>
         </div>
 
@@ -149,7 +150,7 @@ export default async function CatalogPage({
               !category ? 'bg-ink text-parchment' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
-            Toate categoriile
+            {t('categoryAll')}
           </Link>
           {CATEGORIES.map((cat) => (
             <Link
@@ -166,7 +167,7 @@ export default async function CatalogPage({
 
         {/* Grid */}
         {books.length === 0 ? (
-          <p className="text-center text-walnut py-16">Nu am găsit cărți pentru acest filtru.</p>
+          <p className="text-center text-walnut py-16">{t('empty')}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {books.map((b) => (
@@ -188,7 +189,7 @@ export default async function CatalogPage({
                 className="px-3 py-1.5 rounded-md text-sm border border-linen text-walnut hover:bg-stone-100 transition-colors"
                 rel="prev"
               >
-                ← Înapoi
+                {t('paginationPrev')}
               </Link>
             )}
             {pageNumbers.map((n) => (
@@ -209,7 +210,7 @@ export default async function CatalogPage({
                 className="px-3 py-1.5 rounded-md text-sm border border-linen text-walnut hover:bg-stone-100 transition-colors"
                 rel="next"
               >
-                Înainte →
+                {t('paginationNext')}
               </Link>
             )}
           </nav>

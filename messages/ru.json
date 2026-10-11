@@ -828,5 +828,31 @@
     "adminReplied": "Команда поддержки ответила",
     "viewInSupport": "Смотреть в поддержке",
     "support": "Поддержка"
+  },
+  "catalog": {
+    "metaTitle": "Библиотека BookShelf — книги, которые можно взять почитать",
+    "metaTitleCategory": "Книги категории {category} — BookShelf",
+    "metaPageSuffix": " — Страница {page}",
+    "metaDescription": "Просматривайте книги, добавленные сообществом BookShelf, и берите их почитать у друзей.",
+    "heading": "Библиотека BookShelf — {count, plural, one {# книга доступна} few {# книги доступны} many {# книг доступно} other {# книги доступно}}",
+    "subheading": "Просматривайте книги, добавленные сообществом BookShelf. Берите книги у своих друзей.",
+    "statusAll": "Все",
+    "statusAvailable": "Доступные",
+    "categoryAll": "Все категории",
+    "empty": "Нет книг по этому фильтру.",
+    "paginationPrev": "← Назад",
+    "paginationNext": "Вперёд →",
+    "available": "Доступна",
+    "lentOut": "Выдана",
+    "breadcrumbHome": "Главная",
+    "breadcrumbBooks": "Книги",
+    "byAuthorPrefix": "от",
+    "detailMetaTitle": "{title} — {author} — BookShelf",
+    "detailMetaDescription": "Книгу «{title}» ({author}) можно взять почитать на BookShelf. Находите книги у своих друзей.",
+    "notFoundTitle": "Книга не найдена — BookShelf",
+    "availableIn": "Доступна в:",
+    "ctaHeading": "Хотите взять эту книгу почитать?",
+    "ctaButton": "Войти в BookShelf",
+    "relatedHeading": "Больше книг в категории {category}"
   }
 }

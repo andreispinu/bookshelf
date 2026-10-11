@@ -34,11 +34,12 @@ export async function generateMetadata({
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
   const { id } = await params
+  const t = await getTranslations('catalog')
   const book = await getPublicBook(id)
-  if (!book) return { title: 'Carte negăsită — BookShelf' }
+  if (!book) return { title: t('notFoundTitle') }
 
-  const title = `${book.title} de ${book.author} — BookShelf`
-  const description = `Cartea ${book.title} de ${book.author} este disponibilă pentru împrumut pe BookShelf. Găsește cărți la prietenii tăi.`
+  const title = t('detailMetaTitle', { title: book.title, author: book.author })
+  const description = t('detailMetaDescription', { title: book.title, author: book.author })
   const images = book.cover_url ? [book.cover_url] : undefined
 
   return {
@@ -60,8 +61,9 @@ export default async function CatalogBookPage({
   if (!book) notFound()
 
   const supabase = await createClient()
-  const [{ data: { user } }, tCat, locale] = await Promise.all([
+  const [{ data: { user } }, t, tCat, locale] = await Promise.all([
     supabase.auth.getUser(),
+    getTranslations('catalog'),
     getTranslations('categories'),
     getLocale(),
   ])
@@ -100,9 +102,9 @@ export default async function CatalogBookPage({
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="text-sm text-walnut mb-6 flex items-center gap-1.5 flex-wrap">
-          <Link href="/" className="hover:text-ink transition-colors">Acasă</Link>
+          <Link href="/" className="hover:text-ink transition-colors">{t('breadcrumbHome')}</Link>
           <span className="text-walnut-mid">→</span>
-          <Link href="/catalog" className="hover:text-ink transition-colors">Cărți</Link>
+          <Link href="/catalog" className="hover:text-ink transition-colors">{t('breadcrumbBooks')}</Link>
           <span className="text-walnut-mid">→</span>
           <span className="text-ink-light line-clamp-1">{book.title}</span>
         </nav>
@@ -141,7 +143,7 @@ export default async function CatalogBookPage({
               {book.title}
             </h1>
             <p className="text-lg text-walnut">
-              de{' '}
+              {t('byAuthorPrefix')}{' '}
               <Link
                 href={`/catalog?author=${encodeURIComponent(book.author)}`}
                 className="text-amber hover:underline underline-offset-4"
@@ -163,13 +165,13 @@ export default async function CatalogBookPage({
                     : 'bg-rust-light text-rust border-rust/30'
                 }`}
               >
-                {available ? 'Disponibilă' : 'Împrumutată'}
+                {available ? t('available') : t('lentOut')}
               </span>
             </div>
 
             {location && (
               <p className="text-sm text-walnut">
-                Disponibilă în: <span className="text-ink-light font-medium">{location}</span>
+                {t('availableIn')} <span className="text-ink-light font-medium">{location}</span>
               </p>
             )}
 
@@ -180,13 +182,13 @@ export default async function CatalogBookPage({
             {/* CTA */}
             <div className="mt-2 rounded-xl border border-amber/30 bg-amber-pale px-6 py-5">
               <p className="font-serif text-lg text-ink-light mb-3">
-                Vrei să împrumuți această carte?
+                {t('ctaHeading')}
               </p>
               <Link
                 href="/login"
                 className="inline-block px-5 py-2.5 rounded-md bg-ink text-parchment text-sm font-medium hover:bg-ink-light transition-colors"
               >
-                Conectează-te pe BookShelf
+                {t('ctaButton')}
               </Link>
             </div>
           </div>
@@ -196,7 +198,7 @@ export default async function CatalogBookPage({
         {related.length > 0 && categoryLabel && (
           <section className="mt-14">
             <h2 className="font-serif text-xl font-semibold text-ink-light mb-5">
-              Mai multe cărți din {categoryLabel}
+              {t('relatedHeading', { category: categoryLabel })}
             </h2>
             <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {related.map((b) => (

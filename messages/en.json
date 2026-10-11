@@ -828,5 +828,31 @@
     "adminReplied": "Support team replied",
     "viewInSupport": "View in support",
     "support": "Support"
+  },
+  "catalog": {
+    "metaTitle": "BookShelf Library — books to borrow",
+    "metaTitleCategory": "{category} books — BookShelf",
+    "metaPageSuffix": " — Page {page}",
+    "metaDescription": "Browse books added by the BookShelf community and borrow them from your friends.",
+    "heading": "BookShelf Library — {count, plural, one {# book available} other {# books available}}",
+    "subheading": "Browse books added by the BookShelf community. Borrow books from your friends.",
+    "statusAll": "All",
+    "statusAvailable": "Available",
+    "categoryAll": "All categories",
+    "empty": "No books match this filter.",
+    "paginationPrev": "← Previous",
+    "paginationNext": "Next →",
+    "available": "Available",
+    "lentOut": "Lent out",
+    "breadcrumbHome": "Home",
+    "breadcrumbBooks": "Books",
+    "byAuthorPrefix": "by",
+    "detailMetaTitle": "{title} by {author} — BookShelf",
+    "detailMetaDescription": "{title} by {author} is available to borrow on BookShelf. Find books from your friends.",
+    "notFoundTitle": "Book not found — BookShelf",
+    "availableIn": "Available in:",
+    "ctaHeading": "Want to borrow this book?",
+    "ctaButton": "Sign in to BookShelf",
+    "relatedHeading": "More books in {category}"
   }
 }
