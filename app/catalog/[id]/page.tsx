@@ -1,31 +1,40 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getPublicBook, getBooksByCategory } from '@/lib/db/books'
 import { translateCategory } from '@/lib/translate-category'
 import { getCategoryColor } from '@/lib/category-color'
+import { SITE_URL } from '@/lib/site'
+import { extractBookId, bookSlug, bookPath } from '@/lib/slug'
 import LandingNav from '../../landing-nav'
 import SiteFooter from '../../site-footer'
 import CatalogBookCard from '../catalog-book-card'
 
-const SITE_URL = 'https://bookshelf.name'
-
 export const revalidate = 3600
 
-// Pre-render the 500 most recently added books at build time. Everything else
-// is rendered on-demand and then cached (ISR).
+function metaDescription(
+  book: { title: string; author: string; description: string | null },
+  t: (key: string, values?: Record<string, string>) => string
+): string {
+  const desc = book.description?.replace(/\s+/g, ' ').trim()
+  if (desc) return desc.length > 160 ? `${desc.slice(0, 157)}…` : desc
+  return t('detailMetaDescription', { title: book.title, author: book.author })
+}
+
+// Pre-render the 500 most recently added books at build time, each at its
+// canonical slug URL. Everything else is rendered on-demand and then cached.
 export async function generateStaticParams() {
   const { data } = await supabaseAdmin
     .from('books')
-    .select('id')
+    .select('id, title, author')
     .order('created_at', { ascending: false })
     .limit(500)
 
-  return (data ?? []).map((b) => ({ id: b.id as string }))
+  return (data ?? []).map((b) => ({ id: bookSlug(b.title, b.author, b.id) }))
 }
 
 export async function generateMetadata({
@@ -33,20 +42,22 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
-  const { id } = await params
+  const { id: slug } = await params
   const t = await getTranslations('catalog')
-  const book = await getPublicBook(id)
+  const bookId = extractBookId(slug)
+  const book = bookId ? await getPublicBook(bookId) : null
   if (!book) return { title: t('notFoundTitle') }
 
   const title = t('detailMetaTitle', { title: book.title, author: book.author })
-  const description = t('detailMetaDescription', { title: book.title, author: book.author })
+  const description = metaDescription(book, t)
   const images = book.cover_url ? [book.cover_url] : undefined
+  const canonical = `${SITE_URL}${bookPath(book.title, book.author, book.id)}`
 
   return {
     title: { absolute: title },
     description,
-    alternates: { canonical: `${SITE_URL}/catalog/${book.id}` },
-    openGraph: { title, description, images, type: 'book' },
+    alternates: { canonical },
+    openGraph: { title, description, images, type: 'book', url: canonical },
     twitter: { card: 'summary_large_image', title, description, images },
   }
 }
@@ -56,9 +67,17 @@ export default async function CatalogBookPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const book = await getPublicBook(id)
+  const { id: slug } = await params
+  const bookId = extractBookId(slug)
+  if (!bookId) notFound()
+
+  const book = await getPublicBook(bookId)
   if (!book) notFound()
+
+  // Canonicalize the URL: redirect bare UUIDs or stale/wrong slugs to the
+  // current slug (permanent 308 — consolidates link equity on one URL).
+  const canonicalSlug = bookSlug(book.title, book.author, book.id)
+  if (slug !== canonicalSlug) permanentRedirect(`/catalog/${canonicalSlug}`)
 
   const supabase = await createClient()
   const [{ data: { user } }, t, tCat, locale] = await Promise.all([
@@ -74,11 +93,14 @@ export default async function CatalogBookPage({
 
   const related = book.category ? await getBooksByCategory(book.category, book.id, 4) : []
 
-  const jsonLd: Record<string, unknown> = {
+  const canonicalUrl = `${SITE_URL}${bookPath(book.title, book.author, book.id)}`
+
+  const bookLd: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Book',
     name: book.title,
     author: { '@type': 'Person', name: book.author },
+    url: canonicalUrl,
     offers: {
       '@type': 'Offer',
       availability: available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
@@ -87,14 +109,30 @@ export default async function CatalogBookPage({
       seller: { '@type': 'Organization', name: 'BookShelf' },
     },
   }
-  if (book.isbn) jsonLd.isbn = book.isbn
-  if (book.cover_url) jsonLd.image = book.cover_url
+  if (book.isbn) bookLd.isbn = book.isbn
+  if (book.cover_url) bookLd.image = book.cover_url
+  if (book.description) bookLd.description = book.description
+  if (book.language) bookLd.inLanguage = book.language
+  if (book.year) bookLd.datePublished = book.year
+  if (book.publisher) bookLd.publisher = { '@type': 'Organization', name: book.publisher }
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t('breadcrumbHome'), item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: t('breadcrumbBooks'), item: `${SITE_URL}/catalog` },
+      { '@type': 'ListItem', position: 3, name: book.title, item: canonicalUrl },
+    ],
+  }
+
+  const metaLine = [book.publisher, book.year, book.language].filter(Boolean).join(' · ')
 
   return (
     <div className="min-h-screen bg-parchment text-ink">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([bookLd, breadcrumbLd]) }}
       />
 
       <LandingNav isLoggedIn={!!user} currentLocale={locale} />
@@ -175,6 +213,9 @@ export default async function CatalogBookPage({
               </p>
             )}
 
+            {metaLine && (
+              <p className="text-sm text-walnut-mid">{metaLine}</p>
+            )}
             {book.isbn && (
               <p className="text-sm text-walnut-mid">ISBN: {book.isbn}</p>
             )}
@@ -193,6 +234,13 @@ export default async function CatalogBookPage({
             </div>
           </div>
         </div>
+
+        {/* Description */}
+        {book.description && (
+          <section className="mt-10 max-w-2xl">
+            <p className="text-walnut leading-relaxed whitespace-pre-line">{book.description}</p>
+          </section>
+        )}
 
         {/* Related books */}
         {related.length > 0 && categoryLabel && (

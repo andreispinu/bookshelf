@@ -13,7 +13,7 @@ export default async function SiteFooter() {
         <div className="flex items-center gap-5">
           <Link href="/login" className="hover:text-stone-700 transition-colors">{t('footerLogIn')}</Link>
           <Link href="/signup" className="hover:text-stone-700 transition-colors">{t('footerSignUp')}</Link>
-          <a href="https://bookshelf.name" className="hover:text-stone-700 transition-colors">bookshelf.name</a>
+          <a href="https://www.bookshelf.name" className="hover:text-stone-700 transition-colors">bookshelf.name</a>
         </div>
         <span>© {year} BookShelf</span>
       </div>

@@ -5,11 +5,12 @@ import { createClient } from '@/lib/supabase-server'
 import { getPublicBooks } from '@/lib/db/books'
 import { CATEGORIES } from '@/lib/categories'
 import { translateCategory } from '@/lib/translate-category'
+import { SITE_URL } from '@/lib/site'
+import { bookPath } from '@/lib/slug'
 import LandingNav from '../landing-nav'
 import SiteFooter from '../site-footer'
 import CatalogBookCard from './catalog-book-card'
 
-const SITE_URL = 'https://bookshelf.name'
 const PAGE_SIZE = 48
 
 type SearchParams = {
@@ -92,7 +93,7 @@ export default async function CatalogPage({
       '@type': 'Book',
       name: b.title,
       author: { '@type': 'Person', name: b.author },
-      url: `${SITE_URL}/catalog/${b.id}`,
+      url: `${SITE_URL}${bookPath(b.title, b.author, b.id)}`,
     })),
   }
 

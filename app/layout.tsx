@@ -36,7 +36,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://bookshelf.name"),
+  metadataBase: new URL("https://www.bookshelf.name"),
   title: {
     default: "BookShelf — Your personal library",
     template: "BookShelf — %s | Your personal library",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "BookShelf",
-    url: "https://bookshelf.name",
+    url: "https://www.bookshelf.name",
     title: "BookShelf — Your personal library, shared with friends",
     description:
       "A free app to catalogue the books you own, lend and borrow with friends, and track your reading.",

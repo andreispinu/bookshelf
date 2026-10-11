@@ -21,7 +21,11 @@ People who own physical books and want to organize, share, and lend them to frie
 
 ## Technical
 - Web app installable as a PWA on iOS and Android
-- Available at https://bookshelf.name
+- Available at https://www.bookshelf.name
+
+## Browse
+- Public book catalogue (all books, filter by category/availability): https://www.bookshelf.name/catalog
+- Books for sale: https://www.bookshelf.name/marketplace
 
 ## Contact
 noreply@bookshelf.name

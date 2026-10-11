@@ -45,10 +45,10 @@ export default function RecentlyAddedClient({ books, categoryCounts, totalCount 
         </p>
 
         {hasCategories && (
-          <div className="flex gap-2 overflow-x-auto pb-3 mb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
             <button
               onClick={() => setActiveCategory(null)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 activeCategory === null
                   ? 'bg-stone-800 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -60,7 +60,7 @@ export default function RecentlyAddedClient({ books, categoryCounts, totalCount 
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   activeCategory === cat
                     ? 'bg-stone-800 text-white'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'

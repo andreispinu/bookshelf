@@ -4,6 +4,7 @@ import { MapPin } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { COUNTRY_FLAGS } from '@/lib/countries'
+import { SITE_URL } from '@/lib/site'
 import type { Metadata } from 'next'
 import PublicShelf from './public-shelf'
 
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const bookCount = count ?? 0
 
   const t = await getTranslations('landing')
-  const url = `https://bookshelf.name/${username}`
+  const url = `${SITE_URL}/${username}`
   const title = `${profile.name}'s BookShelf — ${bookCount} ${bookCount === 1 ? 'book' : 'books'} shared`
   const description = t('metaProfileDescription', { name: profile.name, count: bookCount })
 
@@ -108,7 +109,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const bookCount = books.length
 
-  const profileUrl = `https://bookshelf.name/${username}`
+  const profileUrl = `${SITE_URL}/${username}`
   const jsonLd: Record<string, unknown>[] = [
     {
       '@context': 'https://schema.org',
@@ -235,7 +236,7 @@ export default async function PublicProfilePage({ params }: Props) {
             {t('publicProfileCtaText')}
           </p>
           <a
-            href="https://bookshelf.name"
+            href="https://www.bookshelf.name"
             className="inline-block px-5 py-2.5 rounded-lg bg-stone-800 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
           >
             {t('publicProfileCtaButton')}

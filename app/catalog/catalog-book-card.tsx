@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getTranslations } from 'next-intl/server'
 import { getCategoryColor } from '@/lib/category-color'
+import { bookPath } from '@/lib/slug'
 import type { PublicBookCard } from '@/lib/db/books'
 
 // Presentational card used by the catalogue index grid and the related-books
@@ -19,7 +20,7 @@ export default async function CatalogBookCard({
   const available = book.status === 'available'
   return (
     <Link
-      href={`/catalog/${book.id}`}
+      href={bookPath(book.title, book.author, book.id)}
       className="bg-white rounded-xl border border-stone-200 p-3 flex flex-col gap-2 hover:border-stone-300 hover:shadow-sm transition-all"
     >
       <div

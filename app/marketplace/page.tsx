@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { getTranslations, getLocale } from 'next-intl/server'
 import { createClient } from '@/lib/supabase-server'
+import { SITE_URL } from '@/lib/site'
 import LandingNav from '../landing-nav'
 import MarketplaceClient from './marketplace-client'
 
-const SITE_URL = 'https://bookshelf.name'
 const TITLE = 'BookShelf Marketplace — Buy books from readers near you'
 const DESCRIPTION =
   'Browse books for sale by BookShelf readers. Search by title, author, category, language, or location.'

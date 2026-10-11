@@ -38,6 +38,10 @@ export type PublicBookCard = {
 
 export type PublicBookDetail = PublicBookCard & {
   isbn: string | null
+  description: string | null
+  publisher: string | null
+  year: string | null
+  language: string | null
   city: string | null
   country: string | null
 }
@@ -78,7 +82,7 @@ export async function getPublicBooks({
 export async function getPublicBook(id: string): Promise<PublicBookDetail | null> {
   const { data: book, error } = await supabaseAdmin
     .from('books')
-    .select('id, title, author, isbn, cover_url, category, status, created_at, user_id')
+    .select('id, title, author, isbn, cover_url, category, status, created_at, description, publisher, year, language, user_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -100,6 +104,10 @@ export async function getPublicBook(id: string): Promise<PublicBookDetail | null
     category: book.category,
     status: book.status,
     created_at: book.created_at,
+    description: book.description ?? null,
+    publisher: book.publisher ?? null,
+    year: book.year ?? null,
+    language: book.language ?? null,
     city: owner?.city ?? null,
     country: owner?.country ?? null,
   }
@@ -122,10 +130,12 @@ export async function getBooksByCategory(
   return (data as PublicBookCard[]) ?? []
 }
 
-export async function getAllBooksForSitemap(): Promise<{ id: string; created_at: string }[]> {
+export async function getAllBooksForSitemap(): Promise<
+  { id: string; title: string; author: string; created_at: string }[]
+> {
   const { data, error } = await supabaseAdmin
     .from('books')
-    .select('id, created_at')
+    .select('id, title, author, created_at')
     .order('created_at', { ascending: false })
 
   if (error) return []

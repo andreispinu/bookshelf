@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { SITE_URL } from '@/lib/site'
+import { bookPath } from '@/lib/slug'
 import { getTranslations, getLocale } from 'next-intl/server'
 import LandingNav from './landing-nav'
 import RecentlyAddedClient from './recently-added-client'
@@ -13,8 +15,6 @@ import {
   Link as LinkIcon, Smartphone, UserPlus, ClipboardList, Bell, CreditCard,
   ArrowLeftRight,
 } from 'lucide-react'
-
-const SITE_URL = 'https://bookshelf.name'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('landing')
@@ -140,7 +140,7 @@ export default async function LandingPage() {
 
   const { data: booksData } = await supabaseAdmin
     .from('books')
-    .select('id, title, cover_url, category, status')
+    .select('id, title, author, cover_url, category, status')
     .not('cover_url', 'is', null)
     .order('created_at', { ascending: false })
     .limit(1000)
@@ -162,7 +162,7 @@ export default async function LandingPage() {
     itemListElement: allBooks.slice(0, 10).map((b, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      url: `${SITE_URL}/catalog/${b.id}`,
+      url: `${SITE_URL}${bookPath(b.title, b.author, b.id)}`,
       name: b.title,
     })),
   }
@@ -571,7 +571,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-5">
             <Link href="/login" className="hover:text-stone-700 transition-colors">{t('footerLogIn')}</Link>
             <Link href="/signup" className="hover:text-stone-700 transition-colors">{t('footerSignUp')}</Link>
-            <a href="https://bookshelf.name" className="hover:text-stone-700 transition-colors">bookshelf.name</a>
+            <a href="https://www.bookshelf.name" className="hover:text-stone-700 transition-colors">bookshelf.name</a>
           </div>
           <span>© {year} BookShelf</span>
         </div>

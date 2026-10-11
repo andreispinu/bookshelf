@@ -1,8 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getAllBooksForSitemap } from '@/lib/db/books'
-
-const SITE_URL = 'https://bookshelf.name'
+import { SITE_URL } from '@/lib/site'
+import { bookPath } from '@/lib/slug'
 
 // Regenerate hourly so newly-public profiles and books get picked up.
 export const revalidate = 3600
@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Every book gets its own public catalogue page.
   const books = await getAllBooksForSitemap()
   const bookUrls: MetadataRoute.Sitemap = books.map((b) => ({
-    url: `${SITE_URL}/catalog/${b.id}`,
+    url: `${SITE_URL}${bookPath(b.title, b.author, b.id)}`,
     lastModified: b.created_at ? new Date(b.created_at) : new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,
