@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef, useEffect, useCallback } from 'react'
+import { Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -165,6 +166,7 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
   const [lendingTo, setLendingTo] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const [fillingBook, setFillingBook] = useState<Book | null>(null)
   const [fillLoading, setFillLoading] = useState(false)
@@ -204,7 +206,27 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
     return acc
   }, {})
 
-  const filteredBooks = activeCategory ? books.filter(b => b.category === activeCategory) : books
+  const query = search.trim().toLowerCase()
+  const filteredBooks = books.filter(book => {
+    const matchesCategory = !activeCategory || book.category === activeCategory
+    const matchesSearch =
+      query === '' ||
+      book.title.toLowerCase().includes(query) ||
+      book.author.toLowerCase().includes(query)
+    return matchesCategory && matchesSearch
+  })
+  const isFiltering = query !== '' || activeCategory !== null
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
+
+  function clearFilters() {
+    setSearch('')
+    setActiveCategory(null)
+    handlePageChange(1)
+  }
 
   const PAGE_SIZE = 10
   const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE)
@@ -418,6 +440,32 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
 
   return (
     <>
+      <div className="relative w-full mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7a5c3e]" />
+        <input
+          type="search"
+          placeholder={t('searchPlaceholder')}
+          value={search}
+          onChange={e => handleSearchChange(e.target.value)}
+          className="w-full pl-9 pr-10 py-2.5 rounded-lg border border-[#d4c4b0] bg-white text-[#2c1a0e] placeholder:text-[#b8a898] focus:outline-none focus:ring-2 focus:ring-[#c4852a]/30 focus:border-[#c4852a] text-sm"
+        />
+        {search && (
+          <button
+            onClick={() => handleSearchChange('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7a5c3e] hover:text-[#2c1a0e]"
+            aria-label={t('clearFilters')}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {isFiltering && (
+        <p className="text-stone-500 text-sm mb-4 -mt-1">
+          {t('filteredCount', { count: filteredBooks.length, total: books.length })}
+        </p>
+      )}
+
       <div className="flex items-start justify-between gap-3 mb-5">
         {uniqueCategories.length > 0 ? (
           <div className="flex flex-wrap gap-2">
@@ -448,7 +496,23 @@ export default function BookList({ books: initial, friends, readingAIMap, readin
       </div>
 
       {filteredBooks.length === 0 ? (
-        <div className="text-center py-12 text-stone-400 text-sm">{t('noBooksInCategory')}</div>
+        query !== '' ? (
+          <div className="text-center py-16 text-[#7a5c3e]">
+            <p className="text-lg font-medium text-[#2c1a0e] mb-1">{t('noResults')}</p>
+            <p className="text-sm">
+              {t('noResultsHint', { search })}
+              {activeCategory !== null && ` — ${translateCategory(activeCategory, tCat)}`}
+            </p>
+            <button
+              onClick={clearFilters}
+              className="mt-3 text-sm text-[#c4852a] hover:underline"
+            >
+              {t('clearFilters')}
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-stone-400 text-sm">{t('noBooksInCategory')}</div>
+        )
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {paginatedBooks.map(book => (
