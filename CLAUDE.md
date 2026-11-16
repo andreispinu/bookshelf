@@ -74,14 +74,15 @@ Route: `/admin` — server-side only, no client-side access.
 
 | Section | Key metrics |
 |---------|-------------|
-| Overview | Total users, paid, MRR, ARR, trial→paid rate, new today/week/month |
-| Users | Subscription breakdown, growth, conversion & churn, recent registrations table (10), signups feed (20) |
+| Overview | Total users, paid, MRR, ARR, free→paid rate, new today/week/month |
+| Users | Subscription breakdown (paid / monthly / annual / free plan / free at 10-book limit / canceled), growth, conversion & churn (free→paid, new subs, cancellations, churn, free near limit 8–9), all-users table with book counts |
 | Revenue | MRR, ARR, monthly/annual subscriber counts, new subs this month, est. total revenue |
 | Activity | Books, Friends & Social, Lending, Messaging, Reading & Wishlist |
 
 **Revenue calculations** (from Supabase profiles table — NOT Stripe API):
 - MRR = (monthly_active × $1) + (annual_active × $10 ÷ 12)
 - ARR = MRR × 12
+- Free→paid = paid (`subscription_status = 'active'`) ÷ total users. There is no trial anymore: every non-active user is on the free plan, even though most rows still carry the legacy `subscription_status = 'trialing'` value — never count "trialing" as a separate state.
 - Est. total revenue = (monthly_ever_paid × $1) + (annual_ever_paid × $10), where "ever paid" uses `subscribed_at IS NOT NULL`
 - `subscribed_at` column: set by Stripe webhook (`checkout.session.completed`) on first activation only (`.is('subscribed_at', null)` guard). Existing actives backfilled via `supabase/add-subscribed-at.sql`.
 

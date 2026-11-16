@@ -23,14 +23,16 @@ function pct(num: number | null | undefined, den: number | null | undefined): st
 function MetricCard({ label, value, tint = 'neutral', sub }: {
   label: string
   value: string | number
-  tint?: 'green' | 'red' | 'neutral'
+  tint?: 'green' | 'red' | 'amber' | 'neutral'
   sub?: string
 }) {
   const bg = tint === 'green' ? 'bg-green-50 border-green-200'
     : tint === 'red' ? 'bg-red-50 border-red-200'
+    : tint === 'amber' ? 'bg-amber-50 border-amber-200'
     : 'bg-white border-stone-200'
   const vc = tint === 'green' ? 'text-green-700'
     : tint === 'red' ? 'text-red-700'
+    : tint === 'amber' ? 'text-amber-700'
     : 'text-stone-900'
   return (
     <div className={`rounded-xl border p-4 ${bg}`}>
@@ -58,14 +60,14 @@ function SubHeader({ children }: { children: React.ReactNode }) {
 export default async function AdminPage() {
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
 
   const [
-    qTotal, qPaid, qTrialing, qExpired, qCanceled,
+    qTotal, qPaid, qCanceled,
     qNewMonth, qNewWeek, qNewToday,
     qMonthlyActive, qAnnualActive,
-    qTrialEver, qMonthlyEver, qAnnualEver,
+    qMonthlyEver, qAnnualEver,
     qCanceledMonth, qNewSubsMonth,
     qRecentProfiles,
     qTotalBooks, qBooksMonth, qBooksWithCover, qBooksWithCat,
@@ -84,15 +86,12 @@ export default async function AdminPage() {
     // ── User metrics ──
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
-    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trialing').gt('trial_ends_at', now.toISOString()),
-    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trialing').lt('trial_ends_at', now.toISOString()),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'canceled'),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', today),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').eq('subscription_plan', 'monthly'),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').eq('subscription_plan', 'annual'),
-    supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).not('trial_ends_at', 'is', null),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_plan', 'monthly').not('subscribed_at', 'is', null),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_plan', 'annual').not('subscribed_at', 'is', null),
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'canceled').gte('updated_at', startOfMonth),
@@ -138,15 +137,12 @@ export default async function AdminPage() {
 
   const totalUsers       = qTotal.count ?? 0
   const paidUsers        = qPaid.count ?? 0
-  const trialingUsers    = qTrialing.count ?? 0
-  const expiredTrialUsers = qExpired.count ?? 0
   const canceledUsers    = qCanceled.count ?? 0
   const newThisMonth     = qNewMonth.count ?? 0
   const newThisWeek      = qNewWeek.count ?? 0
   const newToday         = qNewToday.count ?? 0
   const monthlyActive    = qMonthlyActive.count ?? 0
   const annualActive     = qAnnualActive.count ?? 0
-  const trialEverCount   = qTrialEver.count ?? 0
   const monthlyEverPaid  = qMonthlyEver.count ?? 0
   const annualEverPaid   = qAnnualEver.count ?? 0
   const canceledThisMonth = qCanceledMonth.count ?? 0
@@ -215,6 +211,13 @@ export default async function AdminPage() {
     bookCount: bookCountByUser.get(p.id) ?? 0,
   }))
 
+  // ── Free-tier metrics (no trial anymore: non-active = free plan, 10-book cap) ──
+  const FREE_BOOK_LIMIT = 10
+  const freeRows = userRows.filter(u => !u.isPaid)
+  const freeUsers = freeRows.length
+  const freeAtLimit = freeRows.filter(u => u.bookCount >= FREE_BOOK_LIMIT).length
+  const freeNearLimit = freeRows.filter(u => u.bookCount >= FREE_BOOK_LIMIT - 2 && u.bookCount < FREE_BOOK_LIMIT).length
+
   const lastUpdated = now.toLocaleString('en-US', {
     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   })
@@ -241,7 +244,7 @@ export default async function AdminPage() {
             <MetricCard label="Paid Users" value={c(paidUsers)} tint="green" />
             <MetricCard label="MRR" value={`$${mrr}`} tint="green" />
             <MetricCard label="ARR" value={`$${arr}`} tint="green" />
-            <MetricCard label="Trial → Paid" value={pct(paidUsers, trialEverCount)} tint="green" />
+            <MetricCard label="Free → Paid" value={pct(paidUsers, totalUsers)} tint="green" />
             <MetricCard label="Total Books" value={c(totalBooks)} />
             <MetricCard label="Total Loans" value={c(totalLoans)} />
             <MetricCard label="New Today" value={c(newToday)} tint="green" />
@@ -261,8 +264,8 @@ export default async function AdminPage() {
               <MetricCard label="Active (Paid)" value={c(paidUsers)} tint="green" />
               <MetricCard label="Monthly" value={c(monthlyActive)} tint="green" />
               <MetricCard label="Annual" value={c(annualActive)} tint="green" />
-              <MetricCard label="Trialing" value={c(trialingUsers)} />
-              <MetricCard label="Expired Trial" value={c(expiredTrialUsers)} tint="red" />
+              <MetricCard label="Free Plan" value={c(freeUsers)} />
+              <MetricCard label="Free at Book Limit" value={c(freeAtLimit)} tint="amber" />
               <MetricCard label="Canceled" value={c(canceledUsers)} tint="red" />
             </div>
           </div>
@@ -279,11 +282,11 @@ export default async function AdminPage() {
           <div className="mb-10">
             <SubHeader>Conversion & Churn</SubHeader>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              <MetricCard label="Trial→Paid Conversion" value={pct(paidUsers, trialEverCount)} tint="green" />
+              <MetricCard label="Free→Paid Conversion" value={pct(paidUsers, totalUsers)} tint="green" />
               <MetricCard label="New Subs This Month" value={c(newSubsThisMonth)} tint="green" />
               <MetricCard label="Canceled This Month" value={c(canceledThisMonth)} tint={canceledThisMonth > 0 ? 'red' : 'neutral'} />
               <MetricCard label="Churn Rate (Month)" value={`${churnRate}%`} tint={canceledThisMonth > 0 ? 'red' : 'neutral'} />
-              <MetricCard label="Expired w/o Converting" value={c(expiredTrialUsers)} tint="red" />
+              <MetricCard label="Free Near Limit (8–9)" value={c(freeNearLimit)} tint="amber" />
             </div>
           </div>
 
