@@ -149,7 +149,7 @@ npm run build     # production build (webpack, generates service worker)
   /api/read-with-ai/generate → POST { readingId, bookId } → Claude generates 10-20 insights
   /api/cron/deliver-insights → GET (cron, 08:00 UTC) — delivers one insight/day per active reading
   /api/cron/message-digest   → GET (cron, 18:00 UTC) — sends daily unread message digest emails
-  /api/cron/trial-emails     → GET (cron, 09:00 UTC) — 5-day, 1-day, expired trial reminder emails
+  /api/cron/trial-emails     → GET (cron, 09:00 UTC) — book-limit nudge (once, at 9–10 books; legacy route name)
   /api/cron/overdue-loans    → GET (cron, 09:00 UTC) — marks active loans past due_date as overdue, sends email
   /api/cron/first-book-reminder     → GET (cron, 10:00 UTC) — day-after-signup nudge if 0 books
   /api/cron/invite-friends-reminder → GET (cron, 10:00 UTC) — day-5 nudge if <3 friends
@@ -1043,9 +1043,6 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
   - `messageDigestEmail(firstName, conversations[])` — daily digest (see Daily message digest below)
   - `dailyInsightEmail(firstName, bookTitle, bookAuthor, insightTitle, insightText, extract, position, total)` — sent by deliver-insights cron
   - `invitationEmail(inviterName, token)`
-  - `trialReminder5DayEmail(firstName, trialEndsAt)`
-  - `trialReminder1DayEmail(firstName, trialEndsAt)`
-  - `trialExpiredEmail(firstName)`
   - `lenderHandoffReminderEmail(firstName, borrowerName, bookTitle, approvedDays)` — to lender after approving request
   - `borrowerReceiptConfirmEmail(firstName, lenderName, bookTitle)` — to borrower after lender confirms handoff
   - `loanStartedEmail(firstName, lenderName, bookTitle, dueDate)` — to borrower after confirming receipt
@@ -1063,6 +1060,8 @@ Transactional emails are sent via **Resend** (domain: bookshelf.name, from: nore
     - `inviteReminderAEmail(firstName, lang)` — 10d invite nudge
     - `inviteReminderBEmail(firstName, username|null, lang)` — 21d invite nudge (CTA → shelf link, falls back to `/profile`)
     - `monthlyTipEmail(firstName, tipNumber, username|null, lang)` — one of `MONTHLY_TIP_COUNT` (6) rotating tips
+    - `bookLimitNudgeEmail(firstName, bookCount, lang)` — at 9–10 books (free tier)
+    - `upgradeReminderEmail(firstName, bookCount, lang)` — 90 days after hitting the 10-book limit
 - Templates use inline HTML/CSS with the BookShelf stone brand (Georgia serif, stone-800 background CTA button, warm grey palette)
 - Recipient email fetched via `supabaseAdmin.auth.admin.getUserById(userId)` (only auth.users has email)
 
@@ -1556,45 +1555,18 @@ Sent the day after signup if the user has added no books yet. Multilingual — s
 - `lib/email-templates.ts` — three template functions
 - `vercel.json` — cron schedule added
 
-### Trial lifecycle emails (Vercel cron)
-Three automated emails sent at key moments in the trial lifecycle. A single cron job processes all three types in one daily run.
+### Book-limit nudge email (Vercel cron)
+Sent **once** when a free user reaches 9 or 10 books, pointing them to the $1/month or $10/year upgrade. (The cron route is still named `trial-emails` for historical reasons — the 14-day trial and its 5-day / 1-day / expired emails were removed when the free tier replaced the trial; the old `trial_*_sent_at` columns are unused.)
 
 **Vercel cron schedule** (`vercel.json`): `0 9 * * *` — runs every day at 09:00 UTC.
 
 **Cron route:** `GET /api/cron/trial-emails`
 - Secured by `Authorization: Bearer {CRON_SECRET}` header (Vercel sends this automatically)
-- Returns `{ ok: true, fiveDay, oneDay, expired, errors }` with counts
+- Finds profiles with `subscription_status != 'active'`, `marketing_emails_enabled = true`, `book_limit_email_sent_at IS NULL`, and 9–10 books
+- Sends `bookLimitNudgeEmail(firstName, bookCount, lang)` in the user's `ui_language` (EN/RO/RU, falls back to EN), marketing wrapper with the preferences footer; CTA → `/profile#plans`
+- Sets `book_limit_email_sent_at` (migration: `supabase/add-book-limit-email-field.sql`); returns `{ ok, sent, errors }`
 
-**Three email types:**
-
-| Type | Trigger | Subject | CTA |
-|------|---------|---------|-----|
-| 5-day reminder | `trial_ends_at` between now+4.5d and now+5.5d, `trial_reminder_5day_sent_at IS NULL` | "5 days left on your BookShelf trial" | Choose a plan → `/profile#plans` |
-| 1-day reminder | `trial_ends_at` between now+20h and now+28h, `trial_reminder_1day_sent_at IS NULL` | "Your BookShelf trial ends tomorrow" | Keep my BookShelf → `/profile#plans` |
-| Expired | `trial_ends_at` between now-28h and now, `trial_expired_sent_at IS NULL` | "Your BookShelf trial has ended" | Reactivate my BookShelf → `/subscribe` |
-
-**Database fields** (run `supabase/add-trial-email-fields.sql`):
-- `trial_reminder_5day_sent_at` — timestamptz, nullable, set after 5-day email sent
-- `trial_reminder_1day_sent_at` — timestamptz, nullable, set after 1-day email sent
-- `trial_expired_sent_at` — timestamptz, nullable, set after expired email sent
-
-**Email content:**
-- Uses `first_name` from profiles (falls back to "there")
-- Trial end date formatted as e.g. "Tuesday, June 10" via `en-US` locale
-- Recipient email fetched via `supabaseAdmin.auth.admin.getUserById()`
-- Each send is awaited (cron context, not user-facing), errors caught per-profile so one failure doesn't stop the batch
-- Templates: `trialReminder5DayEmail`, `trialReminder1DayEmail`, `trialExpiredEmail` in `lib/email-templates.ts`
-
-**Files:**
-- `vercel.json` — cron schedule
-- `supabase/add-trial-email-fields.sql` — migration
-- `app/api/cron/trial-emails/route.ts` — cron handler
-- `lib/email-templates.ts` — three new template functions
-
-**Setup:**
-1. Run `supabase/add-trial-email-fields.sql` in Supabase SQL Editor
-2. Add `CRON_SECRET` to Vercel environment variables (generate with `openssl rand -hex 32`)
-3. Add same `CRON_SECRET` to `.env.local` for local testing
+The follow-up 90 days after hitting the limit is the `upgrade-reminder` cron (see Lifecycle & marketing email crons).
 
 ### Lifecycle & marketing email crons
 Five re-engagement/education email crons. All localized EN/RO/RU by `profiles.ui_language`, all respect the master opt-out `profiles.marketing_emails_enabled` (default true), and all use `marketingWrapper()` templates whose footer links to `/profile` ("manage email preferences"). Migration: `supabase/add-lifecycle-emails.sql` (adds tracking fields + `last_active_at` + `marketing_emails_enabled`, backfills `last_active_at = now()` and the opt-out to true).

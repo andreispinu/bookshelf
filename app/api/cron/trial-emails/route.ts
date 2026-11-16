@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/email'
-import { bookLimitNudgeEmail } from '@/lib/email-templates'
+import { bookLimitNudgeEmail, type EmailLang } from '@/lib/email-templates'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -17,8 +17,9 @@ export async function GET(req: NextRequest) {
   // Find free users who have 9 or 10 books and haven't received the nudge email
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
-    .select('id, first_name')
+    .select('id, first_name, ui_language')
     .neq('subscription_status', 'active')
+    .eq('marketing_emails_enabled', true)
     .is('book_limit_email_sent_at', null)
 
   if (!profiles || profiles.length === 0) {
@@ -54,7 +55,8 @@ export async function GET(req: NextRequest) {
       if (!email) continue
 
       const count = bookCount[profile.id] ?? 0
-      const { subject, html } = bookLimitNudgeEmail(profile.first_name ?? 'there', count)
+      const lang = (['en', 'ro', 'ru'].includes(profile.ui_language ?? '') ? profile.ui_language : 'en') as EmailLang
+      const { subject, html } = bookLimitNudgeEmail(profile.first_name ?? 'there', count, lang)
       await sendEmail({ to: email, subject, html })
       await supabaseAdmin
         .from('profiles')

@@ -153,86 +153,6 @@ export function invitationEmail(inviterName: string, token: string): { subject: 
   return { subject, html }
 }
 
-function formatTrialDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-}
-
-export function trialReminder5DayEmail(
-  firstName: string,
-  trialEndsAt: Date,
-): { subject: string; html: string } {
-  const subject = '5 days left on your BookShelf trial'
-  const dateStr = formatTrialDate(trialEndsAt)
-  const html = wrapper(`
-    <tr>
-      <td style="padding:24px 0 20px;">
-        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">5 days left on your trial</p>
-        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
-        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
-          Your free trial ends in 5 days, on <strong>${dateStr}</strong>.
-        </p>
-        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
-          You've been building your personal library — don't let it go. Keep access to all your books, friends,
-          and lending history for just $1/month or $10/year.
-        </p>
-        ${ctaButton('Choose a plan →', `${BASE_URL}/profile#plans`)}
-      </td>
-    </tr>
-  `)
-  return { subject, html }
-}
-
-export function trialReminder1DayEmail(
-  firstName: string,
-  trialEndsAt: Date,
-): { subject: string; html: string } {
-  const subject = 'Your BookShelf trial ends tomorrow'
-  const dateStr = formatTrialDate(trialEndsAt)
-  const html = wrapper(`
-    <tr>
-      <td style="padding:24px 0 20px;">
-        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Your trial ends tomorrow</p>
-        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
-        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
-          Your free trial ends tomorrow, on <strong>${dateStr}</strong>. After that you'll lose access
-          to your books, friends, and lending history.
-        </p>
-        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
-          Keep your BookShelf for just $1/month or $10/year — that's less than a coffee.
-        </p>
-        ${ctaButton('Keep my BookShelf →', `${BASE_URL}/profile#plans`)}
-        <p style="margin:24px 0 0;font-size:13px;color:#a8a29e;line-height:1.6;">
-          P.S. Questions? Just reply to this email.
-        </p>
-      </td>
-    </tr>
-  `)
-  return { subject, html }
-}
-
-export function trialExpiredEmail(firstName: string): { subject: string; html: string } {
-  const subject = 'Your BookShelf trial has ended'
-  const html = wrapper(`
-    <tr>
-      <td style="padding:24px 0 20px;">
-        <p style="margin:0 0 12px;font-size:18px;font-weight:bold;color:#292524;">Your trial has ended</p>
-        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">Hi ${firstName},</p>
-        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">
-          Your free trial ended yesterday. Your books and data are safe — we keep everything for 30 days.
-        </p>
-        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">
-          Subscribe now to regain full access. It's just $1/month or $10/year.
-        </p>
-        ${ctaButton('Reactivate my BookShelf →', `${BASE_URL}/subscribe`)}
-        <p style="margin:24px 0 0;font-size:13px;color:#a8a29e;line-height:1.6;">
-          P.S. Your library will be waiting for you.
-        </p>
-      </td>
-    </tr>
-  `)
-  return { subject, html }
-}
-
 export function borrowRequestApprovedEmail(
   firstName: string,
   ownerName: string,
@@ -1211,30 +1131,6 @@ export function welcomeEmailRu(firstName: string, confirmationUrl: string): { su
   return { subject, html }
 }
 
-export function bookLimitNudgeEmail(firstName: string, bookCount: number): { subject: string; html: string } {
-  const subject = 'Your free BookShelf is almost full'
-  const html = wrapper(
-    `<tr>
-      <td style="padding:32px 40px;">
-        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">Your shelf is filling up, ${firstName}!</p>
-        <p style="margin:0 0 16px;font-size:14px;color:#57534e;line-height:1.6;">
-          You've added <strong>${bookCount} book${bookCount === 1 ? '' : 's'}</strong> to your BookShelf — great progress!
-          Free accounts hold up to 10 books. When you're ready for more, upgrading is just <strong>$1/month</strong> or
-          <strong>$10/year</strong> — unlimited books forever.
-        </p>
-        <p style="margin:0 0 24px;font-size:14px;color:#57534e;line-height:1.6;">
-          No rush — your existing books and all your data are safe. Upgrade whenever you're ready.
-        </p>
-        ${ctaButton('Upgrade to unlimited →', `${BASE_URL}/profile#plans`)}
-        <p style="margin:24px 0 0;font-size:12px;color:#a8a29e;line-height:1.5;">
-          You're receiving this because you have a free BookShelf account.
-        </p>
-      </td>
-    </tr>
-  `)
-  return { subject, html }
-}
-
 export function friendRequestAcceptedEmail(acceptorName: string, acceptorUsername: string): { subject: string; html: string } {
   const safeName = acceptorName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const shelfUrl = acceptorUsername ? `${BASE_URL}/${acceptorUsername}` : `${BASE_URL}/friends`
@@ -1839,6 +1735,58 @@ export function upgradeReminderEmail(
         <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">${t.why}</p>
         ${ctaButton(t.cta, `${BASE_URL}/profile#plans`)}
         <p style="margin:24px 0 0;font-size:13px;color:#a8a29e;line-height:1.5;">${t.note}</p>
+      </td>
+    </tr>
+  `, lang)
+  return { subject: t.subject, html }
+}
+
+// Sent once (trial-emails cron) when a free user reaches 9 or 10 books.
+// Marketing email: localized, respects the opt-out, has the preferences footer.
+export function bookLimitNudgeEmail(
+  firstName: string,
+  bookCount: number,
+  lang: EmailLang,
+): { subject: string; html: string } {
+  const safe = esc(firstName)
+  const n10 = bookCount % 10, n100 = bookCount % 100
+  const roBooks = bookCount === 1 ? 'carte' : (n100 >= 1 && n100 <= 19 ? 'cărți' : 'de cărți')
+  const ruBooks = n10 === 1 && n100 !== 11 ? 'книгу'
+    : n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14) ? 'книги' : 'книг'
+  const t = pick(lang, {
+    en: {
+      subject: 'Your free BookShelf is almost full',
+      heading: `Your shelf is filling up, ${safe}!`,
+      progress: `You've added <strong>${bookCount} book${bookCount === 1 ? '' : 's'}</strong> to your BookShelf — great progress! Free accounts hold up to 10 books.`,
+      pitch: 'When you\'re ready for more, upgrading is just <strong>$1/month</strong> or <strong>$10/year</strong> — unlimited books forever.',
+      reassure: 'No rush — your existing books and all your data are safe. Upgrade whenever you\'re ready.',
+      cta: 'Upgrade to unlimited →',
+    },
+    ro: {
+      subject: 'Raftul tău BookShelf gratuit este aproape plin',
+      heading: `Raftul tău se umple, ${safe}!`,
+      progress: `Ai adăugat <strong>${bookCount} ${roBooks}</strong> pe BookShelf — un progres excelent! Contul gratuit include până la 10 cărți.`,
+      pitch: 'Când ești gata pentru mai mult, upgrade-ul costă doar <strong>1 $/lună</strong> sau <strong>10 $/an</strong> — cărți nelimitate pentru totdeauna.',
+      reassure: 'Nu te grăbi — cărțile și toate datele tale sunt în siguranță. Fă upgrade oricând dorești.',
+      cta: 'Treci la nelimitat →',
+    },
+    ru: {
+      subject: 'Ваша бесплатная полка BookShelf почти заполнена',
+      heading: `Ваша полка заполняется, ${safe}!`,
+      progress: `Вы добавили <strong>${bookCount} ${ruBooks}</strong> в BookShelf — отличный результат! Бесплатный аккаунт вмещает до 10 книг.`,
+      pitch: 'Когда захотите больше, переход стоит всего <strong>$1 в месяц</strong> или <strong>$10 в год</strong> — неограниченное количество книг навсегда.',
+      reassure: 'Не торопитесь — ваши книги и все данные в безопасности. Переходите, когда будете готовы.',
+      cta: 'Перейти на безлимит →',
+    },
+  })
+  const html = marketingWrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">${t.heading}</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">${t.progress}</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">${t.pitch}</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">${t.reassure}</p>
+        ${ctaButton(t.cta, `${BASE_URL}/profile#plans`)}
       </td>
     </tr>
   `, lang)
