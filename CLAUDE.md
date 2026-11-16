@@ -521,11 +521,11 @@ Route: `/profile` — account info and subscription management.
 
 **Sections:**
 1. **Account** — avatar circle (initials), name, email, Edit name button (dialog, calls `updateName` server action)
-2. **Subscription status** — one of three states:
-   - **Free Trial** (amber badge): days remaining, trial end date, "After your trial ends…" message, "View plans ↓" button (scrolls to plans section)
-   - **Active** (green badge): plan name (Monthly/Annual), next billing date, amount, "Manage subscription →" button (calls `/api/stripe/portal` → redirects to Stripe Customer Portal)
-   - **Expired** (red badge): expired message, "Subscribe now ↓" button (scrolls to plans)
-3. **Plans** — two cards (Monthly $1/mo, Annual $10/yr with "Best value" badge). Subscribe buttons call `/api/stripe/checkout`. Current plan button is disabled when already subscribed to that plan.
+2. **Subscription status** — one of two states (keyed on `subscription_status === 'active'`):
+   - **Free plan** (green "Active" badge): book usage progress bar (`N/10`, amber when at the limit), "Upgrade for unlimited" button (scrolls to plans section)
+   - **Paid** (green "Active" badge): plan name (Monthly/Annual), next billing date, amount, "Manage subscription →" button (calls `/api/stripe/portal` → redirects to Stripe Customer Portal)
+   - (Legacy `freeTrial` / `trialExpiredMessage` keys still exist in `messages/*.json` but are no longer rendered.)
+3. **Plans** — two cards (Monthly $1/mo, Annual $10/yr with "Best value" badge), both "Get unlimited". Subscribe buttons call `/api/stripe/checkout`. Buttons are disabled while subscribed; the current plan shows "Current plan".
 4. **Password** — change password form (see "Change password (logged in)" under Auth conventions)
 
 The page also renders Public Profile / username, Location, Language, and Notifications sections (each documented in its own feature section).
@@ -605,12 +605,12 @@ Route: `/` — public marketing page, no auth required. Replaces the old redirec
 **Cache strategy (ISR):** `export const revalidate = 300` at the top of `app/page.tsx` — Next.js regenerates the page in the background every 5 minutes as a safety net. Additionally, `addBook()` and `addBookForce()` server actions call `revalidatePath('/')` after a successful insert, so the landing page is invalidated immediately whenever any user adds a book. The two approaches complement each other: on-demand revalidation for instant freshness, time-based revalidation as a fallback.
 
 **Sections (in order):**
-1. **Nav** — "BookShelf" logo left; center links: Books (#recent-books), Features, How it works, Install, Pricing; "Log in" + "Start free trial" right. If user is already logged in, shows "Go to my shelf" instead.
-2. **Hero** — headline, subheadline, two CTAs ("Start free trial" dark primary, "See how it works" ghost scrolls to `#how-it-works`), note "Free for 14 days. No credit card required."
+1. **Nav** — "BookShelf" logo left; center links: Books (#recent-books), Features, How it works, Install, Pricing; "Log in" + "Start for free" right. If user is already logged in, shows "Go to my shelf" instead.
+2. **Hero** — badge, headline, subheadline, two CTAs ("Start for free" dark primary, "See how it works" ghost scrolls to `#how-it-works`).
 3. **Recently Added Books** — only shown if ≥ 3 books with a cover exist. Fetches up to 1000 most recent books from **all** users regardless of `profile_visibility` via `supabaseAdmin` (bypasses RLS). Shows only cover image, title, category pill, and availability badge — **no author, no owner name, no link to owner** (privacy preserved). Client component (`app/recently-added-client.tsx`) handles category filtering: pills for categories with ≥ 5 books, sorted by count descending, horizontally scrollable on mobile. "All (N)" pill shows total count. Selecting a category shows up to 10 most recent books in it; if a category has < 10 books (but ≥ 5), all are shown. No pills shown if no category has ≥ 5 books.
 4. **Features** — 3-column grid (stacked mobile): Add your library (AI scan), Lend to friends (track loans), Always with you (PWA).
 4. **How it works** (`id="how-it-works"`) — Three-column layout on desktop (`lg:grid-cols-3`), stacked on mobile. Each column in a stone-100 card. Sub-section 1 "Build your library" (BookOpen icon): 4 steps — Create account, Add books, Organise by category, Share your shelf. Sub-section 2 "Lend & borrow with friends" (ArrowLeftRight icon): 5 steps — Add friends, Browse their shelves, Request to borrow, Coordinate the handoff, Return smoothly. Sub-section 3 "Buy & sell with friends" (Tag icon): 4 steps — Mark books for sale, Friends see your listing, Send a buy request, Transfer the book. Driven by `LIBRARY_STEP_KEYS`, `LEND_STEP_KEYS`, and `BUY_SELL_STEP_KEYS` arrays in `page.tsx`; each key maps to `s_${key}_title` and `s_${key}_desc` translation keys in the `landing` namespace.
-5. **Pricing** — 3 cards: Free trial ($0/14 days), Monthly ($1/mo), Annual ($10/yr with "Best value" badge). All CTAs link to `/signup`.
+5. **Pricing** — 3 cards: Free ($0 forever, up to 10 books, no credit card), Monthly ($1/mo, unlimited books), Annual ($10/yr, unlimited, "Best value" badge). All CTAs link to `/signup`.
 6. **Footer** — "BookShelf" branding, links (Log in, Sign up, bookshelf.name), `© {year} BookShelf` (dynamic, never hardcoded).
 
 **Files:**
@@ -1421,248 +1421,6 @@ RLS: own rows full access; accepted friends can SELECT.
 - `app/(dashboard)/notifications-bell.tsx` — `friend_finished_book` type + message + href
 - `app/admin/page.tsx` — Currently Reading metrics section
 
-## Build order (phases)
-
-- [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes
-- [x] Phase 2 — Books: add book, list books, edit/delete
-- [x] Phase 3 — Friends: search users, send/accept/decline friend requests
-- [x] Phase 4 — Sharing: offer book, track loans, mark as returned
-- [x] Phase 5 — PWA: add next-pwa, manifest.json, app icon, offline support (installable on iOS + Android)
-
-## Environment variables
-
-All must be set in Vercel project → Settings → Environment Variables (Production scope).
-
-```
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://njyugygdhkegagnapbcy.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_OjZw6dEXgxUM3sD8qfQAvA_uU_Ek48L
-SUPABASE_SERVICE_ROLE_KEY=<secret — see Supabase dashboard>
-
-# Anthropic
-ANTHROPIC_API_KEY=<secret — from console.anthropic.com>
-
-# Stripe
-STRIPE_SECRET_KEY=<sk_live_...>
-STRIPE_WEBHOOK_SECRET=<whsec_...>
-STRIPE_MONTHLY_PRICE_ID=<price_...>
-STRIPE_ANNUAL_PRICE_ID=<price_...>
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<pk_live_...>
-NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID=<price_...>
-NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID=<price_...>
-
-# Resend (transactional email)
-RESEND_API_KEY=<secret — from resend.com dashboard>
-
-# Vercel cron security
-CRON_SECRET=<random 32+ char string — set same value in Vercel env vars>
-```
-
-Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `getStripe()` from `lib/stripe.ts` (lazy singleton) to avoid Next.js build crashes when the var is absent.
-
-## Design system
-
-- **Component library** — shadcn/ui (base-ui variant, not Radix — no `asChild` prop)
-- **Visual identity** — warm "library" palette (parchment + ink + amber), Playfair Display headings (see the **Design System** section below)
-- **Dark mode** — off (a `.dark` block remains in `globals.css` only for shadcn compatibility)
-- **Design principle** — warm, readable, minimal. Think a physical library, not a tech product.
-- To add a shadcn component: `npx shadcn@latest add <name>`
-- `buttonVariants` must be used with `<Link>` instead of `<Button asChild>` — this version of shadcn uses `@base-ui/react` which does not support `asChild`
-
-## Design System (visual identity)
-
-The BookShelf brand is a warm, paper-inspired "library" look. **Tailwind v4 (CSS-first)** — there is **no `tailwind.config.ts`**; all design tokens live in `@theme` blocks in `app/globals.css`, which auto-generates the utility classes (`bg-parchment`, `text-ink`, `border-linen`, `font-serif`, …). Do NOT create a `tailwind.config.ts` — add tokens to `@theme` instead.
-
-### Color tokens (`app/globals.css` → `@theme`)
-| Token / utility | Hex | Role |
-|------|-----|------|
-| `parchment` | `#faf6f0` | page background |
-| `parchment-card` | `#fdfaf6` | card / navbar background |
-| `ink` | `#2c1a0e` | primary text, CTA button bg |
-| `ink-light` | `#1e1008` | headings |
-| `walnut` | `#7a5c3e` | muted / secondary text |
-| `walnut-mid` | `#9c7a5b` | placeholder, labels, secondary links |
-| `amber` | `#c4852a` | accent, highlights, active states, **AI Reading** badge |
-| `amber-light` | `#f5e6d0` | tag / pill backgrounds |
-| `amber-pale` | `#faf0dc` | subtle tints |
-| `forest` / `forest-light` | `#4a6741` / `#d0e8cc` | **Available** status / success |
-| `navy` / `navy-light` | `#2c4a6e` / `#c8d8f0` | info, **For sale** badge |
-| `linen` | `#e8ddd0` | borders |
-| `rust` / `rust-light` | `#7a3b3b` / `#f5d0d0` | **Lent out** / warning |
-
-Use as `bg-*`, `text-*`, `border-*` (e.g. `bg-forest-light text-forest`). Opacity modifiers work: `border-forest/30`.
-
-**shadcn semantic mapping** (`:root` in `globals.css`, plain hex): `background`→parchment, `card`→parchment-card, `foreground`/`primary`→ink, `primary-foreground`→parchment, `secondary`→amber-light, `muted-foreground`→walnut, `accent`/`ring`→amber, `destructive`→rust, `border`/`input`→linen. So shadcn `<Button>`, `<Input>`, `<Card>` etc. pick up the palette automatically.
-
-### Typography
-- **Headings** — Playfair Display (serif). Loaded via `next/font/google` in `app/layout.tsx` as the `--font-playfair` variable; exposed as `font-serif` and applied to `h1–h4` globally in the `@layer base` block of `globals.css` (weight 600, color `ink-light`). Headings with an explicit `text-*` class keep that colour; the global rule only sets the default.
-- **Body / UI** — Inter (`--font-inter`), exposed as `font-sans`, applied to `body`. Both are variable fonts (no `weight` array) so `font-medium`/`font-semibold`/`font-bold` render without faux-bold.
-- Wordmarks use `font-serif text-xl/2xl font-semibold text-ink` next to the icon.
-- (Geist Mono kept as `--font-mono` / `font-mono`.)
-
-### Icons
-- **Source:** `public/icon.svg` — the stacked-books mark (amber / navy / forest / cream spines + amber bookmark ribbon). Used inline in navbars (`<img src="/icon.svg">`).
-- **Generated:** `scripts/generate-icons.mjs` (run `node scripts/generate-icons.mjs`, uses `sharp`) produces, in `public/`: `favicon-16x16.png`, `favicon-32x32.png` (transparent), `apple-touch-icon.png` (180), `icon-192x192.png`, `icon-512x512.png` (icon centered ~65% on a rounded `#2c1a0e` square), and `favicon.ico` (multi-size 16+32, PNG-encoded, built manually — `sharp` can't emit ICO). **Re-run the script whenever `icon.svg` changes.**
-- `app/layout.tsx` metadata: `icons: { icon: '/favicon-32x32.png', apple: '/apple-touch-icon.png' }`, `viewport.themeColor: '#2c1a0e'`. `public/manifest.json`: `theme_color`/`background_color` `#2c1a0e`, icons → `/icon-192x192.png` + `/icon-512x512.png`.
-- The old `public/icons/*` files are superseded (no longer referenced).
-
-### Book card spines (`lib/category-color.ts`)
-`getCategoryColor(category?: string | null): string` maps a book category (canonical English value from `lib/categories.ts`) to a spine colour, defaulting to ink (`#2c1a0e`). When a book has **no `cover_url`**, book cards render a colored spine in that colour with the title in light serif text instead of a grey placeholder. Applied in: `app/(dashboard)/books/book-list.tsx` (grid + list), `app/recently-added-client.tsx` (landing), `app/[username]/public-shelf.tsx` (public profile).
-
-### Status badges (palette)
-Available → `bg-forest-light text-forest`; Lent out → `bg-rust-light text-rust`; AI Reading → `bg-amber-light text-amber`; For sale → `bg-navy-light text-navy` (the shared `components/price-pill.tsx`). Applied across the book grids (My Books, landing recently-added, public profile, friend shelves). Other secondary surfaces (loan-list workflow badges, etc.) still use their prior colors and inherit the new tokens/typography — extend with the same palette as needed.
-
-### Adding new branded UI
-Prefer the semantic tokens (`bg-parchment`, `text-ink`, `border-linen`, `text-walnut` for muted, `text-amber` for accent). Headings get Playfair automatically. Keep "BookShelf" capitalized exactly.
-
-## Next.js 16 specifics
-
-- **`proxy.ts` instead of `middleware.ts`** — Next.js 16 renamed the middleware convention. The exported function must be named `proxy` (not `middleware`). The `config.matcher` export still works the same way.
-- **Turbopack is the default** — `npm run dev` uses Turbopack. `npm run build` uses `--webpack` because `@ducanh2912/next-pwa` is a webpack plugin and is incompatible with Turbopack.
-- **`turbopack: {}`** in `next.config.ts` silences the webpack/Turbopack conflict warning during dev (PWA is disabled in dev anyway).
-- **`asChild` not supported** — shadcn/ui in this project uses `@base-ui/react/button` instead of Radix. Use `buttonVariants({ className })` on a `<Link>` instead.
-
-## PWA setup
-
-- Package: `@ducanh2912/next-pwa` (maintained fork of next-pwa, supports Next.js 13+)
-- Service worker is generated at build time into `public/sw.js` — this file is gitignored
-- PWA is disabled in development (`disable: process.env.NODE_ENV === 'development'`)
-- Icons live in `public/icons/` — generated from `icon.svg` via sharp at 192px, 512px, and 180px (Apple touch icon)
-- Manifest: `public/manifest.json` — theme color `#292524` (stone-800), start URL `/books`
-- `viewport-fit=cover` is set in `app/layout.tsx` (`viewportFit: "cover"` in the `Viewport` export) — required for `env(safe-area-inset-bottom)` to work on both iPhone and Android PWAs
-
-### PWA update & refresh strategy
-
-**Problem:** Service workers cache aggressively. After a Vercel deploy, installed PWAs serve stale cached content until the user manually refreshes.
-
-**Solution (three layers):**
-
-1. **NetworkFirst cache strategy** (`next.config.ts` `workboxOptions.runtimeCaching`): All runtime requests use NetworkFirst — the SW always tries the network first and falls back to cache only when offline. This prevents stale pages on subsequent visits.
-
-2. **Automatic update detection** (`app/pwa-updater.tsx`): A client component mounted in `app/layout.tsx` listens for SW `updatefound` events. When a new SW installs and waits (`registration.waiting`), a persistent Sonner toast appears: "A new version of BookShelf is available" with an "Update now" button. Clicking it sends `SKIP_WAITING` to the waiting SW; the `controllerchange` event then triggers `window.location.reload()`.
-
-3. **Manual refresh button** (`app/(dashboard)/nav.tsx`): A `RefreshCw` icon button (mobile-only, `sm:hidden`) sits between the bell and avatar in the top bar. Tapping it:
-   - Spins the icon for 1 second (`animate-spin`)
-   - Sends `SKIP_WAITING` if a SW update is queued
-   - Calls `window.location.reload()` after 1s
-
-**Version indicator:** `process.env.NEXT_PUBLIC_BUILD_ID` is set in `next.config.ts` to the build date (`YYYY-MM-DD`). Shown at the bottom of `/profile` so users can confirm they have the latest version.
-
-## Mobile navigation
-
-Mobile (below 640px breakpoint) uses a **bottom navigation bar** instead of the top nav links. This matches the native app convention for PWAs installed from Safari (iPhone) and Chrome (Android).
-
-**Top bar on mobile:**
-- Keeps: BookShelf wordmark (left), bell icon with badge, avatar dropdown (right)
-- Hides: all navigation links (Books, Friends, Messages, Loans)
-- Height: 52px; background: stone-50
-- Bell and avatar behavior identical to desktop
-
-**Bottom nav bar ():**
-- Fixed to bottom of screen, `sm:hidden` (invisible on desktop)
-- 4 tabs: Books (BookOpen), Friends (Users), Messages (MessageSquare), Loans (ArrowLeftRight) — from lucide-react
-- Active tab: stone-900 (#1c1917) + strokeWidth 2; inactive: stone-400 (#a8a29e) + strokeWidth 1.5
-- Red dot badge (8px, no count) on Messages when `unreadMessages > 0`, on Loans when `pendingRequests > 0`
-- Polls `/api/nav-counts` every 30 seconds (same endpoint as top nav)
-- Added in `app/(dashboard)/layout.tsx` so it appears on every dashboard page
-
-**Safe area handling (PWA on iPhone and Android):**
-- `padding-bottom: max(14px, env(safe-area-inset-bottom))` applied to the bottom nav
-- iPhone home indicator: `env(safe-area-inset-bottom)` ≈ 34px → nav extends below tabs
-- Android gesture navigation: `env(safe-area-inset-bottom)` ≈ 24px → same handling
-- Requires `viewport-fit=cover` (set above) for the env() variable to work
-
-**Content area bottom padding:**
-- `pb-24 sm:pb-8` on the dashboard `<main>` element gives 96px bottom clearance on mobile, 32px on desktop
-- Prevents page content from being obscured by the bottom nav
-
-## SEO & GEO
-
-Search engine optimization and Generative Engine Optimization (for AI search like ChatGPT, Perplexity, Gemini, Claude). Only public pages are indexable — everything behind auth is `noindex`.
-
-### Indexability map
-| Area | Indexable? | How |
-|------|-----------|-----|
-| `/` landing | ✅ yes | full metadata + JSON-LD |
-| `/[username]` public profiles | ✅ yes (unless `private`) | dynamic `generateMetadata` + JSON-LD |
-| `/catalog` catalogue index | ✅ yes | `generateMetadata` (filter-aware canonical) + `CollectionPage` JSON-LD |
-| `/catalog/[id]` book pages | ✅ yes | dynamic `generateMetadata` + `Book` JSON-LD |
-| `(auth)` login/signup/forgot/reset | ❌ noindex,nofollow | `metadata` in `app/(auth)/layout.tsx` |
-| `(dashboard)` all protected pages | ❌ noindex,nofollow | `metadata` in `app/(dashboard)/layout.tsx` |
-| `/admin` | ❌ noindex,nofollow | `metadata` in `app/admin/layout.tsx` |
-| `/subscribe` | ❌ noindex,nofollow | `metadata` in `app/subscribe/layout.tsx` (client page, so a server `layout` carries the metadata) |
-
-### Metadata architecture
-- **Canonical host is `www`.** Production serves on `https://www.bookshelf.name`; the apex `bookshelf.name` **307-redirects** to www. So every canonical / sitemap / OG / JSON-LD URL must use www — otherwise canonicals point at a redirecting URL. The single source of truth is **`lib/site.ts` → `SITE_URL = 'https://www.bookshelf.name'`**; import it, never hardcode a host. (Functional/auth links like the password-reset `redirectTo` and share-shelf URLs are separate and must match whatever is whitelisted in Supabase/Stripe — don't blindly swap those.)
-- **`app/layout.tsx`** sets `metadataBase: new URL('https://www.bookshelf.name')`, a title template `"BookShelf — %s | Your personal library"` (default `"BookShelf — Your personal library"`), and default OpenGraph/Twitter tags.
-- **Landing (`app/page.tsx`)** has `generateMetadata()` — **localized** via `getTranslations('landing')`, so EN/RO/RU each get translated title/description/keywords. Uses `title.absolute` (bypasses the template), `description` (≤155 chars), `keywords`, self-canonical, OG `type: website`, Twitter `summary_large_image`.
-- **Public profile (`app/[username]/page.tsx`)** `generateMetadata()` → `"[Name]'s BookShelf — [X] books shared"`, self-canonical `https://www.bookshelf.name/[username]`, OG `type: profile`. Returns `robots: noindex` for private/missing profiles.
-- **Book page (`app/catalog/[id]/page.tsx`)** `generateMetadata()` → `"[Title] by [Author] — BookShelf"` (localized), self-canonical at the **slug URL**, OG `type: book` with the cover image. Meta description uses the book's own description (trimmed to ~160 chars) when present, else a localized template.
-- All indexable pages emit a **self-referencing canonical**.
-
-### Localization / hreflang
-The app serves **all locales from one URL** (locale is the `NEXT_LOCALE` cookie — there are no `/ro` or `/ru` routes). So the landing page emits only a self-canonical + `hreflang="x-default"` → `https://www.bookshelf.name`. We deliberately do **not** emit `/ro` `/ru` hreflang alternates because those URLs don't exist (they'd fall through to the `[username]` catch-all and 404). Locale-specific metadata is still served per request (the cookie drives `getTranslations`), so a RU visitor's crawl sees RU title/description. To add true per-locale URLs later, introduce a `[locale]` routing layer and then emit full `en`/`ro`/`ru` alternates.
-
-### OpenGraph images (Next.js `ImageResponse`)
-- **`app/opengraph-image.tsx`** — static 1200×630 brand image (stone `#f5f0eb` background, "BookShelf" wordmark, tagline, `bookshelf.name`). Auto-wired as `og:image` + `twitter:image` site-wide via metadataBase.
-- **`app/[username]/opengraph-image.tsx`** — dynamic per-profile 1200×630 showing `[Name]'s BookShelf` + book count. Fetches via `supabaseAdmin`; falls back to brand text for private/missing profiles.
-
-### JSON-LD structured data
-Injected as `<script type="application/ld+json">` in the server components:
-- **Landing**: `WebApplication` (name, url, `applicationCategory: LifestyleApplication`, `operatingSystem: "Web, iOS, Android"`, three `Offer`s for free/$1/$10, `inLanguage: [en,ro,ru]`) + `FAQPage` (6 Q&A, **localized** from the `landing` namespace). No `aggregateRating` — we have no real ratings and fabricating them violates Google's guidelines.
-- **Public profile**: `Person` (name, url, avatar image) + `ItemList` of the user's books (each a `Book` with `author`), capped at 100 items, only for `public_full`.
-
-### sitemap & robots
-- **`app/sitemap.ts`** (`revalidate = 3600`): landing (`priority 1.0, daily`) + `/catalog` (`priority 0.9, daily`) + every profile where `profile_visibility != 'private'` AND `username IS NOT NULL` (`priority 0.7, weekly`, `lastModified` = `created_at`) + every book at its **slug URL** (`priority 0.7, weekly`, `lastModified` = `created_at`, via `getAllBooksForSitemap()` + `bookPath()`). All URLs use `SITE_URL` (www). Fetched with `supabaseAdmin`. Served at `/sitemap.xml`. (If the library ever exceeds ~50k books, split into a sitemap index.)
-- **`app/robots.ts`**: `allow: '/'`; `disallow` all private/auth areas (`/admin /api /books /friends /loans /messages /feed /support /wishlist /profile /subscribe /login /signup /forgot-password /reset-password`); declares the sitemap + host (both `www` via `SITE_URL`). Served at `/robots.txt`.
-- **Note**: auth pages are `noindex` AND robots-disallowed, so they are intentionally **excluded from the sitemap** (a sitemap should not list non-indexable URLs) — this overrides the original spec's suggestion to list `/login` `/signup` there.
-
-### GEO — Generative Engine Optimization
-- **`public/llms.txt`** — plain-language summary AI crawlers read to understand and cite the app (what it does, who it's for, pricing, technical, contact). Served at `/llms.txt`.
-- **Entity clarity** — a visible **About BookShelf** section (`#about`) states explicitly what it is ("a book library app"), that it's independently built, launched 2025, hosted on Vercel, and lives at bookshelf.name. A visible **FAQ** section (`#faq`, the same 6 Q&A as the FAQPage schema) gives AI engines extractable Q&A text. The footer prints `bookshelf.name` as text.
-- **Consistent naming** — always exactly **"BookShelf"** (capital B, capital S) across meta tags, OG, JSON-LD, llms.txt, and copy, so AI engines build a clean entity graph.
-
-### Adding new SEO copy
-The landing `metaTitle/metaDescription/metaKeywords/ogTitle/ogDescription/aboutHeading/aboutText/faqHeading/faq*Q/faq*A` and the profile `metaProfileDescription` keys live in the **`landing` namespace** of `messages/en.json`, `ro.json`, `ru.json` — keep all three in sync (see the Translations convention). The WebApplication/FAQPage/Person/ItemList JSON-LD is built from these same translated strings, so it's localized automatically.
-
-### Core Web Vitals (audited)
-- Fonts: Geist via `next/font/google` → `font-display: swap` automatically (no layout shift from fonts).
-- Landing hero is text-only — no LCP image, no CLS.
-- `recently-added-client.tsx` book covers already use `loading="lazy"` inside a fixed `aspectRatio: 2/3` container (no CLS). Remaining `<img>` thumbnails live on `noindex` dashboard pages, so they have negligible SEO impact.
-- **`next/image` is enabled for remote covers** via `images.remotePatterns: [{ protocol: 'https', hostname: '**' }]` in `next.config.ts` (covers come from Supabase Storage, OpenLibrary, and arbitrary AI-suggested URLs — the wildcard means `next/image` never 500s a public page on an unconfigured host). The `/catalog` pages use `next/image`; the landing/marketplace still use `<img>` (unchanged).
-
-### Public book catalogue (`/catalog`)
-A public, no-auth, crawler-oriented catalogue of **all** books across all users — the SEO/GEO surface for individual books. Separate from the private dashboard `/books` (which is per-user and auth-gated) and from the landing page's "recently added" section. Fully localized EN/RO/RU via the **`catalog` message namespace** (page copy, metadata titles/descriptions, status/pagination labels — including ICU plurals on the index heading); category labels reuse `translateCategory`/the `categories` namespace. Nav/footer are the locale-aware `LandingNav` + `SiteFooter`.
-
-**Why `/catalog` and not `/books`:** `/books` is already the authenticated dashboard route (`app/(dashboard)/books/`), so a public page there is an impossible App-Router collision. `/catalog` is public by default (not in `proxy.ts` `protectedPrefixes`, same as `/marketplace`) — no proxy change needed.
-
-**Book URLs are SEO/GEO slugs** (`lib/slug.ts`): `/catalog/<title-author-slug>-<uuid>`, e.g. `/catalog/de-veghe-in-lanul-de-secara-j-d-salinger-eb52d499-…`. `slugify()` handles Romanian diacritics + Cyrillic transliteration + general Latin accents. The full UUID is appended so the book is always resolvable with no DB `slug` column: `extractBookId()` pulls the UUID out of the param, and the page **308-redirects** (`permanentRedirect`) any non-canonical form (bare `/catalog/<uuid>` old links, or a stale slug after a title edit) to the current slug, so link equity consolidates on one canonical URL. `bookSlug()` / `bookPath()` build the canonical path; use them everywhere a book is linked (cards, sitemap, landing ItemList, related).
-
-**Data access:** all catalogue reads use the **service-role client** (`supabaseAdmin`) server-side with whitelisted columns (never name/avatar/email/user_id — only owner city/country on the detail page). Anon can't be used: `books` RLS only exposes *for-sale* books to anon (see `add-marketplace.sql`), and a blanket anon policy would leak `user_id`/all columns via the public key. Same pattern as the public profile page and landing.
-
-**Pages:**
-- **`app/catalog/page.tsx`** (`revalidate = 300`) — paginated index, 48/page. All filters are crawlable `<a>` links (no client-side JS filtering): `?category=` (exact, validated against `CATEGORIES`), `?status=available|all`, `?author=` (exact), `?page=N`. `h1` = "Biblioteca BookShelf — {total} cărți disponibile", category pills wrap (`flex flex-wrap`), numbered prev/next pagination, filter-aware self-canonical, `CollectionPage` JSON-LD (`hasPart` = books on the page).
-- **`app/catalog/[id]/page.tsx`** (`revalidate = 3600`, `generateStaticParams` = top 500 by `created_at`, each at its slug URL) — localized breadcrumb, `next/image` cover (`priority`, 300×450), author link → `/catalog?author=`, category + status badges, owner location (omitted if none), publisher · year · language line, full **description** block, amber CTA → `/login`, related-books strip (`getBooksByCategory`). JSON-LD array: **`Book`** (`offers` InStock/OutOfStock price 0 RON; `url`, `description`, `inLanguage`, `datePublished`, `publisher`, `isbn`, `image` added when present) + **`BreadcrumbList`** (Home → Catalog → book). `notFound()` for unknown/missing ids.
-- **`app/catalog/catalog-book-card.tsx`** — shared presentational card (landing card style, `next/image`).
-- **`app/site-footer.tsx`** — shared public footer (mirrors landing footer, localized), used by `/catalog` pages. Header is the existing `LandingNav` (locale + `isLoggedIn`).
-
-**DB helpers** (`lib/db/books.ts`, all `supabaseAdmin`, server-only — never import into client components): `getPublicBooks({page,category,status,author})` → `{books,total}`; `getPublicBook(id)` (+ description/publisher/year/language and owner city/country); `getBooksByCategory(category,excludeId,limit)`; `getAllBooksForSitemap()` (id+title+author+created_at, for slug URLs). Exported types `PublicBookCard`, `PublicBookDetail`.
-
-**Landing integration** (`app/page.tsx` + `recently-added-client.tsx`): added an `ItemList` JSON-LD (numberOfItems = total book count, first 10 as `ListItem`s → `/catalog/[id]`) and a "view all N books" link (`landing.recentlyViewAll`, EN/RO/RU) below the existing grid. **No visual/ISR change** to the recently-added section itself.
-
-**Freshness:** `addBook()` / `addBookForce()` call `revalidatePath('/catalog')` (alongside `/` and `/books`).
-
-**Caveat — static vs dynamic:** because locale is cookie-based (`i18n/request.ts` reads `cookies()`), every page calling `getTranslations` renders dynamically. So the `revalidate`/`generateStaticParams` on the catalogue pages are effectively no-ops (same as the landing/marketplace pages). Crawlers still get fully-rendered HTML with correct metadata/JSON-LD per request; this only means the pages aren't served from a static ISR cache. True static ISR would require decoupling these pages from the locale cookie (e.g. a `[locale]` routing layer).
-
-## Key decisions and why
-
-- **App Router over Pages Router** — App Router is the current Next.js standard; better for server components and server actions
-- **Server Actions for mutations** — simpler than API routes for this app's needs; reduces boilerplate
-- **`profiles` table separate from `auth.users`** — Supabase's `auth.users` is not directly accessible from the client for security reasons; `profiles` is the public-facing user table
-- **`status` field on books** — simple text enum instead of a join; fast to query, easy to understand
-- **`proxy.ts` for session refresh** — Supabase requires the session to be refreshed on every request; the proxy intercepts all non-static requests to do this
-- **User search via API route** — `/api/users/search` rather than a server action, because search is a GET with a query param called from a client component
-
 ### Invite friends by email
 Users can invite friends who aren't yet on BookShelf via email.
 
@@ -1905,3 +1663,245 @@ Users can contact support via a floating button present on every dashboard page.
 - `app/admin/support/[id]/page.tsx` — admin ticket detail (server)
 - `app/admin/support/[id]/admin-support-client.tsx` — admin reply + status management (client)
 - `lib/email-templates.ts` — `newTicketAdminEmail`, `adminReplyEmail`, `ticketSolvedEmail`
+
+## Build order (phases)
+
+- [x] Phase 1 — Foundation: Next.js setup, Supabase connection, auth (login/signup), protected routes
+- [x] Phase 2 — Books: add book, list books, edit/delete
+- [x] Phase 3 — Friends: search users, send/accept/decline friend requests
+- [x] Phase 4 — Sharing: offer book, track loans, mark as returned
+- [x] Phase 5 — PWA: add next-pwa, manifest.json, app icon, offline support (installable on iOS + Android)
+
+## Environment variables
+
+All must be set in Vercel project → Settings → Environment Variables (Production scope).
+
+```
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://njyugygdhkegagnapbcy.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_OjZw6dEXgxUM3sD8qfQAvA_uU_Ek48L
+SUPABASE_SERVICE_ROLE_KEY=<secret — see Supabase dashboard>
+
+# Anthropic
+ANTHROPIC_API_KEY=<secret — from console.anthropic.com>
+
+# Stripe
+STRIPE_SECRET_KEY=<sk_live_...>
+STRIPE_WEBHOOK_SECRET=<whsec_...>
+STRIPE_MONTHLY_PRICE_ID=<price_...>
+STRIPE_ANNUAL_PRICE_ID=<price_...>
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=<pk_live_...>
+NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID=<price_...>
+NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID=<price_...>
+
+# Resend (transactional email)
+RESEND_API_KEY=<secret — from resend.com dashboard>
+
+# Vercel cron security
+CRON_SECRET=<random 32+ char string — set same value in Vercel env vars>
+```
+
+Note: `STRIPE_SECRET_KEY` must NOT be initialized at module load time — use `getStripe()` from `lib/stripe.ts` (lazy singleton) to avoid Next.js build crashes when the var is absent.
+
+## Design system
+
+- **Component library** — shadcn/ui (base-ui variant, not Radix — no `asChild` prop)
+- **Visual identity** — warm "library" palette (parchment + ink + amber), Playfair Display headings (see the **Design System** section below)
+- **Dark mode** — off (a `.dark` block remains in `globals.css` only for shadcn compatibility)
+- **Design principle** — warm, readable, minimal. Think a physical library, not a tech product.
+- To add a shadcn component: `npx shadcn@latest add <name>`
+- `buttonVariants` must be used with `<Link>` instead of `<Button asChild>` — this version of shadcn uses `@base-ui/react` which does not support `asChild`
+
+## Design System (visual identity)
+
+The BookShelf brand is a warm, paper-inspired "library" look. **Tailwind v4 (CSS-first)** — there is **no `tailwind.config.ts`**; all design tokens live in `@theme` blocks in `app/globals.css`, which auto-generates the utility classes (`bg-parchment`, `text-ink`, `border-linen`, `font-serif`, …). Do NOT create a `tailwind.config.ts` — add tokens to `@theme` instead.
+
+### Color tokens (`app/globals.css` → `@theme`)
+| Token / utility | Hex | Role |
+|------|-----|------|
+| `parchment` | `#faf6f0` | page background |
+| `parchment-card` | `#fdfaf6` | card / navbar background |
+| `ink` | `#2c1a0e` | primary text, CTA button bg |
+| `ink-light` | `#1e1008` | headings |
+| `walnut` | `#7a5c3e` | muted / secondary text |
+| `walnut-mid` | `#9c7a5b` | placeholder, labels, secondary links |
+| `amber` | `#c4852a` | accent, highlights, active states, **AI Reading** badge |
+| `amber-light` | `#f5e6d0` | tag / pill backgrounds |
+| `amber-pale` | `#faf0dc` | subtle tints |
+| `forest` / `forest-light` | `#4a6741` / `#d0e8cc` | **Available** status / success |
+| `navy` / `navy-light` | `#2c4a6e` / `#c8d8f0` | info, **For sale** badge |
+| `linen` | `#e8ddd0` | borders |
+| `rust` / `rust-light` | `#7a3b3b` / `#f5d0d0` | **Lent out** / warning |
+
+Use as `bg-*`, `text-*`, `border-*` (e.g. `bg-forest-light text-forest`). Opacity modifiers work: `border-forest/30`.
+
+**shadcn semantic mapping** (`:root` in `globals.css`, plain hex): `background`→parchment, `card`→parchment-card, `foreground`/`primary`→ink, `primary-foreground`→parchment, `secondary`→amber-light, `muted-foreground`→walnut, `accent`/`ring`→amber, `destructive`→rust, `border`/`input`→linen. So shadcn `<Button>`, `<Input>`, `<Card>` etc. pick up the palette automatically.
+
+### Typography
+- **Headings** — Playfair Display (serif). Loaded via `next/font/google` in `app/layout.tsx` as the `--font-playfair` variable; exposed as `font-serif` and applied to `h1–h4` globally in the `@layer base` block of `globals.css` (weight 600, color `ink-light`). Headings with an explicit `text-*` class keep that colour; the global rule only sets the default.
+- **Body / UI** — Inter (`--font-inter`), exposed as `font-sans`, applied to `body`. Both are variable fonts (no `weight` array) so `font-medium`/`font-semibold`/`font-bold` render without faux-bold.
+- Wordmarks use `font-serif text-xl/2xl font-semibold text-ink` next to the icon.
+- (Geist Mono kept as `--font-mono` / `font-mono`.)
+
+### Icons
+- **Source:** `public/icon.svg` — the stacked-books mark (amber / navy / forest / cream spines + amber bookmark ribbon). Used inline in navbars (`<img src="/icon.svg">`).
+- **Generated:** `scripts/generate-icons.mjs` (run `node scripts/generate-icons.mjs`, uses `sharp`) produces, in `public/`: `favicon-16x16.png`, `favicon-32x32.png` (transparent), `apple-touch-icon.png` (180), `icon-192x192.png`, `icon-512x512.png` (icon centered ~65% on a rounded `#2c1a0e` square), and `favicon.ico` (multi-size 16+32, PNG-encoded, built manually — `sharp` can't emit ICO). **Re-run the script whenever `icon.svg` changes.**
+- `app/layout.tsx` metadata: `icons: { icon: '/favicon-32x32.png', apple: '/apple-touch-icon.png' }`, `viewport.themeColor: '#2c1a0e'`. `public/manifest.json`: `theme_color`/`background_color` `#2c1a0e`, icons → `/icon-192x192.png` + `/icon-512x512.png`.
+- The old `public/icons/*` files are superseded (no longer referenced).
+
+### Book card spines (`lib/category-color.ts`)
+`getCategoryColor(category?: string | null): string` maps a book category (canonical English value from `lib/categories.ts`) to a spine colour, defaulting to ink (`#2c1a0e`). When a book has **no `cover_url`**, book cards render a colored spine in that colour with the title in light serif text instead of a grey placeholder. Applied in: `app/(dashboard)/books/book-list.tsx` (grid + list), `app/recently-added-client.tsx` (landing), `app/[username]/public-shelf.tsx` (public profile).
+
+### Status badges (palette)
+Available → `bg-forest-light text-forest`; Lent out → `bg-rust-light text-rust`; AI Reading → `bg-amber-light text-amber`; For sale → `bg-navy-light text-navy` (the shared `components/price-pill.tsx`). Applied across the book grids (My Books, landing recently-added, public profile, friend shelves). Other secondary surfaces (loan-list workflow badges, etc.) still use their prior colors and inherit the new tokens/typography — extend with the same palette as needed.
+
+### Adding new branded UI
+Prefer the semantic tokens (`bg-parchment`, `text-ink`, `border-linen`, `text-walnut` for muted, `text-amber` for accent). Headings get Playfair automatically. Keep "BookShelf" capitalized exactly.
+
+## Next.js 16 specifics
+
+- **`proxy.ts` instead of `middleware.ts`** — Next.js 16 renamed the middleware convention. The exported function must be named `proxy` (not `middleware`). The `config.matcher` export still works the same way.
+- **Turbopack is the default** — `npm run dev` uses Turbopack. `npm run build` uses `--webpack` because `@ducanh2912/next-pwa` is a webpack plugin and is incompatible with Turbopack.
+- **`turbopack: {}`** in `next.config.ts` silences the webpack/Turbopack conflict warning during dev (PWA is disabled in dev anyway).
+- **`asChild` not supported** — shadcn/ui in this project uses `@base-ui/react/button` instead of Radix. Use `buttonVariants({ className })` on a `<Link>` instead.
+
+## PWA setup
+
+- Package: `@ducanh2912/next-pwa` (maintained fork of next-pwa, supports Next.js 13+)
+- Service worker is generated at build time into `public/sw.js` — this file is gitignored
+- PWA is disabled in development (`disable: process.env.NODE_ENV === 'development'`)
+- Icons: `public/icon-192x192.png`, `icon-512x512.png`, `apple-touch-icon.png` — generated by `scripts/generate-icons.mjs` (see **Icons** under Design System). The old `public/icons/` folder is superseded.
+- Manifest: `public/manifest.json` — theme/background color `#2c1a0e` (ink), start URL `/books`
+- `viewport-fit=cover` is set in `app/layout.tsx` (`viewportFit: "cover"` in the `Viewport` export) — required for `env(safe-area-inset-bottom)` to work on both iPhone and Android PWAs
+
+### PWA update & refresh strategy
+
+**Problem:** Service workers cache aggressively. After a Vercel deploy, installed PWAs serve stale cached content until the user manually refreshes.
+
+**Solution (three layers):**
+
+1. **NetworkFirst cache strategy** (`next.config.ts` `workboxOptions.runtimeCaching`): All runtime requests use NetworkFirst — the SW always tries the network first and falls back to cache only when offline. This prevents stale pages on subsequent visits.
+
+2. **Automatic update detection** (`app/pwa-updater.tsx`): A client component mounted in `app/layout.tsx` listens for SW `updatefound` events. When a new SW installs and waits (`registration.waiting`), a persistent Sonner toast appears: "A new version of BookShelf is available" with an "Update now" button. Clicking it sends `SKIP_WAITING` to the waiting SW; the `controllerchange` event then triggers `window.location.reload()`.
+
+3. **Manual refresh button** (`app/(dashboard)/nav.tsx`): A `RefreshCw` icon button (mobile-only, `sm:hidden`) sits between the bell and avatar in the top bar. Tapping it:
+   - Spins the icon for 1 second (`animate-spin`)
+   - Sends `SKIP_WAITING` if a SW update is queued
+   - Calls `window.location.reload()` after 1s
+
+**Version indicator:** `process.env.NEXT_PUBLIC_BUILD_ID` is set in `next.config.ts` to the build date (`YYYY-MM-DD`). Shown at the bottom of `/profile` so users can confirm they have the latest version.
+
+## Mobile navigation
+
+Mobile (below 640px breakpoint) uses a **bottom navigation bar** instead of the top nav links. This matches the native app convention for PWAs installed from Safari (iPhone) and Chrome (Android).
+
+**Top bar on mobile:**
+- Keeps: BookShelf wordmark (left), bell icon with badge, avatar dropdown (right)
+- Hides: all navigation links (Books, Friends, Messages, Loans)
+- Height: 52px; background: stone-50
+- Bell and avatar behavior identical to desktop
+
+**Bottom nav bar ():**
+- Fixed to bottom of screen, `sm:hidden` (invisible on desktop)
+- 4 tabs: Books (BookOpen), Friends (Users), Messages (MessageSquare), Loans (ArrowLeftRight) — from lucide-react
+- Active tab: stone-900 (#1c1917) + strokeWidth 2; inactive: stone-400 (#a8a29e) + strokeWidth 1.5
+- Red dot badge (8px, no count) on Messages when `unreadMessages > 0`, on Loans when `pendingRequests > 0`
+- Polls `/api/nav-counts` every 30 seconds (same endpoint as top nav)
+- Added in `app/(dashboard)/layout.tsx` so it appears on every dashboard page
+
+**Safe area handling (PWA on iPhone and Android):**
+- `padding-bottom: max(14px, env(safe-area-inset-bottom))` applied to the bottom nav
+- iPhone home indicator: `env(safe-area-inset-bottom)` ≈ 34px → nav extends below tabs
+- Android gesture navigation: `env(safe-area-inset-bottom)` ≈ 24px → same handling
+- Requires `viewport-fit=cover` (set above) for the env() variable to work
+
+**Content area bottom padding:**
+- `pb-24 sm:pb-8` on the dashboard `<main>` element gives 96px bottom clearance on mobile, 32px on desktop
+- Prevents page content from being obscured by the bottom nav
+
+## SEO & GEO
+
+Search engine optimization and Generative Engine Optimization (for AI search like ChatGPT, Perplexity, Gemini, Claude). Only public pages are indexable — everything behind auth is `noindex`.
+
+### Indexability map
+| Area | Indexable? | How |
+|------|-----------|-----|
+| `/` landing | ✅ yes | full metadata + JSON-LD |
+| `/[username]` public profiles | ✅ yes (unless `private`) | dynamic `generateMetadata` + JSON-LD |
+| `/catalog` catalogue index | ✅ yes | `generateMetadata` (filter-aware canonical) + `CollectionPage` JSON-LD |
+| `/catalog/[id]` book pages | ✅ yes | dynamic `generateMetadata` + `Book` JSON-LD |
+| `(auth)` login/signup/forgot/reset | ❌ noindex,nofollow | `metadata` in `app/(auth)/layout.tsx` |
+| `(dashboard)` all protected pages | ❌ noindex,nofollow | `metadata` in `app/(dashboard)/layout.tsx` |
+| `/admin` | ❌ noindex,nofollow | `metadata` in `app/admin/layout.tsx` |
+| `/subscribe` | ❌ noindex,nofollow | `metadata` in `app/subscribe/layout.tsx` (client page, so a server `layout` carries the metadata) |
+
+### Metadata architecture
+- **Canonical host is `www`.** Production serves on `https://www.bookshelf.name`; the apex `bookshelf.name` **307-redirects** to www. So every canonical / sitemap / OG / JSON-LD URL must use www — otherwise canonicals point at a redirecting URL. The single source of truth is **`lib/site.ts` → `SITE_URL = 'https://www.bookshelf.name'`**; import it, never hardcode a host. (Functional/auth links like the password-reset `redirectTo` and share-shelf URLs are separate and must match whatever is whitelisted in Supabase/Stripe — don't blindly swap those.)
+- **`app/layout.tsx`** sets `metadataBase: new URL('https://www.bookshelf.name')`, a title template `"BookShelf — %s | Your personal library"` (default `"BookShelf — Your personal library"`), and default OpenGraph/Twitter tags.
+- **Landing (`app/page.tsx`)** has `generateMetadata()` — **localized** via `getTranslations('landing')`, so EN/RO/RU each get translated title/description/keywords. Uses `title.absolute` (bypasses the template), `description` (≤155 chars), `keywords`, self-canonical, OG `type: website`, Twitter `summary_large_image`.
+- **Public profile (`app/[username]/page.tsx`)** `generateMetadata()` → `"[Name]'s BookShelf — [X] books shared"`, self-canonical `https://www.bookshelf.name/[username]`, OG `type: profile`. Returns `robots: noindex` for private/missing profiles.
+- **Book page (`app/catalog/[id]/page.tsx`)** `generateMetadata()` → `"[Title] by [Author] — BookShelf"` (localized), self-canonical at the **slug URL**, OG `type: book` with the cover image. Meta description uses the book's own description (trimmed to ~160 chars) when present, else a localized template.
+- All indexable pages emit a **self-referencing canonical**.
+
+### Localization / hreflang
+The app serves **all locales from one URL** (locale is the `NEXT_LOCALE` cookie — there are no `/ro` or `/ru` routes). So the landing page emits only a self-canonical + `hreflang="x-default"` → `https://www.bookshelf.name`. We deliberately do **not** emit `/ro` `/ru` hreflang alternates because those URLs don't exist (they'd fall through to the `[username]` catch-all and 404). Locale-specific metadata is still served per request (the cookie drives `getTranslations`), so a RU visitor's crawl sees RU title/description. To add true per-locale URLs later, introduce a `[locale]` routing layer and then emit full `en`/`ro`/`ru` alternates.
+
+### OpenGraph images (Next.js `ImageResponse`)
+- **`app/opengraph-image.tsx`** — static 1200×630 brand image (stone `#f5f0eb` background, "BookShelf" wordmark, tagline, `bookshelf.name`). Auto-wired as `og:image` + `twitter:image` site-wide via metadataBase.
+- **`app/[username]/opengraph-image.tsx`** — dynamic per-profile 1200×630 showing `[Name]'s BookShelf` + book count. Fetches via `supabaseAdmin`; falls back to brand text for private/missing profiles.
+
+### JSON-LD structured data
+Injected as `<script type="application/ld+json">` in the server components:
+- **Landing**: `WebApplication` (name, url, `applicationCategory: LifestyleApplication`, `operatingSystem: "Web, iOS, Android"`, three `Offer`s for free/$1/$10, `inLanguage: [en,ro,ru]`) + `FAQPage` (6 Q&A, **localized** from the `landing` namespace). No `aggregateRating` — we have no real ratings and fabricating them violates Google's guidelines.
+- **Public profile**: `Person` (name, url, avatar image) + `ItemList` of the user's books (each a `Book` with `author`), capped at 100 items, only for `public_full`.
+
+### sitemap & robots
+- **`app/sitemap.ts`** (`revalidate = 3600`): landing (`priority 1.0, daily`) + `/catalog` (`priority 0.9, daily`) + every profile where `profile_visibility != 'private'` AND `username IS NOT NULL` (`priority 0.7, weekly`, `lastModified` = `created_at`) + every book at its **slug URL** (`priority 0.7, weekly`, `lastModified` = `created_at`, via `getAllBooksForSitemap()` + `bookPath()`). All URLs use `SITE_URL` (www). Fetched with `supabaseAdmin`. Served at `/sitemap.xml`. (If the library ever exceeds ~50k books, split into a sitemap index.)
+- **`app/robots.ts`**: `allow: '/'`; `disallow` all private/auth areas (`/admin /api /books /friends /loans /messages /feed /support /wishlist /profile /subscribe /login /signup /forgot-password /reset-password`); declares the sitemap + host (both `www` via `SITE_URL`). Served at `/robots.txt`.
+- **Note**: auth pages are `noindex` AND robots-disallowed, so they are intentionally **excluded from the sitemap** (a sitemap should not list non-indexable URLs) — this overrides the original spec's suggestion to list `/login` `/signup` there.
+
+### GEO — Generative Engine Optimization
+- **`public/llms.txt`** — plain-language summary AI crawlers read to understand and cite the app (what it does, who it's for, pricing, technical, contact). Served at `/llms.txt`.
+- **Entity clarity** — a visible **About BookShelf** section (`#about`) states explicitly what it is ("a book library app"), that it's independently built, launched 2025, hosted on Vercel, and lives at bookshelf.name. A visible **FAQ** section (`#faq`, the same 6 Q&A as the FAQPage schema) gives AI engines extractable Q&A text. The footer prints `bookshelf.name` as text.
+- **Consistent naming** — always exactly **"BookShelf"** (capital B, capital S) across meta tags, OG, JSON-LD, llms.txt, and copy, so AI engines build a clean entity graph.
+
+### Adding new SEO copy
+The landing `metaTitle/metaDescription/metaKeywords/ogTitle/ogDescription/aboutHeading/aboutText/faqHeading/faq*Q/faq*A` and the profile `metaProfileDescription` keys live in the **`landing` namespace** of `messages/en.json`, `ro.json`, `ru.json` — keep all three in sync (see the Translations convention). The WebApplication/FAQPage/Person/ItemList JSON-LD is built from these same translated strings, so it's localized automatically.
+
+### Core Web Vitals (audited)
+- Fonts: Inter + Playfair Display (+ Geist Mono) via `next/font/google` → `font-display: swap` automatically (no layout shift from fonts).
+- Landing hero is text-only — no LCP image, no CLS.
+- `recently-added-client.tsx` book covers already use `loading="lazy"` inside a fixed `aspectRatio: 2/3` container (no CLS). Remaining `<img>` thumbnails live on `noindex` dashboard pages, so they have negligible SEO impact.
+- **`next/image` is enabled for remote covers** via `images.remotePatterns: [{ protocol: 'https', hostname: '**' }]` in `next.config.ts` (covers come from Supabase Storage, OpenLibrary, and arbitrary AI-suggested URLs — the wildcard means `next/image` never 500s a public page on an unconfigured host). The `/catalog` pages use `next/image` but with the **`unoptimized`** prop on covers (served straight from the source URL, no `/_next/image` transformation) to keep Vercel image-transformation usage down — there are thousands of covers from arbitrary hosts. `images.minimumCacheTTL = 2592000` (30 days) applies to any image that *is* still optimized. The landing/marketplace still use `<img>` (unchanged).
+
+### Public book catalogue (`/catalog`)
+A public, no-auth, crawler-oriented catalogue of **all** books across all users — the SEO/GEO surface for individual books. Separate from the private dashboard `/books` (which is per-user and auth-gated) and from the landing page's "recently added" section. Fully localized EN/RO/RU via the **`catalog` message namespace** (page copy, metadata titles/descriptions, status/pagination labels — including ICU plurals on the index heading); category labels reuse `translateCategory`/the `categories` namespace. Nav/footer are the locale-aware `LandingNav` + `SiteFooter`.
+
+**Why `/catalog` and not `/books`:** `/books` is already the authenticated dashboard route (`app/(dashboard)/books/`), so a public page there is an impossible App-Router collision. `/catalog` is public by default (not in `proxy.ts` `protectedPrefixes`, same as `/marketplace`) — no proxy change needed.
+
+**Book URLs are SEO/GEO slugs** (`lib/slug.ts`): `/catalog/<title-author-slug>-<uuid>`, e.g. `/catalog/de-veghe-in-lanul-de-secara-j-d-salinger-eb52d499-…`. `slugify()` handles Romanian diacritics + Cyrillic transliteration + general Latin accents. The full UUID is appended so the book is always resolvable with no DB `slug` column: `extractBookId()` pulls the UUID out of the param, and the page **308-redirects** (`permanentRedirect`) any non-canonical form (bare `/catalog/<uuid>` old links, or a stale slug after a title edit) to the current slug, so link equity consolidates on one canonical URL. `bookSlug()` / `bookPath()` build the canonical path; use them everywhere a book is linked (cards, sitemap, landing ItemList, related).
+
+**Data access:** all catalogue reads use the **service-role client** (`supabaseAdmin`) server-side with whitelisted columns (never name/avatar/email/user_id — only owner city/country on the detail page). Anon can't be used: `books` RLS only exposes *for-sale* books to anon (see `add-marketplace.sql`), and a blanket anon policy would leak `user_id`/all columns via the public key. Same pattern as the public profile page and landing.
+
+**Pages:**
+- **`app/catalog/page.tsx`** (`revalidate = 300`) — paginated index, 48/page. All filters are crawlable `<a>` links (no client-side JS filtering): `?category=` (exact, validated against `CATEGORIES`), `?status=available|all`, `?author=` (exact), `?page=N`. `h1` = "Biblioteca BookShelf — {total} cărți disponibile", category pills wrap (`flex flex-wrap`), numbered prev/next pagination, filter-aware self-canonical, `CollectionPage` JSON-LD (`hasPart` = books on the page).
+- **`app/catalog/[id]/page.tsx`** (`revalidate = 3600`, `generateStaticParams` = top 500 by `created_at`, each at its slug URL) — localized breadcrumb, `next/image` cover (`priority`, 300×450, `unoptimized`), author link → `/catalog?author=`, category + status badges, owner location (omitted if none), publisher · year · language line, full **description** block, amber CTA → `/login`, related-books strip (`getBooksByCategory`). JSON-LD array: **`Book`** (`offers` InStock/OutOfStock price 0 RON; `url`, `description`, `inLanguage`, `datePublished`, `publisher`, `isbn`, `image` added when present) + **`BreadcrumbList`** (Home → Catalog → book). `notFound()` for unknown/missing ids.
+- **`app/catalog/catalog-book-card.tsx`** — shared presentational card (landing card style, `next/image` with `unoptimized`).
+- **`app/site-footer.tsx`** — shared public footer (mirrors landing footer, localized), used by `/catalog` pages. Header is the existing `LandingNav` (locale + `isLoggedIn`).
+
+**DB helpers** (`lib/db/books.ts`, all `supabaseAdmin`, server-only — never import into client components): `getPublicBooks({page,category,status,author})` → `{books,total}`; `getPublicBook(id)` (+ description/publisher/year/language and owner city/country); `getBooksByCategory(category,excludeId,limit)`; `getAllBooksForSitemap()` (id+title+author+created_at, for slug URLs). Exported types `PublicBookCard`, `PublicBookDetail`.
+
+**Landing integration** (`app/page.tsx` + `recently-added-client.tsx`): added an `ItemList` JSON-LD (numberOfItems = total book count, first 10 as `ListItem`s → `/catalog/[id]`) and a "view all N books" link (`landing.recentlyViewAll`, EN/RO/RU) below the existing grid. **No visual/ISR change** to the recently-added section itself.
+
+**Freshness:** `addBook()` / `addBookForce()` call `revalidatePath('/catalog')` (alongside `/` and `/books`).
+
+**Caveat — static vs dynamic:** because locale is cookie-based (`i18n/request.ts` reads `cookies()`), every page calling `getTranslations` renders dynamically. So the `revalidate`/`generateStaticParams` on the catalogue pages are effectively no-ops (same as the landing/marketplace pages). Crawlers still get fully-rendered HTML with correct metadata/JSON-LD per request; this only means the pages aren't served from a static ISR cache. True static ISR would require decoupling these pages from the locale cookie (e.g. a `[locale]` routing layer).
+
+## Key decisions and why
+
+- **App Router over Pages Router** — App Router is the current Next.js standard; better for server components and server actions
+- **Server Actions for mutations** — simpler than API routes for this app's needs; reduces boilerplate
+- **`profiles` table separate from `auth.users`** — Supabase's `auth.users` is not directly accessible from the client for security reasons; `profiles` is the public-facing user table
+- **`status` field on books** — simple text enum instead of a join; fast to query, easy to understand
+- **`proxy.ts` for session refresh** — Supabase requires the session to be refreshed on every request; the proxy intercepts all non-static requests to do this
+- **User search via API route** — `/api/users/search` rather than a server action, because search is a GET with a query param called from a client component
