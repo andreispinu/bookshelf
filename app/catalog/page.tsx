@@ -53,6 +53,20 @@ export async function generateMetadata({
     : t('metaTitle')
   if (page > 1) title += t('metaPageSuffix', { page })
 
+  // Author pages and the "available only" filter are near-duplicates of other
+  // pages (most authors have a single book whose own page already covers it;
+  // almost every book is available). Keep them out of the index but let Google
+  // follow their links to the books. Search Console reported ~660 of these as
+  // "Duplicate, Google chose different canonical than user".
+  // Only the plain catalogue, category pages and their pagination are indexable.
+  if (author || status === 'available') {
+    return {
+      title: { absolute: title },
+      description: t('metaDescription'),
+      robots: { index: false, follow: true },
+    }
+  }
+
   return {
     title: { absolute: title },
     description: t('metaDescription'),
