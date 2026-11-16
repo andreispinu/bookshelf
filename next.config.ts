@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
     // AI-suggested URLs — allow any https host so next/image never 500s on a
     // public catalogue page because of an unconfigured remote host.
     remotePatterns: [{ protocol: 'https', hostname: '**' }],
+    // Cache each transformed cover for 30 days so a given image is only
+    // transformed once per month instead of on every visit.
+    minimumCacheTTL: 2592000,
   },
   async redirects() {
     // The Bookstore feature was renamed to Wishlist; keep old URLs working.

@@ -166,6 +166,7 @@ export default async function CatalogBookPage({
                   height={450}
                   priority
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               ) : (
                 <span className="px-4 font-serif text-lg text-parchment/85 text-center leading-snug">

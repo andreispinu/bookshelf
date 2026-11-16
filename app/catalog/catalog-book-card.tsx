@@ -39,6 +39,7 @@ export default async function CatalogBookCard({
             height={450}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className="w-full h-full object-cover"
+            unoptimized
           />
         ) : (
           <span className="px-2 font-serif text-xs text-parchment/85 text-center leading-snug line-clamp-3">
