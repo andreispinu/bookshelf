@@ -126,8 +126,10 @@ export default function AdminUsersTable({ users }: { users: AdminUserRow[] }) {
         />
       </div>
 
-      <div className="rounded-xl border border-stone-200 overflow-hidden">
-        <table className="w-full text-sm">
+      {/* overflow-x-auto (not overflow-hidden) so the table scrolls sideways on
+          mobile instead of being clipped; min-w keeps columns from squashing. */}
+      <div className="rounded-xl border border-stone-200 overflow-x-auto overscroll-x-contain">
+        <table className="w-full min-w-[600px] text-sm">
           <thead>
             <tr className="bg-stone-50 border-b border-stone-200">
               <th className="text-left px-4 py-3 text-xs text-stone-400 font-medium uppercase tracking-wide">User</th>
@@ -171,7 +173,7 @@ export default function AdminUsersTable({ users }: { users: AdminUserRow[] }) {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
           <p className="text-xs text-stone-400">
             Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, sorted.length)} of {sorted.length}
           </p>
