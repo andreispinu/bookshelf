@@ -157,6 +157,7 @@ npm run build     # production build (webpack, generates service worker)
   /api/cron/add-books-reminder      → GET (cron, 10:00 UTC) — Email A (14d,<3 books) + B (30d,<5 books)
   /api/cron/invite-friends-followup → GET (cron, 10:00 UTC) — Email A (10d,<2 friends) + B (21d,<2 friends)
   /api/cron/monthly-tips            → GET (cron, 1st 10:00 UTC) — rotating tips (6) to all opted-in users
+  /api/cron/upgrade-reminder        → GET (cron, 10:00 UTC) — once, 90d after a free user hits the 10-book limit
   /api/loans/workflow        → PATCH — loan lifecycle transitions (confirm_handoff, confirm_receipt, initiate_return, confirm_return, deny_return)
   /api/loan-extensions       → POST create extension request | PATCH approve/decline
   /api/loan-recalls          → POST create recall | PATCH acknowledge
@@ -208,7 +209,8 @@ invite_reminder_a_sent_at       timestamptz           -- guards Invite follow-up
 invite_reminder_b_sent_at       timestamptz           -- guards Invite follow-up B (21d, <2 friends)
 last_tip_email_sent_at          timestamptz           -- timestamp of last monthly tip email
 last_tip_number                 int DEFAULT 0         -- which tip (1..6) was last sent, for rotation
-marketing_emails_enabled        boolean DEFAULT true  -- master opt-out for all 4 lifecycle/marketing crons
+marketing_emails_enabled        boolean DEFAULT true  -- master opt-out for all 5 lifecycle/marketing crons
+upgrade_reminder_sent_at        timestamptz           -- guards the one-time upgrade reminder (90d after hitting the 10-book limit)
 ```
 
 ### `books`
@@ -1595,7 +1597,7 @@ Three automated emails sent at key moments in the trial lifecycle. A single cron
 3. Add same `CRON_SECRET` to `.env.local` for local testing
 
 ### Lifecycle & marketing email crons
-Four re-engagement/education email crons. All localized EN/RO/RU by `profiles.ui_language`, all respect the master opt-out `profiles.marketing_emails_enabled` (default true), and all use `marketingWrapper()` templates whose footer links to `/profile` ("manage email preferences"). Migration: `supabase/add-lifecycle-emails.sql` (adds tracking fields + `last_active_at` + `marketing_emails_enabled`, backfills `last_active_at = now()` and the opt-out to true).
+Five re-engagement/education email crons. All localized EN/RO/RU by `profiles.ui_language`, all respect the master opt-out `profiles.marketing_emails_enabled` (default true), and all use `marketingWrapper()` templates whose footer links to `/profile` ("manage email preferences"). Migration: `supabase/add-lifecycle-emails.sql` (adds tracking fields + `last_active_at` + `marketing_emails_enabled`, backfills `last_active_at = now()` and the opt-out to true).
 
 **Activity tracking:** `proxy.ts` writes `profiles.last_active_at` at most once/day per device, throttled by a `bs_active=YYYY-MM-DD` cookie (no read on the hot path; relies on the `profiles: owner update` RLS policy). This is the source of truth for the weekly digest's "inactive" rule.
 
@@ -1606,6 +1608,7 @@ Four re-engagement/education email crons. All localized EN/RO/RU by `profiles.ui
 | `weekly-friend-digest` | `0 9 * * 1` (Mon) | ≥1 friend, inactive 7d, not sent in 6d; up to 5 friend books added in past 7d — **skips (no flag write) if no fresh books** | `weekly_digest_sent_at` |
 | `add-books-reminder` | `0 10 * * *` | Email A: ~14d signup & <3 books (with popular-category suggestions). Email B: ~30d signup, <5 books, A already sent | `add_books_reminder_a_sent_at`, `add_books_reminder_b_sent_at` |
 | `invite-friends-followup` | `0 10 * * *` | Email A: ~10d signup & <2 friends. Email B: ~21d signup, <2 friends, A sent. **Separate sequence** from the day-5 `invite-friends-reminder` cron (own flags) | `invite_reminder_a_sent_at`, `invite_reminder_b_sent_at` |
+| `upgrade-reminder` | `0 10 * * *` | Free users (`subscription_status != 'active'`) who reached the 10-book limit **≥90 days ago** and still haven't upgraded. "Limit reached" = `created_at` of the user's 10th book (no tracking column). Sent **once**. Pitch: $10/year (<$1/month) keeps the independent, ad-free project running — hosting, AI, email | `upgrade_reminder_sent_at` |
 | `monthly-tips` | `0 10 1 * *` (1st) | All opted-in users; rotates through 6 tips via `last_tip_number`. 25-day guard makes it retry-safe. Collects all candidates first, then sends in bounded-concurrency batches (avoids mutate-while-paginate skips + fits the 60s cap) | `last_tip_email_sent_at`, `last_tip_number` |
 
 **Vercel Hobby plan constraints (this project runs on Hobby):** crons run **at most once per day** (weekly/monthly schedules are fine; sub-daily would fail deploy), fire within a ±59 min window, and functions are capped at **`maxDuration = 60`s**. `monthly-tips` is the only cron that iterates *all* users, so it batches sends (`CONCURRENCY = 10`); if a very large user base can't be cleared in 60s, the unreached users keep their flag unset and are picked up next month. 100 crons/project are allowed on all plans, so cron count is not a concern.
@@ -1614,10 +1617,12 @@ Four re-engagement/education email crons. All localized EN/RO/RU by `profiles.ui
 - `supabase/add-lifecycle-emails.sql` — migration
 - `proxy.ts` — throttled `last_active_at` write
 - `lib/email-templates.ts` — `EmailLang` type, `marketingWrapper()`, `weeklyFriendDigestEmail`, `addBooksReminder{A,B}Email`, `inviteReminder{A,B}Email`, `monthlyTipEmail`, `MONTHLY_TIP_COUNT`, `DigestBook`
-- `app/api/cron/{weekly-friend-digest,add-books-reminder,invite-friends-followup,monthly-tips}/route.ts`
+- `app/api/cron/{weekly-friend-digest,add-books-reminder,invite-friends-followup,monthly-tips,upgrade-reminder}/route.ts`
+- `supabase/add-upgrade-reminder.sql` — adds `profiles.upgrade_reminder_sent_at`
+- `lib/email-templates.ts` → `upgradeReminderEmail(firstName, bookCount, lang)` (CTA → `/profile#plans`)
 - `app/(dashboard)/profile/notifications-section.tsx` + `actions.ts` (`updateMarketingEmailsEnabled`) + `page.tsx`
 - `messages/{en,ro,ru}.json` — `profile.marketingEmails` + `profile.marketingEmailsDesc`
-- `vercel.json` — 4 cron entries
+- `vercel.json` — 5 cron entries
 
 ### In-app support system
 Users can contact support via a floating button present on every dashboard page. Conversations are tracked in dedicated DB tables. Admin replies from the admin panel.

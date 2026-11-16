@@ -1788,3 +1788,59 @@ export function monthlyTipEmail(
 }
 
 export const MONTHLY_TIP_COUNT = TIP_COUNT
+
+// Sent once by the upgrade-reminder cron, ~3 months after a free user hit the
+// 10-book limit without upgrading. Marketing email (respects the opt-out).
+export function upgradeReminderEmail(
+  firstName: string,
+  bookCount: number,
+  lang: EmailLang,
+): { subject: string; html: string } {
+  const safe = esc(firstName)
+  // Russian plural: 1 книга / 2–4 книги / 5+ книг (11–14 always книг).
+  const n10 = bookCount % 10, n100 = bookCount % 100
+  const ruBooks = n10 === 1 && n100 !== 11 ? 'книга'
+    : n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14) ? 'книги' : 'книг'
+  const t = pick(lang, {
+    en: {
+      subject: 'Your BookShelf is full — make room for more books',
+      greeting: `Hi ${safe},`,
+      intro: `Your shelf has been full for a few months now — you have <strong>${bookCount} books</strong>, the limit of the free plan. Any book you've read or bought since then isn't on your shelf yet.`,
+      pitch: 'For <strong>$10 a year</strong> — less than $1 a month — you get <strong>unlimited books</strong>. Add everything you own, and lend, sell and share it all with your friends.',
+      why: 'BookShelf is an independent project with no ads and no data selling. Your $10 goes straight into keeping it running: hosting, the AI that scans your covers, and email delivery. It\'s a very small amount, and it makes a real difference.',
+      cta: 'Get unlimited books →',
+      note: 'Prefer monthly? It\'s $1/month — cancel anytime. Your books stay safe either way.',
+    },
+    ro: {
+      subject: 'Raftul tău BookShelf este plin — fă loc pentru mai multe cărți',
+      greeting: `Salut, ${safe}!`,
+      intro: `Raftul tău este plin de câteva luni — ai <strong>${bookCount} cărți</strong>, limita planului gratuit. Cărțile citite sau cumpărate de atunci nu sunt încă pe raft.`,
+      pitch: 'Pentru <strong>10 $ pe an</strong> — mai puțin de 1 $ pe lună — primești <strong>cărți nelimitate</strong>. Adaugă tot ce ai și împrumută, vinde și împărtășește totul cu prietenii.',
+      why: 'BookShelf este un proiect independent, fără reclame și fără vânzare de date. Cei 10 $ merg direct în întreținerea lui: găzduire, inteligența artificială care îți scanează copertele și trimiterea e-mailurilor. Este o sumă foarte mică, dar face o diferență reală.',
+      cta: 'Vreau cărți nelimitate →',
+      note: 'Preferi lunar? Costă 1 $/lună — anulezi oricând. Cărțile tale rămân în siguranță oricum.',
+    },
+    ru: {
+      subject: 'Ваша полка BookShelf заполнена — освободите место для новых книг',
+      greeting: `Привет, ${safe}!`,
+      intro: `Ваша полка заполнена уже несколько месяцев — у вас <strong>${bookCount} ${ruBooks}</strong>, это лимит бесплатного тарифа. Книги, прочитанные или купленные с тех пор, ещё не на полке.`,
+      pitch: 'За <strong>$10 в год</strong> — меньше $1 в месяц — вы получаете <strong>неограниченное количество книг</strong>. Добавьте всё, что у вас есть, и одалживайте, продавайте и делитесь книгами с друзьями.',
+      why: 'BookShelf — независимый проект без рекламы и без продажи данных. Ваши $10 идут напрямую на его поддержку: хостинг, ИИ, который распознаёт обложки, и отправку писем. Это совсем небольшая сумма, но она действительно важна.',
+      cta: 'Получить безлимит →',
+      note: 'Удобнее помесячно? Это $1 в месяц — отмена в любой момент. Ваши книги в любом случае в безопасности.',
+    },
+  })
+  const html = marketingWrapper(`
+    <tr>
+      <td style="padding:24px 0 20px;">
+        <p style="margin:0 0 16px;font-size:18px;font-weight:bold;color:#292524;">${t.greeting}</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">${t.intro}</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#57534e;line-height:1.6;">${t.pitch}</p>
+        <p style="margin:0 0 24px;font-size:15px;color:#57534e;line-height:1.6;">${t.why}</p>
+        ${ctaButton(t.cta, `${BASE_URL}/profile#plans`)}
+        <p style="margin:24px 0 0;font-size:13px;color:#a8a29e;line-height:1.5;">${t.note}</p>
+      </td>
+    </tr>
+  `, lang)
+  return { subject: t.subject, html }
+}
