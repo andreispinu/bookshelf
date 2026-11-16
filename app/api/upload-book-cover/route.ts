@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   if (!image) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
 
   const buffer = Buffer.from(await image.arrayBuffer())
-  const resized = await sharp(buffer).resize({ width: 600, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer()
+  const resized = await sharp(buffer).rotate().resize({ width: 600, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer()
 
   const filename = `${user.id}/${Date.now()}.jpg`
   const { error: uploadError } = await supabaseAdmin.storage

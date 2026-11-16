@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
 
   // Resize to 256×256 (cover crop, centre-aligned) and encode as JPEG
   const resized = await sharp(buffer)
+    .rotate() // apply EXIF orientation (phone photos) before EXIF is stripped
     .resize(256, 256, { fit: 'cover', position: 'centre' })
     .jpeg({ quality: 85 })
     .toBuffer()

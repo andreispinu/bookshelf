@@ -85,7 +85,7 @@ Return only a raw JSON object. No markdown, no code blocks, no explanation.`,
       messages: [{ role: 'user', content: claudeContent }],
     }),
     // Always use front cover for thumbnail
-    sharp(coverBuffer).resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
+    sharp(coverBuffer).rotate().resize({ width: 400, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(),
   ])
 
   // Parse Claude response

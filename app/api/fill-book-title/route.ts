@@ -31,6 +31,7 @@ async function downloadAndStore(
     if (buffer.length < minBytes) return null   // reject tiny placeholders
 
     const resized = await sharp(buffer)
+      .rotate() // apply EXIF orientation (phone photos) before EXIF is stripped
       .resize({ width: 600, withoutEnlargement: true })
       .jpeg({ quality: 85 })
       .toBuffer()
